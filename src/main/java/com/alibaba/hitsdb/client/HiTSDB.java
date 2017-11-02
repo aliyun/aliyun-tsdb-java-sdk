@@ -59,41 +59,41 @@ public interface HiTSDB extends Closeable {
 	 * @param start
 	 * @param end
 	 */
-	void deleteData(String metric, int startTime, int endTime) throws HttpUnknowStatusException;;
+	void deleteData(String metric, long startTime, long endTime) throws HttpUnknowStatusException;
 
 	/**
 	 * @param metric
 	 * @param startDate
 	 * @param endDate
 	 */
-	void deleteData(String metric, Date startDate, Date endDate) throws HttpUnknowStatusException;;
+	void deleteData(String metric, Date startDate, Date endDate) throws HttpUnknowStatusException;
 
 	/**
 	 * @param metric
 	 * @param tags
 	 */
-	void deleteMeta(String metric, Map<String, String> tags) throws HttpUnknowStatusException;;
+	void deleteMeta(String metric, Map<String, String> tags) throws HttpUnknowStatusException;
 
 	/**
 	 * @param timeline
 	 */
-	void deleteMeta(Timeline timeline) throws HttpUnknowStatusException;;
+	void deleteMeta(Timeline timeline) throws HttpUnknowStatusException;
 
 	/**
 	 * @param lifetime
 	 */
-	void ttl(int lifetime) throws HttpUnknowStatusException;;
+	void ttl(int lifetime) throws HttpUnknowStatusException;
 
 	/**
 	 * @param lifetime
 	 * @param unit
 	 */
-	void ttl(int lifetime, TimeUnit unit) throws HttpUnknowStatusException;;
+	void ttl(int lifetime, TimeUnit unit) throws HttpUnknowStatusException;
 
 	/**
 	 * @return
 	 */
-	int ttl() throws HttpUnknowStatusException;;
+	int ttl() throws HttpUnknowStatusException;
 
 	/**
 	 * @param type
@@ -101,7 +101,7 @@ public interface HiTSDB extends Closeable {
 	 * @param max
 	 * @return
 	 */
-	List<String> suggest(Suggest type, String prefix, int max) throws HttpUnknowStatusException;;
+	List<String> suggest(Suggest type, String prefix, int max) throws HttpUnknowStatusException;
 
 	/**
 	 * @param tagkey
@@ -109,7 +109,7 @@ public interface HiTSDB extends Closeable {
 	 * @param max
 	 * @return
 	 */
-	List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;;
+	List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;
 
 	/**
 	 * 关闭客户端连接。<br>

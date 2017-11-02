@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +40,6 @@ import com.alibaba.hitsdb.client.value.request.DumpMetaValue;
 import com.alibaba.hitsdb.client.value.request.MetricTimeRange;
 import com.alibaba.hitsdb.client.value.request.Point;
 import com.alibaba.hitsdb.client.value.request.Query;
-import com.alibaba.hitsdb.client.value.request.SubQuery;
 import com.alibaba.hitsdb.client.value.request.SuggestValue;
 import com.alibaba.hitsdb.client.value.request.TTLValue;
 import com.alibaba.hitsdb.client.value.request.Timeline;
@@ -140,7 +138,7 @@ public class HiTSDBClient implements HiTSDB {
 	}
 
 	@Override
-	public void deleteData(String metric, int startTime, int endTime) {
+	public void deleteData(String metric, long startTime, long endTime) {
 		MetricTimeRange metricTimeRange = new MetricTimeRange(metric, startTime, endTime);
 		HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
@@ -159,8 +157,8 @@ public class HiTSDBClient implements HiTSDB {
 
 	@Override
 	public void deleteData(String metric, Date startDate, Date endDate) {
-		int startTime = (int) (startDate.getTime() / 1000);
-		int endTime = (int) (startDate.getTime() / 1000);
+		long startTime = startDate.getTime();
+		long endTime = startDate.getTime();
 		deleteData(metric, startTime, endTime);
 	}
 
@@ -215,16 +213,6 @@ public class HiTSDBClient implements HiTSDB {
 
 	@Override
 	public List<QueryResult> query(Query query) {
-		boolean queryOne = false;
-		int start = query.getStart();
-		int end = query.getEnd();
-		if (start == end) {
-			start -= 1;
-			queryOne = true;
-			List<SubQuery> queries = query.getQueries();
-			query = Query.timeRange(start, end).sub(queries).build();
-		}
-
 		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
@@ -235,34 +223,6 @@ public class HiTSDBClient implements HiTSDB {
 			String content = resultResponse.getContent();
 			List<QueryResult> queryResultList;
 			queryResultList = JSON.parseArray(content, QueryResult.class);
-			if (queryOne) {
-				for (QueryResult queryResult : queryResultList) {
-					LinkedHashMap<Integer, Number> dps = queryResult.getDps();
-					if (dps != null && !dps.isEmpty()) {
-						Iterator<Entry<Integer, Number>> iterator = dps.entrySet().iterator();
-						while (iterator.hasNext()) {
-							Entry<Integer, Number> entry = iterator.next();
-							Integer time = entry.getKey();
-							if (!time.equals(end)) {
-								iterator.remove();
-							}
-						}
-					}
-
-					LinkedHashMap<Integer, String> sdps = queryResult.getSdps();
-					if (sdps != null && !sdps.isEmpty()) {
-						Iterator<Entry<Integer, String>> iterator = sdps.entrySet().iterator();
-						while (iterator.hasNext()) {
-							Entry<Integer, String> entry = iterator.next();
-							Integer time = entry.getKey();
-							if (!time.equals(end)) {
-								iterator.remove();
-							}
-						}
-					}
-				}
-			}
-
 			return queryResultList;
 		case ServerNotSupport:
 			throw new HttpServerNotSupportException(resultResponse);
@@ -278,19 +238,9 @@ public class HiTSDBClient implements HiTSDB {
 	public void query(Query query, QueryCallback callback) {
 		FutureCallback<HttpResponse> httpCallback = null;
 		String address = httpclient.getHttpAddressManager().getAddress();
-
-		boolean queryOne = false;
-		int start = query.getStart();
-		int end = query.getEnd();
-		if (start == end) {
-			start -= 1;
-			queryOne = true;
-			List<SubQuery> queries = query.getQueries();
-			query = Query.timeRange(start, end).sub(queries).build();
-		}
-
+		
 		if (callback != null) {
-			httpCallback = this.httpResponseCallbackFactory.createQueryCallback(address, callback, query, queryOne);
+			httpCallback = this.httpResponseCallbackFactory.createQueryCallback(address, callback, query);
 		}
 
 		httpclient.postToAddress(address, HttpAPI.QUERY, query.toJSON(), httpCallback);

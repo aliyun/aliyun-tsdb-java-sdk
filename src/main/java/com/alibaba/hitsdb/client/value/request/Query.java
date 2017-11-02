@@ -8,25 +8,25 @@ import java.util.List;
 import com.alibaba.hitsdb.client.value.JSONValue;
 
 public class Query extends JSONValue {
-    private int start;
-    private int end;
+    private long start;
+    private long end;
     private List<SubQuery> queries;
 
     public static class Builder {
-        private int startTime;
-        private int endTime;
+        private long startTime;
+        private long endTime;
         private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
 
-        public Builder(int startTime) {
+        public Builder(long startTime) {
             this.startTime = startTime;
         }
 
-        public Builder(int startTime, int endTime) {
+        public Builder(long startTime, long endTime) {
             this.startTime = startTime;
             this.endTime = endTime;
         }
 
-        public Builder end(int endTime) {
+        public Builder end(long endTime) {
             this.endTime = endTime;
             return this;
         }
@@ -68,30 +68,30 @@ public class Query extends JSONValue {
 
     }
 
-    public static Builder start(int startTime) {
+    public static Builder start(long startTime) {
         return new Builder(startTime);
     }
 
     public static Builder start(Date startDate) {
-        int startTime = (int) (startDate.getTime() / 1000);
+        long startTime = startDate.getTime();
         return new Builder(startTime);
     }
 
     public static Builder timeRange(Date startDate, Date endDate) {
-        int startTime = (int) (startDate.getTime() / 1000);
-        int endTime = (int) (endDate.getTime() / 1000);
+        long startTime = startDate.getTime();
+        long endTime = endDate.getTime();
         return new Builder(startTime, endTime);
     }
 
-    public static Builder timeRange(int startTime, int endTime) {
+    public static Builder timeRange(long startTime, long endTime) {
         return new Builder(startTime, endTime);
     }
 
-    public int getStart() {
+    public long getStart() {
         return start;
     }
 
-    public int getEnd() {
+    public long getEnd() {
         return end;
     }
 

@@ -30,8 +30,8 @@ public class HttpResponseCallbackFactory {
         return new BaseHttpFutrueCallback(unCompletedTaskNum, futureCallback);
     }
 
-    public FutureCallback<HttpResponse> createQueryCallback(final String address, final QueryCallback callback, final Query query,final boolean queryOne) {
-        FutureCallback<HttpResponse> httpCallback = new QueryHttpResponseCallback(address, query, callback,this.httpCompress,queryOne);
+    public FutureCallback<HttpResponse> createQueryCallback(final String address, final QueryCallback callback, final Query query) {
+        FutureCallback<HttpResponse> httpCallback = new QueryHttpResponseCallback(address, query, callback,this.httpCompress);
         return httpCallback;
     }
 

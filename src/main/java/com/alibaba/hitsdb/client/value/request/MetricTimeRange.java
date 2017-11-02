@@ -4,14 +4,14 @@ import com.alibaba.hitsdb.client.value.JSONValue;
 
 public class MetricTimeRange extends JSONValue {
     private String metric;
-    private int start;
-    private int end;
+    private long start;
+    private long end;
 
     public MetricTimeRange() {
         super();
     }
 
-    public MetricTimeRange(String metric, int start, int end) {
+    public MetricTimeRange(String metric, long start, long end) {
         super();
         this.metric = metric;
         this.start = start;
@@ -26,19 +26,19 @@ public class MetricTimeRange extends JSONValue {
         this.metric = metric;
     }
 
-    public int getStart() {
+    public long getStart() {
         return start;
     }
 
-    public void setStart(int start) {
+    public void setStart(long start) {
         this.start = start;
     }
 
-    public int getEnd() {
+    public long getEnd() {
         return end;
     }
 
-    public void setEnd(int end) {
+    public void setEnd(long end) {
         this.end = end;
     }
 

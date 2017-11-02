@@ -18,7 +18,7 @@ public class Point extends JSONValue {
 		private String metric;
 		private Map<String, String> tags = new HashMap<String, String>();
 		private Number value;
-		private int timestamp;
+		private long timestamp;
 		private Granularity granularityType;
 		private String granularity;
 		private String aggregator;
@@ -50,14 +50,14 @@ public class Point extends JSONValue {
 			return this;
 		}
 
-		public MetricBuilder timestamp(int timestamp) {
+		public MetricBuilder timestamp(long timestamp) {
 			this.timestamp = timestamp;
 			return this;
 		}
-
+		
 		public MetricBuilder timestamp(Date date) {
 			Objects.requireNonNull(date);
-			this.timestamp = (int) (date.getTime() / 1000);
+			this.timestamp = date.getTime();
 			return this;
 		}
 
@@ -67,7 +67,7 @@ public class Point extends JSONValue {
 			return this;
 		}
 
-		public MetricBuilder value(int timestamp, Number value) {
+		public MetricBuilder value(long timestamp, Number value) {
 			Objects.requireNonNull(value);
 			this.timestamp = timestamp;
 			this.value = value;
@@ -77,7 +77,7 @@ public class Point extends JSONValue {
 		public MetricBuilder value(Date date, Number value) {
 			Objects.requireNonNull(value);
 			Objects.requireNonNull(date);
-			this.timestamp = (int) (date.getTime() / 1000);
+			this.timestamp = date.getTime();
 			this.value = value;
 			return this;
 		}
@@ -129,7 +129,7 @@ public class Point extends JSONValue {
 
 	private String metric;
 	private Map<String, String> tags;
-	private Integer timestamp;
+	private Long timestamp;
 	private Number value;
 	private String granularity;
 	private String aggregator;
@@ -144,7 +144,7 @@ public class Point extends JSONValue {
 		return tags;
 	}
 
-	public Integer getTimestamp() {
+	public Long getTimestamp() {
 		return timestamp;
 	}
 
@@ -175,7 +175,7 @@ public class Point extends JSONValue {
 		this.tags = tags;
 	}
 
-	public void setTimestamp(Integer timestamp) {
+	public void setTimestamp(Long timestamp) {
 		this.timestamp = timestamp;
 	}
 

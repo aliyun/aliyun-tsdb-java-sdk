@@ -24,15 +24,13 @@ public class QueryHttpResponseCallback implements FutureCallback<HttpResponse> {
     private final Query query;
     private final QueryCallback callback;
     private final boolean compress;
-    private final boolean queryOne;
 
-    public QueryHttpResponseCallback(final String address, final Query query, QueryCallback callback,boolean compress,boolean queryOne) {
+    public QueryHttpResponseCallback(final String address, final Query query, QueryCallback callback,boolean compress) {
         super();
         this.address = address;
         this.query = query;
         this.callback = callback;
         this.compress = compress;
-        this.queryOne = queryOne;
     }
 
     @Override
@@ -46,36 +44,6 @@ public class QueryHttpResponseCallback implements FutureCallback<HttpResponse> {
         case ServerSuccess:
             String content = resultResponse.getContent();
             List<QueryResult> queryResultList = JSON.parseArray(content, QueryResult.class);
-            
-            if(queryOne) {
-	            	int end = this.query.getEnd();
-	        		for(QueryResult queryResult: queryResultList) {
-	        			LinkedHashMap<Integer, Number> dps = queryResult.getDps();
-	        			if(dps!=null && !dps.isEmpty()) {
-	        				Iterator<Entry<Integer, Number>> iterator = dps.entrySet().iterator();
-	        				while(iterator.hasNext()) {
-	        					Entry<Integer, Number> entry = iterator.next();
-	        					Integer time = entry.getKey();
-	        					if(!time.equals(end)) {
-	        						iterator.remove();
-	        					}
-	        				}
-	        			}
-	        			
-	        			LinkedHashMap<Integer, String> sdps = queryResult.getSdps();
-	        			if(sdps!=null && !sdps.isEmpty()) {
-	        				Iterator<Entry<Integer, String>> iterator = sdps.entrySet().iterator();
-	        				while(iterator.hasNext()) {
-	        					Entry<Integer, String> entry = iterator.next();
-	        					Integer time = entry.getKey();
-	        					if(!time.equals(end)) {
-	        						iterator.remove();
-	        					}
-	        				}
-	        			}
-	        		}
-	        	}
-            
             callback.response(this.address, query, queryResultList);
             return;
         case ServerNotSupport:
