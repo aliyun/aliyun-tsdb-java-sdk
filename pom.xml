@@ -4,6 +4,14 @@
 	<groupId>com.alibaba</groupId>
 	<artifactId>hitsdb-client</artifactId>
 	<version>0.0.1</version>
+	<name>HiTSDB Client SDK</name>
+    <description>The Alibaba HiTSDB SDK for Java used for accessing High Performance Time Series Database</description>
+    <url>https://www.aliyun.com/product/hitsdb</url>
+    <scm>
+        <url>https://github.com/aliyun/HiTSDB-Client</url>
+        <connection>git@github.com:aliyun/HiTSDB-Client.git</connection>
+        <developerConnection>https://www.aliyun.com/product/hitsdb</developerConnection>
+    </scm>
 	<dependencies>
 		<!-- HTTP -->
 		<dependency>

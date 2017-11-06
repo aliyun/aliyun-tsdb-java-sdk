@@ -1,9 +1,6 @@
 package com.alibaba.hitsdb.client.callback.http;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map.Entry;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
