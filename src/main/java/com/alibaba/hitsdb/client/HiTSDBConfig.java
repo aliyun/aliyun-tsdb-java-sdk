@@ -7,8 +7,8 @@ public class HiTSDBConfig {
 	public static class Builder {
 		public static volatile boolean ProducerThreadSerializeSwitch = false;
 
-		private int activateRequestLimit = -1;
-		private boolean activateRequestLimitSwitch = true;
+		private int putRequestLimit = -1;
+		private boolean putRequestLimitSwitch = true;
 
 		private int batchPutBufferSize = 10000;
 		private AbstractBatchPutCallback<?> batchPutCallback;
@@ -39,9 +39,9 @@ public class HiTSDBConfig {
 			this.port = port;
 		}
 
-		public Builder activateRequestLimit(int limit) {
-			this.activateRequestLimit = limit;
-			this.activateRequestLimitSwitch = true;
+		public Builder putRequestLimit(int limit) {
+			this.putRequestLimit = limit;
+			this.putRequestLimitSwitch = true;
 			return this;
 		}
 
@@ -70,8 +70,8 @@ public class HiTSDBConfig {
 			return this;
 		}
 
-		public Builder closeActivateRequestLimit() {
-			this.activateRequestLimitSwitch = false;
+		public Builder closePutRequestLimit() {
+			this.putRequestLimitSwitch = false;
 			return this;
 		}
 
@@ -124,8 +124,8 @@ public class HiTSDBConfig {
 			hiTSDBConfig.batchPutRetryCount = this.batchPutRetryCount;
 			hiTSDBConfig.httpConnectionPool = this.httpConnectionPool;
 			hiTSDBConfig.httpConnectTimeout = this.httpConnectTimeout;
-			hiTSDBConfig.activateRequestLimitSwitch = this.activateRequestLimitSwitch;
-			hiTSDBConfig.activateRequestLimit = this.activateRequestLimit;
+			hiTSDBConfig.putRequestLimitSwitch = this.putRequestLimitSwitch;
+			hiTSDBConfig.putRequestLimit = this.putRequestLimit;
 			hiTSDBConfig.batchPutConsumerThreadCount = this.batchPutConsumerThreadCount;
 			hiTSDBConfig.httpCompress = this.httpCompress;
 			hiTSDBConfig.ioThreadCount = this.ioThreadCount;
@@ -133,8 +133,8 @@ public class HiTSDBConfig {
 			hiTSDBConfig.httpConnectionLiveTime = this.httpConnectionLiveTime;
 			hiTSDBConfig.httpKeepaliveTime = this.httpKeepaliveTime;
 			hiTSDBConfig.asyncPut = this.asyncPut;
-			if (this.activateRequestLimitSwitch && this.activateRequestLimit <= 0) {
-				hiTSDBConfig.activateRequestLimit = this.httpConnectionPool;
+			if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
+				hiTSDBConfig.putRequestLimit = this.httpConnectionPool;
 			}
 
 			return hiTSDBConfig;
@@ -183,8 +183,8 @@ public class HiTSDBConfig {
 		return new Builder(host, port);
 	}
 
-	private int activateRequestLimit;
-	private boolean activateRequestLimitSwitch;
+	private int putRequestLimit;
+	private boolean putRequestLimitSwitch;
 	private int batchPutBufferSize;
 	private AbstractBatchPutCallback<?> batchPutCallback;
 	private int batchPutConsumerThreadCount;
@@ -205,8 +205,8 @@ public class HiTSDBConfig {
 
 	private int port;
 
-	public int getActivateRequestLimit() {
-		return activateRequestLimit;
+	public int getPutRequestLimit() {
+		return putRequestLimit;
 	}
 
 	public int getBatchPutBufferSize() {
@@ -253,8 +253,8 @@ public class HiTSDBConfig {
 		return port;
 	}
 
-	public boolean isActivateRequestLimitSwitch() {
-		return activateRequestLimitSwitch;
+	public boolean isPutRequestLimitSwitch() {
+		return putRequestLimitSwitch;
 	}
 
 	public boolean isHttpCompress() {

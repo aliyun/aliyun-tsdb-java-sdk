@@ -118,9 +118,9 @@ public class HttpClientFactory {
 		if (httpConnectionPool > 0) {
 			String host = config.getHost();
 			int port = config.getPort();
-			int activateRequestLimit = config.getActivateRequestLimit();
+			int putRequestLimit = config.getPutRequestLimit();
 			String address = String.format("%s:%d", host,port);
-			semaphoreManager = SemaphoreManager.create(address, activateRequestLimit);
+			semaphoreManager = SemaphoreManager.create(address, putRequestLimit);
 		}
 		
 		return semaphoreManager;

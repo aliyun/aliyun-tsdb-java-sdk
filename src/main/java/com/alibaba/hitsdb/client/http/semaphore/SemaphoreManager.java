@@ -12,7 +12,7 @@ public class SemaphoreManager {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SemaphoreManager.class);
 	private ConcurrentHashMap<String, Semaphore> addressSemaphoreMap;
 	private int poolNum;
-	private boolean activateRequestLimitSwitch = true;
+	private boolean putRequestLimitSwitch = true;
 
 	private SemaphoreManager(List<String> addresses, int poolNum) {
 		synchronized (this) {
@@ -44,7 +44,7 @@ public class SemaphoreManager {
 	}
 
 	public boolean acquire(String address) {
-		if (!this.activateRequestLimitSwitch) {
+		if (!this.putRequestLimitSwitch) {
 			return true;
 		}
 
