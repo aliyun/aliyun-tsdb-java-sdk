@@ -20,7 +20,6 @@ import com.alibaba.hitsdb.client.callback.QueryCallback;
 import com.alibaba.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.alibaba.hitsdb.client.consumer.Consumer;
 import com.alibaba.hitsdb.client.consumer.ConsumerFactory;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.exception.http.HttpServerErrorException;
@@ -59,7 +58,7 @@ public class HiTSDBClient implements HiTSDB {
 	private final HttpClient httpclient;
 	private final HiTSDBConfig config;
 
-	public HiTSDBClient(HiTSDBConfig config) throws HttpClientInitException, VIPClientException {
+	public HiTSDBClient(HiTSDBConfig config) throws HttpClientInitException {
 		this.config = config;
 		this.httpclient = HttpClientFactory.createHttpClient(config);
 		this.httpCompress = config.isHttpCompress();

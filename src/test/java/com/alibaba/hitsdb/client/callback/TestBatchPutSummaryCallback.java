@@ -9,7 +9,6 @@ import org.junit.Test;
 import com.alibaba.hitsdb.client.HiTSDB;
 import com.alibaba.hitsdb.client.HiTSDBClientFactory;
 import com.alibaba.hitsdb.client.HiTSDBConfig;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.value.request.Point;
 import com.alibaba.hitsdb.client.value.response.batch.SummaryResult;
@@ -18,7 +17,7 @@ public class TestBatchPutSummaryCallback {
     HiTSDB tsdb;
 
     @Before
-    public void init() throws VIPClientException, HttpClientInitException, IOException {
+    public void init() throws HttpClientInitException, IOException {
         System.out.println("按下任意键，开始运行...");
         while (true) {
             int read = System.in.read();

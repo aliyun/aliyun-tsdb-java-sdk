@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.alibaba.hitsdb.client.callback.QueryCallback;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.alibaba.hitsdb.client.value.request.Query;
@@ -21,7 +20,7 @@ public class TestHiTSDBClientQuery {
     HiTSDB tsdb;
 
     @Before
-    public void init() throws VIPClientException, HttpClientInitException {
+    public void init() throws HttpClientInitException {
     		HiTSDBConfig config = HiTSDBConfig
     		        .address("127.0.0.1")
     		        .config();

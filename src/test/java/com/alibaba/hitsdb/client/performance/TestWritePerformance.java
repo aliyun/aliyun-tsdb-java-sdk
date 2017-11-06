@@ -13,7 +13,6 @@ import com.alibaba.hitsdb.client.HiTSDB;
 import com.alibaba.hitsdb.client.HiTSDBClientFactory;
 import com.alibaba.hitsdb.client.HiTSDBConfig;
 import com.alibaba.hitsdb.client.callback.BatchPutCallback;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.value.Result;
 import com.alibaba.hitsdb.client.value.request.Point;
@@ -30,7 +29,7 @@ public class TestWritePerformance {
 	final AtomicLong num = new AtomicLong();
 
 	@Before
-	public void init() throws IOException, VIPClientException, HttpClientInitException {
+	public void init() throws IOException, HttpClientInitException {
 		System.out.println("按下任意键，开始运行...");
 		while (true) {
 			int read = System.in.read();

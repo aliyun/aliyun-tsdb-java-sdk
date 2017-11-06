@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.alibaba.hitsdb.client.callback.BatchPutCallback;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.value.Result;
 import com.alibaba.hitsdb.client.value.request.Point;
@@ -37,7 +36,7 @@ public class TestHiTSDBClientBatchPutStringValue {
     HiTSDB tsdb;
 
     @Before
-    public void init() throws VIPClientException, HttpClientInitException {
+    public void init() throws HttpClientInitException {
         BatchPutCallback pcb = new BatchPutCallback(){
             
             final AtomicInteger num = new AtomicInteger();

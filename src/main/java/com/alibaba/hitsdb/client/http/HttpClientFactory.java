@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.hitsdb.client.HiTSDBConfig;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.http.semaphore.SemaphoreManager;
 
@@ -32,7 +31,7 @@ public class HttpClientFactory {
 	
 	private static SemaphoreManager semaphoreManager;
 
-	public static HttpClient createHttpClient(HiTSDBConfig config) throws HttpClientInitException, VIPClientException {
+	public static HttpClient createHttpClient(HiTSDBConfig config) throws HttpClientInitException {
 		Objects.requireNonNull(config);
 		
 		// 创建 ConnectingIOReactor

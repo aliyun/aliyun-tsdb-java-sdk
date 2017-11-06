@@ -9,7 +9,6 @@ import org.junit.Test;
 import com.alibaba.hitsdb.client.HiTSDB;
 import com.alibaba.hitsdb.client.HiTSDBClientFactory;
 import com.alibaba.hitsdb.client.HiTSDBConfig;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.util.UI;
 import com.alibaba.hitsdb.client.value.request.Point;
@@ -18,7 +17,7 @@ public class TestNoLogicCallback {
     HiTSDB tsdb;
 
     @Before
-    public void init() throws VIPClientException, HttpClientInitException {
+    public void init() throws HttpClientInitException {
         UI.pauseStart();
         HiTSDBConfig config = HiTSDBConfig
                 .address("127.0.0.1", 8242)

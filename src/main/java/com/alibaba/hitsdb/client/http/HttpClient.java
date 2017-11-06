@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.hitsdb.client.HiTSDBConfig;
 import com.alibaba.hitsdb.client.callback.http.HttpResponseCallbackFactory;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.http.request.HttpDeleteWithEntity;
@@ -80,7 +79,7 @@ public class HttpClient {
 	private final boolean httpCompress;
 
 	HttpClient(HiTSDBConfig config, CloseableHttpAsyncClient httpclient, SemaphoreManager semaphoreManager)
-			throws VIPClientException, HttpClientInitException {
+			throws HttpClientInitException {
 		this.host = config.getHost();
 		this.port = config.getPort();
 		this.httpCompress = config.isHttpCompress();

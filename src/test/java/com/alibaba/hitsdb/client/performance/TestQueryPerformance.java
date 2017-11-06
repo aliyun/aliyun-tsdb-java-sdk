@@ -12,7 +12,6 @@ import com.alibaba.hitsdb.client.HiTSDB;
 import com.alibaba.hitsdb.client.HiTSDBClientFactory;
 import com.alibaba.hitsdb.client.HiTSDBConfig;
 import com.alibaba.hitsdb.client.callback.QueryCallback;
-import com.alibaba.hitsdb.client.exception.VIPClientException;
 import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
 import com.alibaba.hitsdb.client.value.request.Query;
 import com.alibaba.hitsdb.client.value.request.SubQuery;
@@ -25,7 +24,7 @@ public class TestQueryPerformance {
 	static int SIZE = 1;
 
 	@Before
-	public void init() throws VIPClientException, HttpClientInitException {
+	public void init() throws HttpClientInitException {
 		cl = new CountDownLatch(SIZE);
 		HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 8242)
 //				 .useVIPServer()
