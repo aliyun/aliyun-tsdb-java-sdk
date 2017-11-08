@@ -13,7 +13,7 @@ import com.aliyun.hitsdb.client.value.type.Aggregator;
 
 public class TestRead {
 	public static void main(String[] args) throws IOException {
-		HiTSDBConfig config = HiTSDBConfig.address("100.81.154.171", 8242).config();
+		HiTSDBConfig config = HiTSDBConfig.address("example.hitsdb.com", 8242).config();
 		HiTSDB tsdb = HiTSDBClientFactory.connect(config);
 
 		// 构造查询条件并查询数据。
