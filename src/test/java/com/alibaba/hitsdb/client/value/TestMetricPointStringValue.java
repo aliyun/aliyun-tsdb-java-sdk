@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.alibaba.hitsdb.client.value.request.Point;
+import com.aliyun.hitsdb.client.value.request.Point;
 
 public class TestMetricPointStringValue {
     

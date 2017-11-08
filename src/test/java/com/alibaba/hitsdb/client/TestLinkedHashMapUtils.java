@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.alibaba.hitsdb.client.util.LinkedHashMapUtils;
+import com.aliyun.hitsdb.client.util.LinkedHashMapUtils;
 
 public class TestLinkedHashMapUtils {
     

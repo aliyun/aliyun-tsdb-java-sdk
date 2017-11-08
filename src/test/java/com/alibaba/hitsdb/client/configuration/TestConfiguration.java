@@ -4,10 +4,10 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.alibaba.hitsdb.client.HiTSDBConfig;
-import com.alibaba.hitsdb.client.callback.BatchPutCallback;
-import com.alibaba.hitsdb.client.value.Result;
-import com.alibaba.hitsdb.client.value.request.Point;
+import com.aliyun.hitsdb.client.HiTSDBConfig;
+import com.aliyun.hitsdb.client.callback.BatchPutCallback;
+import com.aliyun.hitsdb.client.value.Result;
+import com.aliyun.hitsdb.client.value.request.Point;
 
 public class TestConfiguration {
 

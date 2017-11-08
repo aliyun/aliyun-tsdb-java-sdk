@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.hitsdb.client.value.response.batch.SummaryResult;
+import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 
 
 public class TestSummaryResult {

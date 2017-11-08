@@ -8,8 +8,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
-import com.alibaba.hitsdb.client.value.request.Timeline;
+import com.aliyun.hitsdb.client.HiTSDB;
+import com.aliyun.hitsdb.client.HiTSDBClientFactory;
+import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.value.request.Timeline;
 
 public class TestHiTSDBClientDeleteMeta {
     HiTSDB tsdb;

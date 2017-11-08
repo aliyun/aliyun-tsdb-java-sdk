@@ -1,17 +1,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.alibaba</groupId>
+	<groupId>com.aliyun</groupId>
 	<artifactId>hitsdb-client</artifactId>
 	<version>0.0.1</version>
 	<name>HiTSDB Client SDK</name>
-    <description>The Alibaba HiTSDB SDK for Java used for accessing High Performance Time Series Database</description>
-    <url>https://www.aliyun.com/product/hitsdb</url>
-    <scm>
-        <url>https://github.com/aliyun/HiTSDB-Client</url>
-        <connection>git@github.com:aliyun/HiTSDB-Client.git</connection>
-        <developerConnection>https://www.aliyun.com/product/hitsdb</developerConnection>
-    </scm>
+	<description>The Alibaba HiTSDB SDK for Java used for accessing High Performance Time Series Database</description>
+	<url>https://www.aliyun.com/product/hitsdb</url>
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
+	<scm>
+		<url>https://github.com/aliyun/HiTSDB-Client</url>
+		<connection>git@github.com:aliyun/HiTSDB-Client.git</connection>
+		<developerConnection>https://www.aliyun.com/product/hitsdb</developerConnection>
+	</scm>
 	<dependencies>
 		<!-- HTTP -->
 		<dependency>

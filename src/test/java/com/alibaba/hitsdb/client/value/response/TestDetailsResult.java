@@ -6,9 +6,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.hitsdb.client.value.request.Point;
-import com.alibaba.hitsdb.client.value.response.batch.DetailsResult;
-import com.alibaba.hitsdb.client.value.response.batch.ErrorPoint;
+import com.aliyun.hitsdb.client.value.request.Point;
+import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
+import com.aliyun.hitsdb.client.value.response.batch.ErrorPoint;
 
 public class TestDetailsResult {
 

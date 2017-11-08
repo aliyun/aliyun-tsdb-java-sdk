@@ -9,11 +9,11 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.alibaba.hitsdb.client.value.request.Filter;
-import com.alibaba.hitsdb.client.value.request.Query;
-import com.alibaba.hitsdb.client.value.request.SubQuery;
-import com.alibaba.hitsdb.client.value.type.Aggregator;
-import com.alibaba.hitsdb.client.value.type.FilterType;
+import com.aliyun.hitsdb.client.value.request.Filter;
+import com.aliyun.hitsdb.client.value.request.Query;
+import com.aliyun.hitsdb.client.value.request.SubQuery;
+import com.aliyun.hitsdb.client.value.type.Aggregator;
+import com.aliyun.hitsdb.client.value.type.FilterType;
 
 public class TestQuery {
 

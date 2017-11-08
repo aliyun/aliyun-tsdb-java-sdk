@@ -7,13 +7,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.alibaba.hitsdb.client.callback.QueryCallback;
-import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
-import com.alibaba.hitsdb.client.exception.http.HttpUnknowStatusException;
-import com.alibaba.hitsdb.client.value.request.Query;
-import com.alibaba.hitsdb.client.value.request.SubQuery;
-import com.alibaba.hitsdb.client.value.response.QueryResult;
-import com.alibaba.hitsdb.client.value.type.Aggregator;
+import com.aliyun.hitsdb.client.HiTSDB;
+import com.aliyun.hitsdb.client.HiTSDBClientFactory;
+import com.aliyun.hitsdb.client.HiTSDBConfig;
+import com.aliyun.hitsdb.client.callback.QueryCallback;
+import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
+import com.aliyun.hitsdb.client.value.request.Query;
+import com.aliyun.hitsdb.client.value.request.SubQuery;
+import com.aliyun.hitsdb.client.value.response.QueryResult;
+import com.aliyun.hitsdb.client.value.type.Aggregator;
 
 public class TestHiTSDBClientQuery {
 

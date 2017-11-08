@@ -11,7 +11,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.hitsdb.client.value.request.Point;
+import com.aliyun.hitsdb.client.value.request.Point;
 
 @Ignore
 public class TestFastJSON {

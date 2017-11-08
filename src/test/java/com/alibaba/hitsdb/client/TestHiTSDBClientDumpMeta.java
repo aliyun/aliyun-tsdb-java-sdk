@@ -7,8 +7,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.alibaba.hitsdb.client.exception.http.HttpClientInitException;
-import com.alibaba.hitsdb.client.value.response.TagResult;
+import com.aliyun.hitsdb.client.HiTSDB;
+import com.aliyun.hitsdb.client.HiTSDBClientFactory;
+import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.value.response.TagResult;
 
 public class TestHiTSDBClientDumpMeta {
     HiTSDB tsdb;
