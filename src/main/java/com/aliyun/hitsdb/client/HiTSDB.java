@@ -30,6 +30,8 @@ public interface HiTSDB extends Closeable {
 	List<QueryResult> query(Query query) throws HttpUnknowStatusException;
 
 	List<QueryResult> last(Query query, int num) throws HttpUnknowStatusException;
+	
+	void delete(Query query) throws HttpUnknowStatusException;
 
 	void deleteData(String metric, long startTime, long endTime) throws HttpUnknowStatusException;
 

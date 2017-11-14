@@ -153,7 +153,7 @@ public class TestQuery {
     }
     
     @Test
-    public void testRealtime() {
+    public void testSubQueryRealtime() {
         SubQuery subQuery = SubQuery
                 .metric("test1").aggregator(Aggregator.AVG).rate().downsample("none")
                 .tag("tagk1", "tagv1")
@@ -167,59 +167,26 @@ public class TestQuery {
     }
     
     @Test
-    public void testQueryString() throws ParseException {
-        String strDate = "2017-08-01 13:14:15";
+    public void testQueryDelete() throws ParseException {
+    	String strDate = "2017-08-01 13:14:15";
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = sdf.parse(strDate);
 
         int endTime = (int) (date.getTime() / 1000);
         int startTime = endTime - 60 * 60;
 
-        SubQuery subQuery1 = SubQuery
-                .metric("test1")
-                .aggregator(Aggregator.SUM)
-                .rate()
-                .tag("tagk1", "tagv1")
-                .tag("tagk2", "tagv2")
-                .explicitTags()
-                .build();
-        
-        SubQuery subQuery2 = SubQuery
-                .metric("test2")
-                .aggregator(Aggregator.AVG)
-                .rate()
-                .tag("tagk1", "tagv1")
-                .tag("tagk2", "tagv2")
-                .explicitTags(true)
-                .build();
-        
-        SubQuery subQuery3 = SubQuery
-                .metric("test3")
-                .aggregator(Aggregator.AVG)
-                .rate()
-                .tag("tagk1", "tagv1")
-                .tag("tagk2", "tagv2")
-                .build();
-        
-        SubQuery subQuery4 = SubQuery
-                .metric("test4")
-                .aggregator(Aggregator.AVG)
-                .rate()
-                .tag("tagk1", "tagv1")
-                .tag("tagk2", "tagv2")
-                .build();
+        SubQuery subQuery1 = SubQuery.metric("test1").aggregator(Aggregator.SUM).rate().tag("tagk1", "tagv1")
+                .tag("tagk2", "tagv2").build();
+        SubQuery subQuery2 = SubQuery.metric("test2").aggregator(Aggregator.AVG).rate().tag("tagk1", "tagv1")
+                .tag("tagk2", "tagv2").build();
 
-        Query query = Query.timeRange(startTime, endTime)
-            .sub(subQuery1)
-            .sub(subQuery2)
-            .sub(subQuery3)
-            .sub(subQuery4)
-            .build();
+        Query query = Query.start(startTime).end(endTime)
+        				.sub(subQuery1).sub(subQuery2)
+        				.delete()
+        				.build();
         
         String json = query.toJSON();
         Assert.assertEquals(json,
-                "{\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"explicitTags\":true,\"index\":0,\"metric\":\"test1\",\"queryString\":true,\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"explicitTags\":true,\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":2,\"metric\":\"test3\",\"queryString\":true,\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":3,\"metric\":\"test4\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
+                "{\"delete\":true,\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
     }
-    
-    
 }

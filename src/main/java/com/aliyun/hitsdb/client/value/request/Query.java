@@ -8,95 +8,116 @@ import java.util.List;
 import com.aliyun.hitsdb.client.value.JSONValue;
 
 public class Query extends JSONValue {
-    private long start;
-    private long end;
-    private List<SubQuery> queries;
+	private long start;
+	private long end;
+	private Boolean delete;
+	private List<SubQuery> queries;
 
-    public static class Builder {
-        private long startTime;
-        private long endTime;
-        private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
+	public static class Builder {
+		private long startTime;
+		private long endTime;
+		private Boolean delete;
+		private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
 
-        public Builder(long startTime) {
-            this.startTime = startTime;
-        }
+		public Builder(long startTime) {
+			this.startTime = startTime;
+		}
 
-        public Builder(long startTime, long endTime) {
-            this.startTime = startTime;
-            this.endTime = endTime;
-        }
+		public Builder(long startTime, long endTime) {
+			this.startTime = startTime;
+			this.endTime = endTime;
+		}
 
-        public Builder end(long endTime) {
-            this.endTime = endTime;
-            return this;
-        }
+		public Builder end(long endTime) {
+			this.endTime = endTime;
+			return this;
+		}
 
-        public Builder sub(SubQuery... subQuerys) {
-            int newIndex = subQueryList.size();
-            int i = 0;
-            for (SubQuery subQuery : subQuerys) {
-                if(subQuery.getIndex() <= 0) {
-                    subQuery.setIndex(newIndex + i);
-                }
-                subQuery.setIndex(newIndex + i);
-                subQueryList.add(subQuery);
-                i++;
-            }
-            return this;
-        }
+		public Builder sub(SubQuery... subQuerys) {
+			int newIndex = subQueryList.size();
+			int i = 0;
+			for (SubQuery subQuery : subQuerys) {
+				if (subQuery.getIndex() <= 0) {
+					subQuery.setIndex(newIndex + i);
+				}
+				subQuery.setIndex(newIndex + i);
+				subQueryList.add(subQuery);
+				i++;
+			}
+			return this;
+		}
 
-        public Builder sub(Collection<SubQuery> subQuerys) {
-            int newIndex = subQueryList.size();
-            int i = 0;
-            for (SubQuery subQuery : subQuerys) {
-                if(subQuery.getIndex() <= 0) {
-                    subQuery.setIndex(newIndex + i);
-                }
-                subQueryList.add(subQuery);
-                i++;
-            }
-            return this;
-        }
+		public Builder sub(Collection<SubQuery> subQuerys) {
+			int newIndex = subQueryList.size();
+			int i = 0;
+			for (SubQuery subQuery : subQuerys) {
+				if (subQuery.getIndex() <= 0) {
+					subQuery.setIndex(newIndex + i);
+				}
+				subQueryList.add(subQuery);
+				i++;
+			}
+			return this;
+		}
 
-        public Query build() {
-            Query query = new Query();
-            query.start = this.startTime;
-            query.end = this.endTime;
-            query.queries = this.subQueryList;
-            return query;
-        }
+		public Builder delete() {
+			this.delete = true;
+			return this;
+		}
 
-    }
+		public Builder delete(boolean delete) {
+			if (delete) {
+				this.delete = true;
+			} else {
+				this.delete = null;
+			}
+			return this;
+		}
 
-    public static Builder start(long startTime) {
-        return new Builder(startTime);
-    }
+		public Query build() {
+			Query query = new Query();
+			query.start = this.startTime;
+			query.end = this.endTime;
+			query.queries = this.subQueryList;
+			query.delete = this.delete;
+			return query;
+		}
 
-    public static Builder start(Date startDate) {
-        long startTime = startDate.getTime();
-        return new Builder(startTime);
-    }
+	}
 
-    public static Builder timeRange(Date startDate, Date endDate) {
-        long startTime = startDate.getTime();
-        long endTime = endDate.getTime();
-        return new Builder(startTime, endTime);
-    }
+	public static Builder start(long startTime) {
+		return new Builder(startTime);
+	}
 
-    public static Builder timeRange(long startTime, long endTime) {
-        return new Builder(startTime, endTime);
-    }
+	public static Builder start(Date startDate) {
+		long startTime = startDate.getTime();
+		return new Builder(startTime);
+	}
 
-    public long getStart() {
-        return start;
-    }
+	public static Builder timeRange(Date startDate, Date endDate) {
+		long startTime = startDate.getTime();
+		long endTime = endDate.getTime();
+		return new Builder(startTime, endTime);
+	}
 
-    public long getEnd() {
-        return end;
-    }
+	public static Builder timeRange(long startTime, long endTime) {
+		return new Builder(startTime, endTime);
+	}
 
-    public List<SubQuery> getQueries() {
-        return queries;
-    }
+	public long getStart() {
+		return start;
+	}
+
+	public long getEnd() {
+		return end;
+	}
+
+	public Boolean getDelete() {
+		return delete;
+	}
+
+	public List<SubQuery> getQueries() {
+		return queries;
+	}
 
 }

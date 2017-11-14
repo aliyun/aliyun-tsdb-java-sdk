@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -57,6 +58,18 @@ public class HiTSDBClient implements HiTSDB {
 	private final boolean httpCompress;
 	private final HttpClient httpclient;
 	private final HiTSDBConfig config;
+	private static Field queryDeleteField;
+	static {
+		try {
+			queryDeleteField = Query.class.getDeclaredField("delete");
+			queryDeleteField.setAccessible(true);
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		}
+		
+	}
 
 	public HiTSDBClient(HiTSDBConfig config) throws HttpClientInitException {
 		this.config = config;
@@ -235,6 +248,7 @@ public class HiTSDBClient implements HiTSDB {
 
 	@Override
 	public void query(Query query, QueryCallback callback) {
+		
 		FutureCallback<HttpResponse> httpCallback = null;
 		String address = httpclient.getHttpAddressManager().getAddress();
 		
@@ -404,6 +418,32 @@ public class HiTSDBClient implements HiTSDB {
 			}
 
 			return result;
+		case ServerNotSupport:
+			throw new HttpServerNotSupportException(resultResponse);
+		case ServerError:
+			throw new HttpServerErrorException(resultResponse);
+		default:
+			throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	@Override
+	public void delete(Query query) throws HttpUnknowStatusException {
+		try {
+			queryDeleteField.set(query, true);
+		} catch (IllegalArgumentException e) {
+			throw new HttpClientException(e);
+		} catch (IllegalAccessException e) {
+			throw new HttpClientException(e);
+		}
+		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+		case ServerSuccessNoContent:
+			return;
+		case ServerSuccess:
+			return;
 		case ServerNotSupport:
 			throw new HttpServerNotSupportException(resultResponse);
 		case ServerError:
