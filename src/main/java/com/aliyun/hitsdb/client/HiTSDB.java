@@ -14,12 +14,15 @@ import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.value.request.Query;
 import com.aliyun.hitsdb.client.value.request.Timeline;
+import com.aliyun.hitsdb.client.value.response.LastDPValue;
 import com.aliyun.hitsdb.client.value.response.QueryResult;
 import com.aliyun.hitsdb.client.value.response.TagResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
 
 public interface HiTSDB extends Closeable {
 	void put(Point point);
+
+	void put(Point... points);
 
 	Result putSync(Collection<Point> points);
 
@@ -30,13 +33,13 @@ public interface HiTSDB extends Closeable {
 	List<QueryResult> query(Query query) throws HttpUnknowStatusException;
 
 	List<QueryResult> last(Query query, int num) throws HttpUnknowStatusException;
-	
+
 	void delete(Query query) throws HttpUnknowStatusException;
 
 	void deleteData(String metric, long startTime, long endTime) throws HttpUnknowStatusException;
 
 	void deleteData(String metric, Date startDate, Date endDate) throws HttpUnknowStatusException;
-	
+
 	void deleteMeta(String metric, Map<String, String> tags) throws HttpUnknowStatusException;
 
 	void deleteMeta(Timeline timeline) throws HttpUnknowStatusException;
@@ -52,4 +55,8 @@ public interface HiTSDB extends Closeable {
 	List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;
 
 	void close(boolean force) throws IOException;
+
+	List<LastDPValue> lastdp(Collection<Timeline> timelines) throws HttpUnknowStatusException;
+
+	List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException;
 }

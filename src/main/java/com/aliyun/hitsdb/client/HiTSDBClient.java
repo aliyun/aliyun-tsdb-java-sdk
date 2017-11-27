@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.consumer.Consumer;
@@ -43,6 +45,7 @@ import com.aliyun.hitsdb.client.value.request.Query;
 import com.aliyun.hitsdb.client.value.request.SuggestValue;
 import com.aliyun.hitsdb.client.value.request.TTLValue;
 import com.aliyun.hitsdb.client.value.request.Timeline;
+import com.aliyun.hitsdb.client.value.response.LastDPValue;
 import com.aliyun.hitsdb.client.value.response.QueryResult;
 import com.aliyun.hitsdb.client.value.response.TTLResult;
 import com.aliyun.hitsdb.client.value.response.TagResult;
@@ -68,7 +71,7 @@ public class HiTSDBClient implements HiTSDB {
 		} catch (SecurityException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	public HiTSDBClient(HiTSDBConfig config) throws HttpClientInitException {
@@ -248,10 +251,10 @@ public class HiTSDBClient implements HiTSDB {
 
 	@Override
 	public void query(Query query, QueryCallback callback) {
-		
+
 		FutureCallback<HttpResponse> httpCallback = null;
 		String address = httpclient.getHttpAddressManager().getAddress();
-		
+
 		if (callback != null) {
 			httpCallback = this.httpResponseCallbackFactory.createQueryCallback(address, callback, query);
 		}
@@ -450,6 +453,43 @@ public class HiTSDBClient implements HiTSDB {
 			throw new HttpServerErrorException(resultResponse);
 		default:
 			throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	@Override
+	public List<LastDPValue> lastdp(Collection<Timeline> timelines) throws HttpUnknowStatusException {
+		Object timelinesJSON = JSON.toJSON(timelines);
+		JSONObject obj = new JSONObject();
+		obj.put("queries", timelinesJSON);
+		String jsonString = obj.toJSONString();
+		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LASTDP, jsonString);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+		case ServerSuccessNoContent:
+			return null;
+		case ServerSuccess:
+			String content = resultResponse.getContent();
+			List<LastDPValue> queryResultList = JSON.parseArray(content, LastDPValue.class);
+			return queryResultList;
+		case ServerNotSupport:
+			throw new HttpServerNotSupportException(resultResponse);
+		case ServerError:
+			throw new HttpServerErrorException(resultResponse);
+		default:
+			throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	@Override
+	public List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException {
+		return lastdp(Arrays.asList(timelines));
+	}
+
+	@Override
+	public void put(Point... points) {
+		for (Point p : points) {
+			this.put(p);
 		}
 	}
 

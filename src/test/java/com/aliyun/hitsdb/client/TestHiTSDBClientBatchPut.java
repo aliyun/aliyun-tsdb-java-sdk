@@ -57,10 +57,13 @@ public class TestHiTSDBClientBatchPut {
             
         };
         
-        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 8242)
+        /*
+         ts-bp15x2zm58512h24f.hitsdb.rds.aliyuncs.com:3242
+         */
+        HiTSDBConfig config = HiTSDBConfig.address("ts-bp15x2zm58512h24f.hitsdb.rds.aliyuncs.com", 3242)
                 .listenBatchPut(pcb)
-                .httpConnectTimeout(3)
-                .batchPutRetryCount(2)
+                .httpConnectTimeout(1)
+                .batchPutRetryCount(0)
                 .config();
         tsdb = HiTSDBClientFactory.connect(config);
     }
