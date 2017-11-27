@@ -493,4 +493,19 @@ public class HiTSDBClient implements HiTSDB {
 		}
 	}
 
+	@Override
+	public Result putSync(Point... points) {
+		return putSync(Arrays.asList(points));
+	}
+
+	@Override
+	public <T extends Result> T putSync(Class<T> resultType, Collection<Point> points) {
+		return putSync(points,resultType);
+	}
+
+	@Override
+	public <T extends Result> T putSync(Class<T> resultType, Point... points) {
+		return putSync(resultType,Arrays.asList(points));
+	}
+
 }

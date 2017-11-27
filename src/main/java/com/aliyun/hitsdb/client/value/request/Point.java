@@ -31,6 +31,12 @@ public class Point extends JSONValue {
 			this.metric = metric;
 		}
 
+		/**
+		 * add a TagKey and TagValue
+		 * @param tagName
+		 * @param value
+		 * @return
+		 */
 		public MetricBuilder tag(final String tagName, final String value) {
 			Objects.requireNonNull(tagName, "tagName");
 			Objects.requireNonNull(value, "value");
@@ -40,33 +46,64 @@ public class Point extends JSONValue {
 			return this;
 		}
 
+		/**
+		 * add the tags
+		 * @param tags
+		 * @return
+		 */
 		public MetricBuilder tag(final Map<String, String> tags) {
 			this.tags.putAll(tags);
 			return this;
 		}
 
+		/**
+		 * set aggregator
+		 * @param aggregator
+		 * @return
+		 */
 		public MetricBuilder aggregator(String aggregator) {
 			this.aggregator = aggregator;
 			return this;
 		}
 
+		/**
+		 * set timestamp
+		 * @param timestamp
+		 * @return
+		 */
 		public MetricBuilder timestamp(long timestamp) {
 			this.timestamp = timestamp;
 			return this;
 		}
 		
+		/**
+		 * set timestamp
+		 * @param date
+		 * @return
+		 */
 		public MetricBuilder timestamp(Date date) {
 			Objects.requireNonNull(date);
 			this.timestamp = date.getTime();
 			return this;
 		}
 
+		/**
+		 * set value
+		 * @param value
+		 * @return
+		 */
 		public MetricBuilder value(Number value) {
 			Objects.requireNonNull(value);
 			this.value = value;
 			return this;
 		}
 
+		/**
+		 * set value
+		 * @param timestamp
+		 * @param value doube, long, int 
+		 * @return
+		 */
 		public MetricBuilder value(long timestamp, Number value) {
 			Objects.requireNonNull(value);
 			this.timestamp = timestamp;
@@ -74,6 +111,12 @@ public class Point extends JSONValue {
 			return this;
 		}
 
+		/**
+		 * set date and value
+		 * @param date
+		 * @param value doube, long, int 
+		 * @return
+		 */
 		public MetricBuilder value(Date date, Number value) {
 			Objects.requireNonNull(value);
 			Objects.requireNonNull(date);
@@ -95,12 +138,16 @@ public class Point extends JSONValue {
 			this.granularity = granularityType.getName();
 			return this;
 		}
-
+		
 		public MetricBuilder version(Long version) {
 			this.version = version;
 			return this;
 		}
 
+		/**
+		 * build a point
+		 * @return
+		 */
 		public Point build() {
 			Point point = new Point();
 			point.metric = this.metric;
@@ -117,12 +164,23 @@ public class Point extends JSONValue {
 			return point;
 		}
 
+		/**
+		 * convert to json
+		 * @param point
+		 * @return
+		 */
 		private String buildJSON(Point point) {
 			return JSON.toJSONString(point);
 		}
 
 	}
 
+	
+	/**
+	 * set the metric
+	 * @param metric
+	 * @return
+	 */
 	public static MetricBuilder metric(String metric) {
 		return new MetricBuilder(metric);
 	}

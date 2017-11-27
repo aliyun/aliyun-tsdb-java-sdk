@@ -61,6 +61,14 @@ public class SubQuery {
 			return this;
 		}
 
+		/**
+		 * add a filter
+		 * @param type
+		 * @param tagk
+		 * @param filter
+		 * @param groupBy
+		 * @return
+		 */
 		public Builder filter(FilterType type, String tagk, String filter, Boolean groupBy) {
 			if (filters == null) {
 				filters = new ArrayList<Filter>();
@@ -78,6 +86,11 @@ public class SubQuery {
 			return this;
 		}
 
+		/**
+		 * add a filter
+		 * @param filter
+		 * @return
+		 */
 		public Builder filter(Filter filter) {
 			if (filters == null) {
 				filters = new ArrayList<Filter>();
@@ -87,26 +100,54 @@ public class SubQuery {
 			return this;
 		}
 
+		/**
+		 * add a filter
+		 * @param type
+		 * @param tagk
+		 * @param filter
+		 * @return
+		 */
 		public Builder filter(FilterType type, String tagk, String filter) {
 			this.filter(type, tagk, filter, null);
 			return this;
 		}
 
+		/**
+		 * set the rate
+		 * @param rate
+		 * @return
+		 */
 		public Builder rate(boolean rate) {
 			this.rate = rate;
 			return this;
 		}
 
+		/**
+		 * set the downsample
+		 * @param downsample
+		 * @return
+		 */
 		public Builder downsample(String downsample) {
 			this.downsample = downsample;
 			return this;
 		}
 
+		/**
+		 * add a tagkey and tagvalue
+		 * @param tagk
+		 * @param tagv
+		 * @return
+		 */
 		public Builder tag(String tagk, String tagv) {
 			this.tags.put(tagk, tagv);
 			return this;
 		}
 
+		/**
+		 * add the tags
+		 * @param tags
+		 * @return
+		 */
 		public Builder tag(Map<String, String> tags) {
 			this.tags.putAll(tags);
 			return this;

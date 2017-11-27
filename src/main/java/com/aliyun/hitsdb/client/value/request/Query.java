@@ -85,21 +85,43 @@ public class Query extends JSONValue {
 
 	}
 
+	/**
+	 * set the start time
+	 * @param startTime
+	 * @return
+	 */
 	public static Builder start(long startTime) {
 		return new Builder(startTime);
 	}
 
+	/**
+	 * set the start date
+	 * @param startDate
+	 * @return
+	 */
 	public static Builder start(Date startDate) {
 		long startTime = startDate.getTime();
 		return new Builder(startTime);
 	}
 
+	/**
+	 * set the start date and the end date
+	 * @param startDate
+	 * @param endDate
+	 * @return
+	 */
 	public static Builder timeRange(Date startDate, Date endDate) {
 		long startTime = startDate.getTime();
 		long endTime = endDate.getTime();
 		return new Builder(startTime, endTime);
 	}
 
+	/**
+	 * set the start time and the end time
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 */
 	public static Builder timeRange(long startTime, long endTime) {
 		return new Builder(startTime, endTime);
 	}
