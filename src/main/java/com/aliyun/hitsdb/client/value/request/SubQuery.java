@@ -67,7 +67,7 @@ public class SubQuery {
 		 * @param tagk tagkey
 		 * @param filter filter
 		 * @param groupBy grouyBy
-		 * @return
+		 * @return Builder
 		 */
 		public Builder filter(FilterType type, String tagk, String filter, Boolean groupBy) {
 			if (filters == null) {
@@ -89,7 +89,7 @@ public class SubQuery {
 		/**
 		 * add a filter
 		 * @param filter filter
-		 * @return
+		 * @return Builder
 		 */
 		public Builder filter(Filter filter) {
 			if (filters == null) {
@@ -105,7 +105,7 @@ public class SubQuery {
 		 * @param type tupe
 		 * @param tagk tagkey
 		 * @param filter filter
-		 * @return
+		 * @return Builder
 		 */
 		public Builder filter(FilterType type, String tagk, String filter) {
 			this.filter(type, tagk, filter, null);
