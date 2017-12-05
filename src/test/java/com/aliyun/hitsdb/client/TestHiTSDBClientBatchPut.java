@@ -57,10 +57,7 @@ public class TestHiTSDBClientBatchPut {
             
         };
         
-        /*
-         ts-bp15x2zm58512h24f.hitsdb.rds.aliyuncs.com:3242
-         */
-        HiTSDBConfig config = HiTSDBConfig.address("ts-bp15x2zm58512h24f.hitsdb.rds.aliyuncs.com", 3242)
+        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 3242)
                 .listenBatchPut(pcb)
                 .httpConnectTimeout(1)
                 .batchPutRetryCount(0)

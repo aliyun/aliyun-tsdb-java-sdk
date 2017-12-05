@@ -412,6 +412,7 @@ public class HiTSDBClient implements HiTSDB {
 		switch (httpStatus) {
 		case ServerSuccessNoContent:
 			result = (T) new Result();
+			return result;
 		case ServerSuccess:
 			String content = resultResponse.getContent();
 			if (resultType.equals(SummaryResult.class)) {

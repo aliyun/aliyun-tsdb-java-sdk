@@ -50,7 +50,7 @@ public class TestBatchPutSummaryCallback {
     
     @Test
     public void test() throws InterruptedException {
-        for(int i = 0;i<1000;i++){
+        for(int i = 0;i<1000;i++) {
             Point point = createPoint(i%4,1.123);
             tsdb.put(point);
             Thread.sleep(1000);

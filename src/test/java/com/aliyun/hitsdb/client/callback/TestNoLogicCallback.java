@@ -20,10 +20,10 @@ public class TestNoLogicCallback {
     public void init() throws HttpClientInitException {
         UI.pauseStart();
         HiTSDBConfig config = HiTSDBConfig
-                .address("127.0.0.1", 8242)
+                .address("127.0.0.1", 3242)
                 .httpConnectionPool(64)
-                .httpConnectTimeout(2)
-                .batchPutRetryCount(3)
+                .httpConnectTimeout(90)
+//                .batchPutRetryCount()
                 .config();
 
         tsdb = HiTSDBClientFactory.connect(config);
@@ -31,7 +31,7 @@ public class TestNoLogicCallback {
 
     @Test
     public void test() throws InterruptedException {
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 1; i++) {
             Point point = createPoint(i % 4, 1.123);
             tsdb.put(point);
             Thread.sleep(1000*2);
