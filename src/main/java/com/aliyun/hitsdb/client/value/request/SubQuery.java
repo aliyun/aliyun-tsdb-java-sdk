@@ -63,10 +63,10 @@ public class SubQuery {
 
 		/**
 		 * add a filter
-		 * @param type
-		 * @param tagk
-		 * @param filter
-		 * @param groupBy
+		 * @param type FilterType
+		 * @param tagk tagkey
+		 * @param filter filter
+		 * @param groupBy grouyBy
 		 * @return
 		 */
 		public Builder filter(FilterType type, String tagk, String filter, Boolean groupBy) {
@@ -88,7 +88,7 @@ public class SubQuery {
 
 		/**
 		 * add a filter
-		 * @param filter
+		 * @param filter filter
 		 * @return
 		 */
 		public Builder filter(Filter filter) {
@@ -102,9 +102,9 @@ public class SubQuery {
 
 		/**
 		 * add a filter
-		 * @param type
-		 * @param tagk
-		 * @param filter
+		 * @param type tupe
+		 * @param tagk tagkey
+		 * @param filter filter
 		 * @return
 		 */
 		public Builder filter(FilterType type, String tagk, String filter) {
@@ -114,8 +114,8 @@ public class SubQuery {
 
 		/**
 		 * set the rate
-		 * @param rate
-		 * @return
+		 * @param rate rate
+		 * @return Builder
 		 */
 		public Builder rate(boolean rate) {
 			this.rate = rate;
@@ -124,8 +124,8 @@ public class SubQuery {
 
 		/**
 		 * set the downsample
-		 * @param downsample
-		 * @return
+		 * @param downsample downsample
+		 * @return Builder
 		 */
 		public Builder downsample(String downsample) {
 			this.downsample = downsample;
@@ -134,9 +134,9 @@ public class SubQuery {
 
 		/**
 		 * add a tagkey and tagvalue
-		 * @param tagk
-		 * @param tagv
-		 * @return
+		 * @param tagk tagkey
+		 * @param tagv tagvalue
+		 * @return Builder
 		 */
 		public Builder tag(String tagk, String tagv) {
 			this.tags.put(tagk, tagv);
@@ -145,8 +145,8 @@ public class SubQuery {
 
 		/**
 		 * add the tags
-		 * @param tags
-		 * @return
+		 * @param tags the map
+		 * @return Builder
 		 */
 		public Builder tag(Map<String, String> tags) {
 			this.tags.putAll(tags);

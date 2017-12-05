@@ -33,8 +33,8 @@ public class Point extends JSONValue {
 
 		/**
 		 * add a TagKey and TagValue
-		 * @param tagName
-		 * @param value
+		 * @param tagName tagName
+		 * @param value value
 		 * @return
 		 */
 		public MetricBuilder tag(final String tagName, final String value) {
@@ -48,8 +48,8 @@ public class Point extends JSONValue {
 
 		/**
 		 * add the tags
-		 * @param tags
-		 * @return
+		 * @param tags a map
+		 * @return MetricBuilder
 		 */
 		public MetricBuilder tag(final Map<String, String> tags) {
 			this.tags.putAll(tags);
@@ -58,8 +58,8 @@ public class Point extends JSONValue {
 
 		/**
 		 * set aggregator
-		 * @param aggregator
-		 * @return
+		 * @param aggregator aggregator
+		 * @return MetricBuilder
 		 */
 		public MetricBuilder aggregator(String aggregator) {
 			this.aggregator = aggregator;
@@ -68,8 +68,8 @@ public class Point extends JSONValue {
 
 		/**
 		 * set timestamp
-		 * @param timestamp
-		 * @return
+		 * @param timestamp time
+		 * @return MetricBuilder
 		 */
 		public MetricBuilder timestamp(long timestamp) {
 			this.timestamp = timestamp;
@@ -78,8 +78,8 @@ public class Point extends JSONValue {
 		
 		/**
 		 * set timestamp
-		 * @param date
-		 * @return
+		 * @param date java.util.Date
+		 * @return MetricBuilder
 		 */
 		public MetricBuilder timestamp(Date date) {
 			Objects.requireNonNull(date);
@@ -89,8 +89,8 @@ public class Point extends JSONValue {
 
 		/**
 		 * set value
-		 * @param value
-		 * @return
+		 * @param value value
+		 * @return MetricBuilder
 		 */
 		public MetricBuilder value(Number value) {
 			Objects.requireNonNull(value);
@@ -102,7 +102,7 @@ public class Point extends JSONValue {
 		 * set value
 		 * @param timestamp
 		 * @param value doube, long, int 
-		 * @return
+		 * @return MetricBuilder
 		 */
 		public MetricBuilder value(long timestamp, Number value) {
 			Objects.requireNonNull(value);
@@ -115,7 +115,7 @@ public class Point extends JSONValue {
 		 * set date and value
 		 * @param date
 		 * @param value doube, long, int 
-		 * @return
+		 * @return MetricBuilder
 		 */
 		public MetricBuilder value(Date date, Number value) {
 			Objects.requireNonNull(value);
@@ -146,7 +146,7 @@ public class Point extends JSONValue {
 
 		/**
 		 * build a point
-		 * @return
+		 * @return Point
 		 */
 		public Point build() {
 			Point point = new Point();
@@ -167,7 +167,7 @@ public class Point extends JSONValue {
 		/**
 		 * convert to json
 		 * @param point
-		 * @return
+		 * @return String
 		 */
 		private String buildJSON(Point point) {
 			return JSON.toJSONString(point);
@@ -179,7 +179,7 @@ public class Point extends JSONValue {
 	/**
 	 * set the metric
 	 * @param metric
-	 * @return
+	 * @return MetricBuilder
 	 */
 	public static MetricBuilder metric(String metric) {
 		return new MetricBuilder(metric);
