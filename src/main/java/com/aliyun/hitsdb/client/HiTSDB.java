@@ -56,14 +56,14 @@ public interface HiTSDB extends Closeable {
 	/**
 	 * Synchronous put method
 	 * @param points points
-	 * @return
+	 * @return Result
 	 */
 	<T extends Result> T putSync(Class<T> resultType,Collection<Point> points);
 	
 	/**
 	 * Synchronous put method
 	 * @param points points
-	 * @return
+	 * @return Result
 	 */
 	<T extends Result> T putSync(Class<T> resultType,Point... points);
 	
