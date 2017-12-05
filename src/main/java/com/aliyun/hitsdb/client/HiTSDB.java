@@ -49,65 +49,72 @@ public interface HiTSDB extends Closeable {
 	/**
 	 * Synchronous put method
 	 * @param points points
+	 * @param resultType resultType
+	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
 	 * @return Result
 	 */
 	<T extends Result> T putSync(Collection<Point> points, Class<T> resultType);
 	
 	/**
 	 * Synchronous put method
+	 * @param resultType resultType
 	 * @param points points
+	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
 	 * @return Result
 	 */
 	<T extends Result> T putSync(Class<T> resultType,Collection<Point> points);
 	
 	/**
 	 * Synchronous put method
+	 * @param resultType resultType
 	 * @param points points
+	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
 	 * @return Result
 	 */
 	<T extends Result> T putSync(Class<T> resultType,Point... points);
 	
 	/**
-	 * query query method
-	 * @param points points
+	 * query method
+	 * @param query query
+	 * @param callback callback
 	 */
 	void query(Query query, QueryCallback callback);
 
 	/**
 	 * query query
-	 * @param points points
+	 * @param query query
 	 * @return result : List
 	 */
 	List<QueryResult> query(Query query) throws HttpUnknowStatusException;
 
 	/**
 	 * @param query query
-	 * @param num num
 	 * @return result : List
-	 * @throws HttpUnknowStatusException
+	 * @param num point count num
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<QueryResult> last(Query query, int num) throws HttpUnknowStatusException;
 
 	/**
 	 * delete method
 	 * @param query query
-	 * @throws HttpUnknowStatusException
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	void delete(Query query) throws HttpUnknowStatusException;
 
 	/**
-	 * @param metric
-	 * @param startTime
-	 * @param endTime
-	 * @throws HttpUnknowStatusException
+	 * @param metric metric
+	 * @param startTime start timestamp
+	 * @param endTime end timestamp
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	void deleteData(String metric, long startTime, long endTime) throws HttpUnknowStatusException;
 
 	/**
 	 * @param metric
-	 * @param startDate
-	 * @param endDate
-	 * @throws HttpUnknowStatusException
+	 * @param startDate start date
+	 * @param endDate end date
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	void deleteData(String metric, Date startDate, Date endDate) throws HttpUnknowStatusException;
 
@@ -121,7 +128,7 @@ public interface HiTSDB extends Closeable {
 
 	/**
 	 * delete meta method
-	 * @param timeline timeline obj
+	 * @param timeline timeline object
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	void deleteMeta(Timeline timeline) throws HttpUnknowStatusException;
@@ -162,7 +169,7 @@ public interface HiTSDB extends Closeable {
 	 * @param tagkey
 	 * @param tagValuePrefix
 	 * @param max
-	 * @return
+	 * @return List
 	 * @throws HttpUnknowStatusException
 	 */
 	List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;

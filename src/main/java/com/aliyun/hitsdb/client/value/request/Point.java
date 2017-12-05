@@ -35,7 +35,7 @@ public class Point extends JSONValue {
 		 * add a TagKey and TagValue
 		 * @param tagName tagName
 		 * @param value value
-		 * @return
+		 * @return MetricBuilder
 		 */
 		public MetricBuilder tag(final String tagName, final String value) {
 			Objects.requireNonNull(tagName, "tagName");
@@ -113,7 +113,7 @@ public class Point extends JSONValue {
 
 		/**
 		 * set date and value
-		 * @param date
+		 * @param date date
 		 * @param value doube, long, int 
 		 * @return MetricBuilder
 		 */
