@@ -88,7 +88,7 @@ public class Query extends JSONValue {
 	/**
 	 * set the start time
 	 * @param startTime
-	 * @return
+	 * @return Builder
 	 */
 	public static Builder start(long startTime) {
 		return new Builder(startTime);
@@ -97,7 +97,7 @@ public class Query extends JSONValue {
 	/**
 	 * set the start date
 	 * @param startDate
-	 * @return
+	 * @return Builder
 	 */
 	public static Builder start(Date startDate) {
 		long startTime = startDate.getTime();
@@ -108,7 +108,7 @@ public class Query extends JSONValue {
 	 * set the start date and the end date
 	 * @param startDate
 	 * @param endDate
-	 * @return
+	 * @return Builder
 	 */
 	public static Builder timeRange(Date startDate, Date endDate) {
 		long startTime = startDate.getTime();
@@ -120,7 +120,7 @@ public class Query extends JSONValue {
 	 * set the start time and the end time
 	 * @param startTime
 	 * @param endTime
-	 * @return
+	 * @return Builder
 	 */
 	public static Builder timeRange(long startTime, long endTime) {
 		return new Builder(startTime, endTime);
