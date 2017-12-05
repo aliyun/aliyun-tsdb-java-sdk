@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.aliyun.hitsdb.client.HiTSDB;
@@ -59,8 +60,7 @@ public class TestHiTSDBClientBatchPut {
         
         HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 3242)
                 .listenBatchPut(pcb)
-                .httpConnectTimeout(1)
-                .batchPutRetryCount(0)
+                .httpConnectTimeout(90)
                 .config();
         tsdb = HiTSDBClientFactory.connect(config);
     }
@@ -79,13 +79,17 @@ public class TestHiTSDBClientBatchPut {
     public void testPutData() {
     		int t = (int) (1508742134297l/1000);  // 1508742134
     		int t1 = t - 1;
-        Point point = Point.metric("test-test-test").tag("level", "500")
+        Point point = Point
+        			.metric("test-test-test")
+        			.tag("a", "1")
+        			.tag("b","2")
                 .timestamp(t1)
-                .value(123.4567)
+                .value(456.789)
                 .build();
         tsdb.put(point);
     }
 
+    @Ignore
     @Test
     public void testLargeDateBatchPutDataCallback() {
         Random random = new Random();
@@ -93,15 +97,15 @@ public class TestHiTSDBClientBatchPut {
         for(int i = 0;i<100000;i++) {
             double nextDouble = random.nextDouble() * 100;
             Point point = Point.metric("test1")
-                                   .tag("tagk1", "tagv1")
-                                   .tag("tagk2", "tagv2")
-                                   .tag("tagk3", "tagv3")
+                                   .tag("a", "b")
+                                   .tag("b", "c")
                                    .timestamp(time + i).value(nextDouble)
                                    .build();
             tsdb.put(point);
         }
     }
     
+    @Ignore
     @Test
     public void testMiddleDateBatchPutDataCallback() {
         Random random = new Random();
@@ -118,6 +122,7 @@ public class TestHiTSDBClientBatchPut {
         }
     }
     
+    @Ignore
     @Test
     public void testLitterDateBatchPutDataCallback() {
         Random random = new Random();

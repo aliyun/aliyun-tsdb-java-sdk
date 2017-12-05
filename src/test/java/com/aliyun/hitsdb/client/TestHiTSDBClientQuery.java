@@ -25,7 +25,7 @@ public class TestHiTSDBClientQuery {
     @Before
     public void init() throws HttpClientInitException {
     		HiTSDBConfig config = HiTSDBConfig
-    		        .address("127.0.0.1")
+    		        .address("127.0.0.1",3242)
     		        .config();
         tsdb = HiTSDBClientFactory.connect(config);
     }
@@ -45,16 +45,18 @@ public class TestHiTSDBClientQuery {
 //        Calendar calendar = Calendar.getInstance();
 //        calendar.add(Calendar.DATE, -3);
 //        Date startTime = calendar.getTime();
-	    	int t0 = (int) (1508742134297l/1000);
+//	    	int t0 = (int) (1508742134297l/1000);
 	    	int t1 = (int) (1508742134297l/1000);
-//	    int 	t0 = t1 - 1;
+	    int 	t0 = t1 - 100;
         Query query = Query
                 .timeRange(t0, t1)
-                .sub(SubQuery.metric("test-test-test").aggregator(Aggregator.NONE).tag("level", "500").build())
+                .sub(SubQuery.metric("test-test-test").aggregator(Aggregator.NONE).tag("a", "1").build())
+                .sub(SubQuery.metric("test-test-test").aggregator(Aggregator.NONE).tag("b", "2").build())
                 .build();
         
         try {
 	    		List<QueryResult> result = tsdb.query(query);
+	    		System.out.println("查询结果：" + result.size());
 	    		System.out.println("查询结果：" + result);
         } catch (HttpUnknowStatusException e) {
     			e.printStackTrace();
