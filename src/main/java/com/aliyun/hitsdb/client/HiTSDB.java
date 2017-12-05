@@ -22,75 +22,75 @@ import com.aliyun.hitsdb.client.value.type.Suggest;
 public interface HiTSDB extends Closeable {
 	/**
 	 * Asynchronous put point
-	 * @param point
+	 * @param point point
 	 */
 	void put(Point point);
 
 	/**
 	 * Asynchronous put points
-	 * @param points
+	 * @param points points
 	 */
 	void put(Point... points);
 
 	/**
 	 * Synchronous put method
-	 * @param points
-	 * @return
+	 * @param points points
+	 * @return Result
 	 */
 	Result putSync(Collection<Point> points);
 	
 	/**
 	 * Synchronous put method
-	 * @param points
-	 * @return
+	 * @param points points
+	 * @return Result
 	 */
 	Result putSync(Point... points);
 
 	/**
 	 * Synchronous put method
-	 * @param points
-	 * @return
+	 * @param points points
+	 * @return Result
 	 */
 	<T extends Result> T putSync(Collection<Point> points, Class<T> resultType);
 	
 	/**
 	 * Synchronous put method
-	 * @param points
+	 * @param points points
 	 * @return
 	 */
 	<T extends Result> T putSync(Class<T> resultType,Collection<Point> points);
 	
 	/**
 	 * Synchronous put method
-	 * @param points
+	 * @param points points
 	 * @return
 	 */
 	<T extends Result> T putSync(Class<T> resultType,Point... points);
 	
 	/**
-	 * query
-	 * @param points
-	 * @return
+	 * query query method
+	 * @param points points
 	 */
 	void query(Query query, QueryCallback callback);
 
 	/**
-	 * query
-	 * @param points
-	 * @return
+	 * query query
+	 * @param points points
+	 * @return result : List
 	 */
 	List<QueryResult> query(Query query) throws HttpUnknowStatusException;
 
 	/**
-	 * @param query
-	 * @param num
-	 * @return
+	 * @param query query
+	 * @param num num
+	 * @return result : List
 	 * @throws HttpUnknowStatusException
 	 */
 	List<QueryResult> last(Query query, int num) throws HttpUnknowStatusException;
 
 	/**
-	 * @param query
+	 * delete method
+	 * @param query query
 	 * @throws HttpUnknowStatusException
 	 */
 	void delete(Query query) throws HttpUnknowStatusException;
@@ -112,47 +112,53 @@ public interface HiTSDB extends Closeable {
 	void deleteData(String metric, Date startDate, Date endDate) throws HttpUnknowStatusException;
 
 	/**
-	 * @param metric
-	 * @param tags
-	 * @throws HttpUnknowStatusException
+	 * delete meta method
+	 * @param metric metric
+	 * @param tags a map
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	void deleteMeta(String metric, Map<String, String> tags) throws HttpUnknowStatusException;
 
 	/**
-	 * @param timeline
-	 * @throws HttpUnknowStatusException
+	 * delete meta method
+	 * @param timeline timeline obj
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	void deleteMeta(Timeline timeline) throws HttpUnknowStatusException;
 
 	/**
-	 * @param lifetime
-	 * @throws HttpUnknowStatusException
+	 * ttl method
+	 * @param lifetime unit:seconds
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	void ttl(int lifetime) throws HttpUnknowStatusException;
 
 	/**
-	 * @param lifetime
-	 * @param unit
-	 * @throws HttpUnknowStatusException
+	 * @param lifetime lifetime
+	 * @param unit unit 
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	void ttl(int lifetime, TimeUnit unit) throws HttpUnknowStatusException;
 
 	/**
-	 * @return
-	 * @throws HttpUnknowStatusException
+	 * get ttl method
+	 * @return ttl seconds
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	int ttl() throws HttpUnknowStatusException;
 
 	/**
+	 * suggest method
 	 * @param type
 	 * @param prefix
 	 * @param max
-	 * @return
+	 * @return List
 	 * @throws HttpUnknowStatusException
 	 */
 	List<String> suggest(Suggest type, String prefix, int max) throws HttpUnknowStatusException;
 
 	/**
+	 * dumpMeta method
 	 * @param tagkey
 	 * @param tagValuePrefix
 	 * @param max
@@ -162,23 +168,25 @@ public interface HiTSDB extends Closeable {
 	List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;
 
 	/**
-	 * close tsdb
+	 * close tsdb method
 	 * @param force
 	 * @throws IOException
 	 */
 	void close(boolean force) throws IOException;
 
 	/**
-	 * @param timelines
-	 * @return
-	 * @throws HttpUnknowStatusException
+	 * lastdp
+	 * @param timelines timelimes
+	 * @return List
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<LastDPValue> lastdp(Collection<Timeline> timelines) throws HttpUnknowStatusException;
 
 	/**
-	 * @param timelines
-	 * @return
-	 * @throws HttpUnknowStatusException
+	 * lastdp
+	 * @param timelines timelimes
+	 * @return List
+	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException;
 }
