@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client.performance;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -24,9 +25,10 @@ public class TestWritePerformance {
 	final AtomicLong t0 = new AtomicLong();
 	final AtomicLong t1 = new AtomicLong();
 
-	int P_NUM = 1;
+	int P_NUM = 2;
 	final int SIZE = 40000000;
 	final AtomicLong num = new AtomicLong();
+	final AtomicLong failNum = new AtomicLong();
 
 	@Before
 	public void init() throws IOException, HttpClientInitException {
@@ -43,25 +45,26 @@ public class TestWritePerformance {
 
 			@Override
 			public void response(String address, List<Point> input, Result output) {
-				long afterNum = num.addAndGet(input.size());
-				System.out.println("成功处理" + input.size() + ",已处理" + afterNum);
+//				long afterNum = num.addAndGet(input.size());
+//				System.out.println("成功处理" + input.size() + ",已处理" + afterNum);
 			}
 
 			@Override
 			public void failed(String address, List<Point> input, Exception ex) {
 				System.err.print(address + ":" + ex);
-				long afterNum = num.addAndGet(input.size());
+				long afterNum = failNum.addAndGet(input.size());
 				System.out.println("失败处理" + input.size() + ",已处理" + afterNum);
 			}
 		};
 
 		HiTSDBConfig.Builder.ProducerThreadSerializeSwitch = true;
 
-		HiTSDBConfig config = HiTSDBConfig.address("hitsdb2.dbpaas.com", 8242).httpConnectionPool(512)
-				.batchPutBufferSize(1000000).batchPutSize(500)
-				 .listenBatchPut(cb)
-				.ioThreadCount(2).batchPutConsumerThreadCount(2)
-				.config();
+		HiTSDBConfig config = HiTSDBConfig.address("ts-wz9cvuoer10r79eq9.hitsdb.rds.aliyuncs.com", 3242)
+				.httpConnectionPool(728).batchPutBufferSize(1000000)
+				.batchPutSize(500)
+				.httpCompress(true)
+				.listenBatchPut(cb)
+				.ioThreadCount(1).batchPutConsumerThreadCount(1).config();
 
 		tsdb = HiTSDBClientFactory.connect(config);
 	}
@@ -80,33 +83,32 @@ public class TestWritePerformance {
 		System.out.println("结束");
 	}
 
-	// public Point createPoint(int tag, double value) {
-	// int t = (int) (System.currentTimeMillis() / 1000);
-	// return Point.metric("test-performance").tag("tag",
-	// String.valueOf(tag)).value(t, value).build();
-	// }
+	public Point createPoint(int tag, double value) {
+		int t = (int) (System.currentTimeMillis() / 1000);
+		return Point.metric("test-performance").tag("tag", String.valueOf(tag)).value(t, value).build();
+	}
 
 	@Test
 	public void testBatchPut() throws InterruptedException {
 		final CountDownLatch countDownLatch = new CountDownLatch(P_NUM);
 		final long currentTimeMillis = System.currentTimeMillis();
-		long version = System.currentTimeMillis();
-		final Point point = Point.metric("test-performance-hitsdb").tag("tag", "v1.0")
-				.value((int) (currentTimeMillis / 1000), 54321.12345).version(version).build();
+//		long version = System.currentTimeMillis();
+//		final Point point = Point.metric("test-performance-hitsdb").tag("tag", "v1.0")
+//				.value((int) (currentTimeMillis / 1000), 54321.12345).version(version).build();
 
 		Thread[] p_threads = new Thread[P_NUM];
 		for (int x = 0; x < p_threads.length; x++) {
 			final int index = x;
 			p_threads[index] = new Thread(new Runnable() {
-				// final Random random = new Random();
+				 final Random random = new Random();
 
 				@Override
 				public void run() {
 					t0.compareAndSet(0, currentTimeMillis);
 					for (int i = 0; i < SIZE; i++) {
-						// double nextDouble = random.nextDouble();
-						// double nextDouble = 321.123456;
-						// Point point = createPoint(index, nextDouble);
+						 double nextDouble = random.nextDouble();
+//						 double nextDouble = 321.123456;
+						 Point point = createPoint(index, nextDouble);
 						try {
 							// System.out.println(point.toJSON());
 							tsdb.put(point);
