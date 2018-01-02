@@ -167,11 +167,11 @@ public interface HiTSDB extends Closeable {
 
 	/**
 	 * dumpMeta method
-	 * @param tagkey
-	 * @param tagValuePrefix
-	 * @param max
-	 * @return List
-	 * @throws HttpUnknowStatusException
+	 * @param tagkey tagkey
+	 * @param tagValuePrefix the prefix of the tagvalue
+	 * @param max max 
+	 * @return the List of the TagResult
+	 * @throws HttpUnknowStatusException exception
 	 */
 	List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;
 

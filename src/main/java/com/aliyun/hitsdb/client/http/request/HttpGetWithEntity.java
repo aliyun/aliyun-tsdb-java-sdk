@@ -16,9 +16,6 @@ public class HttpGetWithEntity extends HttpEntityEnclosingRequestBase {
         setURI(uri);
     }
 
-    /**
-     * @throws IllegalArgumentException if the uri is invalid.
-     */
     public HttpGetWithEntity(final String uri) {
         super();
         setURI(URI.create(uri));
