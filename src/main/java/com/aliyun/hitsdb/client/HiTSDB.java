@@ -111,7 +111,8 @@ public interface HiTSDB extends Closeable {
 	void deleteData(String metric, long startTime, long endTime) throws HttpUnknowStatusException;
 
 	/**
-	 * @param metric
+	 * for the api deleteDate
+	 * @param metric metric name
 	 * @param startDate start date
 	 * @param endDate end date
 	 * @throws HttpUnknowStatusException Exception
@@ -156,11 +157,11 @@ public interface HiTSDB extends Closeable {
 
 	/**
 	 * suggest method
-	 * @param type
-	 * @param prefix
-	 * @param max
-	 * @return List
-	 * @throws HttpUnknowStatusException
+	 * @param type type
+	 * @param prefix prefix
+	 * @param max max
+	 * @return result
+	 * @throws HttpUnknowStatusException exception
 	 */
 	List<String> suggest(Suggest type, String prefix, int max) throws HttpUnknowStatusException;
 
@@ -176,15 +177,15 @@ public interface HiTSDB extends Closeable {
 
 	/**
 	 * close tsdb method
-	 * @param force
-	 * @throws IOException
+	 * @param force true or false
+	 * @throws IOException exception
 	 */
 	void close(boolean force) throws IOException;
 
 	/**
 	 * lastdp
 	 * @param timelines timelimes
-	 * @return List
+	 * @return result
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<LastDPValue> lastdp(Collection<Timeline> timelines) throws HttpUnknowStatusException;
@@ -192,7 +193,7 @@ public interface HiTSDB extends Closeable {
 	/**
 	 * lastdp
 	 * @param timelines timelimes
-	 * @return List
+	 * @return List 
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException;

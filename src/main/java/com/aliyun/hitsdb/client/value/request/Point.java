@@ -100,7 +100,7 @@ public class Point extends JSONValue {
 
 		/**
 		 * set value
-		 * @param timestamp
+		 * @param timestamp timestamp
 		 * @param value doube, long, int 
 		 * @return MetricBuilder
 		 */
@@ -178,8 +178,8 @@ public class Point extends JSONValue {
 	
 	/**
 	 * set the metric
-	 * @param metric
-	 * @return MetricBuilder
+	 * @param metric metric
+	 * @return MetricBuilder get a builder
 	 */
 	public static MetricBuilder metric(String metric) {
 		return new MetricBuilder(metric);

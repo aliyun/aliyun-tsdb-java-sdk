@@ -87,8 +87,8 @@ public class Query extends JSONValue {
 
 	/**
 	 * set the start time
-	 * @param startTime
-	 * @return Builder
+	 * @param startTime start timestamp
+	 * @return Builder get a builder
 	 */
 	public static Builder start(long startTime) {
 		return new Builder(startTime);
