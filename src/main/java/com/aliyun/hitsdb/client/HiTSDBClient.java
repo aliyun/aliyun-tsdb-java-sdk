@@ -52,6 +52,7 @@ import com.aliyun.hitsdb.client.value.response.TagResult;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
+import com.google.common.util.concurrent.RateLimiter;
 
 public class HiTSDBClient implements HiTSDB {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HiTSDBClient.class);
@@ -60,6 +61,7 @@ public class HiTSDBClient implements HiTSDB {
 	private final HttpResponseCallbackFactory httpResponseCallbackFactory;
 	private final boolean httpCompress;
 	private final HttpClient httpclient;
+	private RateLimiter rateLimter;
 	private final HiTSDBConfig config;
 	private static Field queryDeleteField;
 	static {
@@ -79,13 +81,18 @@ public class HiTSDBClient implements HiTSDB {
 		this.httpclient = HttpClientFactory.createHttpClient(config);
 		this.httpCompress = config.isHttpCompress();
 		boolean asyncPut = config.isAsyncPut();
+		int maxTPS = config.getMaxTPS();
+		if (maxTPS > 0) {
+			this.rateLimter = RateLimiter.create(maxTPS);
+		}
+
 		if (asyncPut) {
 			this.httpResponseCallbackFactory = httpclient.getHttpResponseCallbackFactory();
 			int batchPutBufferSize = config.getBatchPutBufferSize();
 			int batchPutTimeLimit = config.getBatchPutTimeLimit();
 			boolean backpressure = config.isBackpressure();
 			this.queue = DataQueueFactory.createDataPointQueue(batchPutBufferSize, batchPutTimeLimit, backpressure);
-			this.consumer = ConsumerFactory.createConsumer(queue, httpclient, config);
+			this.consumer = ConsumerFactory.createConsumer(queue, httpclient, rateLimter, config);
 			this.consumer.start();
 		} else {
 			this.httpResponseCallbackFactory = null;
@@ -501,12 +508,12 @@ public class HiTSDBClient implements HiTSDB {
 
 	@Override
 	public <T extends Result> T putSync(Class<T> resultType, Collection<Point> points) {
-		return putSync(points,resultType);
+		return putSync(points, resultType);
 	}
 
 	@Override
 	public <T extends Result> T putSync(Class<T> resultType, Point... points) {
-		return putSync(resultType,Arrays.asList(points));
+		return putSync(resultType, Arrays.asList(points));
 	}
 
 }

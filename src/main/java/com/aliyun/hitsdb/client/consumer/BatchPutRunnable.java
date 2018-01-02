@@ -24,6 +24,7 @@ import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.value.request.Point;
+import com.google.common.util.concurrent.RateLimiter;
 
 public class BatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutRunnable.class);
@@ -47,7 +48,7 @@ public class BatchPutRunnable implements Runnable {
      * 消费者队列控制器。
      * 在优雅关闭中，若消费者队列尚未结束，则CountDownLatch用于阻塞close()方法。
      */
-    private final CountDownLatch countDownLatch;
+    private final CountDownLatch countDownLatch; 
     
     /**
      * 每批次数据点个数
@@ -69,8 +70,10 @@ public class BatchPutRunnable implements Runnable {
     private final SemaphoreManager semaphoreManager;
     		
 	private final HttpAddressManager httpAddressManager;
+
+	private RateLimiter rateLimiter;
 	
-    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, HiTSDBConfig config,CountDownLatch countDownLatch) {
+    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, HiTSDBConfig config,CountDownLatch countDownLatch, RateLimiter rateLimiter) {
         this.dataQueue = dataQueue;
         this.hitsdbHttpClient = httpclient;
         this.semaphoreManager = hitsdbHttpClient.getSemaphoreManager();
@@ -80,6 +83,7 @@ public class BatchPutRunnable implements Runnable {
         this.batchPutTimeLimit = config.getBatchPutTimeLimit();
         this.config = config;
         this.countDownLatch = countDownLatch;
+        this.rateLimiter = rateLimiter;
         this.httpResponseCallbackFactory = hitsdbHttpClient.getHttpResponseCallbackFactory();
     }
 
@@ -122,6 +126,9 @@ public class BatchPutRunnable implements Runnable {
                 try {
                     Point point = dataQueue.receive(waitTimeLimit);
                     if (point != null) {
+                    		if(this.rateLimiter != null) {
+                    			this.rateLimiter.acquire();
+                    		}
                     		pointList.add(point);
                     }
                     

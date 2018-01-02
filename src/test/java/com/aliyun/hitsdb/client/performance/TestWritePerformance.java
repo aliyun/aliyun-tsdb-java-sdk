@@ -26,7 +26,7 @@ public class TestWritePerformance {
 	final AtomicLong t1 = new AtomicLong();
 
 	int P_NUM = 2;
-	final int SIZE = 40000000;
+	final int SIZE = 10000*10;
 	final AtomicLong num = new AtomicLong();
 	final AtomicLong failNum = new AtomicLong();
 
@@ -51,20 +51,28 @@ public class TestWritePerformance {
 
 			@Override
 			public void failed(String address, List<Point> input, Exception ex) {
-				System.err.print(address + ":" + ex);
 				long afterNum = failNum.addAndGet(input.size());
-				System.out.println("失败处理" + input.size() + ",已处理" + afterNum);
+				System.out.println("失败处理, 地址: " + address + ",异常:" + ex + ", " + input.size() + ",已处理" + afterNum);
 			}
 		};
 
 		HiTSDBConfig.Builder.ProducerThreadSerializeSwitch = true;
 
-		HiTSDBConfig config = HiTSDBConfig.address("ts-wz9cvuoer10r79eq9.hitsdb.rds.aliyuncs.com", 3242)
-				.httpConnectionPool(728).batchPutBufferSize(1000000)
+		// 华南1 ts-wz9cvuoer10r79eq9
+		// 华东1 ts-bp11o8932ld793es1
+		// ts-wz9cvuoer10r79eq9.hitsdb.rds.aliyuncs.com
+//		HiTSDBConfig config = HiTSDBConfig.address("ts-wz9cvuoer10r79eq9.hitsdb.rds.aliyuncs.com", 3242)
+		HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 3002)
+				.httpConnectionPool(728)
+				.batchPutBufferSize(1000000)
 				.batchPutSize(500)
-				.httpCompress(true)
+//				.httpCompress(true)
+				.httpConnectionPool(512)
 				.listenBatchPut(cb)
-				.ioThreadCount(1).batchPutConsumerThreadCount(1).config();
+				.maxTPS(3000)
+				.ioThreadCount(1)
+				.batchPutConsumerThreadCount(1)
+				.config();
 
 		tsdb = HiTSDBClientFactory.connect(config);
 	}
@@ -92,6 +100,7 @@ public class TestWritePerformance {
 	public void testBatchPut() throws InterruptedException {
 		final CountDownLatch countDownLatch = new CountDownLatch(P_NUM);
 		final long currentTimeMillis = System.currentTimeMillis();
+		
 //		long version = System.currentTimeMillis();
 //		final Point point = Point.metric("test-performance-hitsdb").tag("tag", "v1.0")
 //				.value((int) (currentTimeMillis / 1000), 54321.12345).version(version).build();

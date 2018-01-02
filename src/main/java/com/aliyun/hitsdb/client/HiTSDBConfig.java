@@ -16,6 +16,7 @@ public class HiTSDBConfig {
 		private int batchPutRetryCount = 0;
 		private int batchPutSize = 500;
 		private int batchPutTimeLimit = 300;
+		private int maxTPS = -1;
 
 		private String host;
 		private int port = 8242;
@@ -111,6 +112,11 @@ public class HiTSDBConfig {
 			this.asyncPut = asyncPut;
 			return this;
 		}
+		
+		public Builder maxTPS(int maxTPS) {
+			this.maxTPS = maxTPS;
+			return this;
+		}
 
 		public HiTSDBConfig config() {
 			HiTSDBConfig hiTSDBConfig = new HiTSDBConfig();
@@ -132,6 +138,7 @@ public class HiTSDBConfig {
 			hiTSDBConfig.backpressure = this.backpressure;
 			hiTSDBConfig.httpConnectionLiveTime = this.httpConnectionLiveTime;
 			hiTSDBConfig.httpKeepaliveTime = this.httpKeepaliveTime;
+			hiTSDBConfig.maxTPS = this.maxTPS;
 			hiTSDBConfig.asyncPut = this.asyncPut;
 			if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
 				hiTSDBConfig.putRequestLimit = this.httpConnectionPool;
@@ -191,8 +198,10 @@ public class HiTSDBConfig {
 	private int batchPutRetryCount;
 	private int batchPutSize;
 	private int batchPutTimeLimit;
+	private int maxTPS;
+	
 	private String host;
-
+	
 	private boolean httpCompress;
 	private int httpConnectionPool;
 	private int httpConnectTimeout;
@@ -275,6 +284,10 @@ public class HiTSDBConfig {
 
 	public boolean isAsyncPut() {
 		return asyncPut;
+	}
+
+	public int getMaxTPS() {
+		return maxTPS;
 	}
 
 }

@@ -78,7 +78,7 @@ public class SubQuery {
 			f.setType(type);
 			f.setFilter(filter);
 			f.setTagk(tagk);
-			if (groupBy == true) {
+			if (true == groupBy) {
 				f.setGroupBy(groupBy);
 			}
 
@@ -188,6 +188,9 @@ public class SubQuery {
 				subQuery.granularity = this.granularityType.getName();
 			}
 			subQuery.filters = this.filters;
+			if (subQuery.tags != null && subQuery.tags.isEmpty()) {
+				subQuery.tags = null;
+			}
 
 			return subQuery;
 		}

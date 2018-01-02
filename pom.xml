@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.aliyun</groupId>
 	<artifactId>hitsdb-client</artifactId>
-	<version>0.0.2</version>
+	<version>0.0.3</version>
 	<name>HiTSDB Client SDK</name>
 	<description>The Alibaba HiTSDB SDK for Java used for accessing High Performance Time Series Database</description>
 	<url>https://www.aliyun.com/product/hitsdb</url>
@@ -18,6 +18,13 @@
 		<developerConnection>https://www.aliyun.com/product/hitsdb</developerConnection>
 	</scm>
 	<dependencies>
+		<!-- Guava -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>18.0</version>
+		</dependency>
+
 		<!-- HTTP -->
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.queue.DataQueue;
+import com.google.common.util.concurrent.RateLimiter;
 
 public class DefaultBatchPutConsumer implements Consumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultBatchPutConsumer.class);
@@ -18,20 +19,22 @@ public class DefaultBatchPutConsumer implements Consumer {
     private int batchPutConsumerThreadCount;
     private HttpClient httpclient;
     private HiTSDBConfig config;
+    private RateLimiter rateLimiter;
     private CountDownLatch countDownLatch;
 
-    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, HiTSDBConfig config) {
+    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, HiTSDBConfig config) {
         this.dataQueue = buffer;
         this.httpclient = httpclient;
         this.config = config;
         this.countDownLatch = new CountDownLatch(config.getBatchPutConsumerThreadCount());
         this.batchPutConsumerThreadCount = config.getBatchPutConsumerThreadCount();
+        this.rateLimiter = rateLimiter;
         threadPool = Executors.newFixedThreadPool(batchPutConsumerThreadCount, new BatchPutThreadFactory());
     }
 
     public void start() {
         for (int i = 0; i < batchPutConsumerThreadCount; i++) {
-            threadPool.submit(new BatchPutRunnable(this.dataQueue, this.httpclient, this.config,this.countDownLatch));
+            threadPool.submit(new BatchPutRunnable(this.dataQueue, this.httpclient, this.config,this.countDownLatch,this.rateLimiter));
         }
     }
 
