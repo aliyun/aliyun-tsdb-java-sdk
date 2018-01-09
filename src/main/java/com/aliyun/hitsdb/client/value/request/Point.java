@@ -3,6 +3,7 @@ package com.aliyun.hitsdb.client.value.request;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 
 import com.alibaba.fastjson.JSON;
@@ -143,12 +144,18 @@ public class Point extends JSONValue {
 			this.version = version;
 			return this;
 		}
-
+		
+		
 		/**
 		 * build a point
 		 * @return Point
 		 */
 		public Point build() {
+			return build(true);
+		}
+
+		
+		public Point build(boolean checkPoint) {
 			Point point = new Point();
 			point.metric = this.metric;
 			point.tags = this.tags;
@@ -159,6 +166,10 @@ public class Point extends JSONValue {
 			point.version = this.version;
 			if (HiTSDBConfig.Builder.ProducerThreadSerializeSwitch) {
 				point.json = buildJSON(point);
+			}
+			
+			if (checkPoint) {
+				Point.checkPoint(point);
 			}
 
 			return point;
@@ -263,6 +274,86 @@ public class Point extends JSONValue {
 			return this.json;
 		} else {
 			return super.toJSON();
+		}
+	}
+	
+	/**
+	 * If it is true, it is a legitimate character. 
+	 * @param c char
+	 * @return
+	 */
+	private static boolean checkChar(char c) {
+		return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') || 
+				c == '-' || c == '_' || 
+				c == '.' || c == ' ' || c == ',' || c == '=' || c == '/' || c == ':' ||
+				c == '(' || c == ')' || c == '[' || c == ']' || c == '\'' || c == '/' ||
+				Character.isLetter(c);
+	}
+	
+	
+	/**
+	 * Checkout the point format
+	 * @param point point
+	 */
+	public static void checkPoint(Point point) {
+		if (point.metric == null || point.metric.length() == 0) {
+			throw new IllegalArgumentException("The metric can't be empty");
+		}
+
+		if (point.timestamp == null) {
+			throw new IllegalArgumentException("The timestamp can't be null");
+		}
+		
+		if (point.timestamp <= 0) {
+			throw new IllegalArgumentException("The timestamp can't be less than or equal to 0");
+		}
+
+		if (point.value == null) {
+			throw new IllegalArgumentException("The value can't be all null");
+		}
+
+		if (point.value == (Number) Double.NaN) {
+			throw new IllegalArgumentException("The value can't be NaN");
+		}
+
+		if (point.value == (Number) Double.POSITIVE_INFINITY) {
+			throw new IllegalArgumentException("The value can't be POSITIVE_INFINITY");
+		}
+
+		if (point.value == (Number) Double.NEGATIVE_INFINITY) {
+			throw new IllegalArgumentException("The value can't be NEGATIVE_INFINITY");
+		}
+
+		if (point.tags == null || point.tags.size() == 0) {
+			throw new IllegalArgumentException("At least one tag is needed");
+		}
+
+		for (int i = 0; i < point.metric.length(); i++) {
+			final char c = point.metric.charAt(i);
+			if (!checkChar(c)) {
+				throw new IllegalArgumentException("There is an invalid character in metric. the char is '" + c + "'");
+			}
+		}
+
+		for (Entry<String, String> entry : point.tags.entrySet()) {
+			String tagkey = entry.getKey();
+			String tagvalue = entry.getValue();
+
+			for (int i = 0; i < tagkey.length(); i++) {
+				final char c = tagkey.charAt(i);
+				if (!checkChar(c)) {
+					throw new IllegalArgumentException("There is an invalid character in tagkey. the tagkey is + "
+							+ tagkey + ", the char is '" + c + "'");
+				}
+			}
+
+			for (int i = 0; i < tagvalue.length(); i++) {
+				final char c = tagvalue.charAt(i);
+				if (!checkChar(c)) {
+					throw new IllegalArgumentException("There is an invalid character in tagvalue. the tag is + <"
+							+ tagkey + ":" + tagvalue + "> , the char is '" + c + "'");
+				}
+			}
 		}
 	}
 
