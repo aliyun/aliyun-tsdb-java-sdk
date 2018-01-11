@@ -180,7 +180,7 @@ public class HiTSDBClient implements HiTSDB {
 	@Override
 	public void deleteData(String metric, Date startDate, Date endDate) {
 		long startTime = startDate.getTime();
-		long endTime = startDate.getTime();
+		long endTime = endDate.getTime();
 		deleteData(metric, startTime, endTime);
 	}
 
