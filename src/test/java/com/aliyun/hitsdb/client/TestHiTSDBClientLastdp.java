@@ -18,7 +18,7 @@ public class TestHiTSDBClientLastdp {
 
 	@Before
 	public void init() throws HttpClientInitException {
-		HiTSDBConfig config = HiTSDBConfig.address("ts-uf6h46ipnbugbx6j8.hitsdb.rds.aliyuncs.com", 3242).config();
+		HiTSDBConfig config = HiTSDBConfig.address("test.host", 3242).config();
 		tsdb = HiTSDBClientFactory.connect(config);
 	}
 

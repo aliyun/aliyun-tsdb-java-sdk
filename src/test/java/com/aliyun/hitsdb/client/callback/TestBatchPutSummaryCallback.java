@@ -40,7 +40,7 @@ public class TestBatchPutSummaryCallback {
         };
         
         HiTSDBConfig config = HiTSDBConfig
-                .address("127.0.0.1", 8242)
+                .address("test.host", 8242)
                 .httpConnectionPool(100)
                 .listenBatchPut(pcb)
                 .config();

@@ -20,7 +20,7 @@ public class TestNoLogicCallback {
     public void init() throws HttpClientInitException {
         UI.pauseStart();
         HiTSDBConfig config = HiTSDBConfig
-                .address("127.0.0.1", 3242)
+                .address("test.host", 3242)
                 .httpConnectionPool(64)
                 .httpConnectTimeout(90)
 //                .batchPutRetryCount()
