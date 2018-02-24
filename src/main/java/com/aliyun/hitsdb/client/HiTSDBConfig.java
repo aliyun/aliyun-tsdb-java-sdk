@@ -1,6 +1,11 @@
 package com.aliyun.hitsdb.client;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.LoadCallback;
+import com.aliyun.hitsdb.client.util.TSDBNetAddress;
 
 public class HiTSDBConfig {
 
@@ -12,14 +17,14 @@ public class HiTSDBConfig {
 
 		private int batchPutBufferSize = 10000;
 		private AbstractBatchPutCallback<?> batchPutCallback;
+		private LoadCallback loadCallback;
 		private int batchPutConsumerThreadCount = 1;
 		private int batchPutRetryCount = 0;
 		private int batchPutSize = 500;
 		private int batchPutTimeLimit = 300;
 		private int maxTPS = -1;
 
-		private String host;
-		private int port = 8242;
+		private List<TSDBNetAddress> netAddress = new ArrayList<TSDBNetAddress>();
 
 		private boolean httpCompress = false;
 		private int httpConnectionPool = 64; // 每个Host分配的连接数
@@ -31,14 +36,15 @@ public class HiTSDBConfig {
 		private boolean backpressure = true;
 		private boolean asyncPut = true;
 
-		public Builder(String host) {
-			this.host = host;
-		}
-
 		public Builder(String host, int port) {
-			this.host = host;
-			this.port = port;
+			this.netAddress.add(new TSDBNetAddress(host,port));
 		}
+		
+		public Builder(TSDBNetAddress... netAddresses) {
+		    for(TSDBNetAddress netAddress : netAddresses) {
+		        this.netAddress.add(netAddress);
+		    }
+        }
 
 		public Builder putRequestLimit(int limit) {
 			this.putRequestLimit = limit;
@@ -120,10 +126,10 @@ public class HiTSDBConfig {
 
 		public HiTSDBConfig config() {
 			HiTSDBConfig hiTSDBConfig = new HiTSDBConfig();
-
-			hiTSDBConfig.host = this.host;
-			hiTSDBConfig.port = this.port;
+			
+			hiTSDBConfig.netAddress = this.netAddress;
 			hiTSDBConfig.batchPutCallback = this.batchPutCallback;
+			hiTSDBConfig.loadCallback = this.loadCallback;
 			hiTSDBConfig.batchPutSize = this.batchPutSize;
 			hiTSDBConfig.batchPutTimeLimit = this.batchPutTimeLimit;
 			hiTSDBConfig.batchPutBufferSize = this.batchPutBufferSize;
@@ -181,14 +187,14 @@ public class HiTSDBConfig {
 		}
 
 	}
-
-	public static Builder address(String host) {
-		return new Builder(host);
-	}
-
+	
 	public static Builder address(String host, int port) {
 		return new Builder(host, port);
 	}
+	
+	public static Builder address(TSDBNetAddress... netAddresses) {
+        return new Builder(netAddresses);
+    }
 
 	private int putRequestLimit;
 	private boolean putRequestLimitSwitch;
@@ -200,7 +206,7 @@ public class HiTSDBConfig {
 	private int batchPutTimeLimit;
 	private int maxTPS;
 	
-	private String host;
+	private List<TSDBNetAddress> netAddress;
 	
 	private boolean httpCompress;
 	private int httpConnectionPool;
@@ -211,8 +217,7 @@ public class HiTSDBConfig {
 	private int ioThreadCount;
 	private boolean backpressure;
 	private boolean asyncPut;
-
-	private int port;
+	private LoadCallback loadCallback;
 
 	public int getPutRequestLimit() {
 		return putRequestLimit;
@@ -242,10 +247,6 @@ public class HiTSDBConfig {
 		return batchPutTimeLimit;
 	}
 
-	public String getHost() {
-		return host;
-	}
-
 	public int getHttpConnectionPool() {
 		return httpConnectionPool;
 	}
@@ -256,10 +257,6 @@ public class HiTSDBConfig {
 
 	public int getIoThreadCount() {
 		return ioThreadCount;
-	}
-
-	public int getPort() {
-		return port;
 	}
 
 	public boolean isPutRequestLimitSwitch() {
@@ -289,5 +286,13 @@ public class HiTSDBConfig {
 	public int getMaxTPS() {
 		return maxTPS;
 	}
+
+    public List<TSDBNetAddress> getNetAddress() {
+        return netAddress;
+    }
+
+    public LoadCallback getLoadCallback() {
+        return loadCallback;
+    }
 
 }

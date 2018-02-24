@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.value.Result;
+import com.aliyun.hitsdb.client.value.request.CompressionBatchPoints;
 import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.value.request.Query;
 import com.aliyun.hitsdb.client.value.request.Timeline;
@@ -31,6 +32,13 @@ public interface HiTSDB extends Closeable {
 	 * @param points points
 	 */
 	void put(Point... points);
+	
+	
+	/**
+	 * Asynchronous put points
+	 * @param compressionBatchPoints
+	 */
+	void load(CompressionBatchPoints compressionBatchPoints);
 
 	/**
 	 * Synchronous put method

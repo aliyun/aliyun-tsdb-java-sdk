@@ -12,13 +12,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.consumer.Consumer;
@@ -35,9 +31,11 @@ import com.aliyun.hitsdb.client.http.response.HttpStatus;
 import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.queue.DataQueueFactory;
+import com.aliyun.hitsdb.client.tscompress.queue.CompressionBatchPointsQueue;
 import com.aliyun.hitsdb.client.util.LinkedHashMapUtils;
 import com.aliyun.hitsdb.client.value.JSONValue;
 import com.aliyun.hitsdb.client.value.Result;
+import com.aliyun.hitsdb.client.value.request.CompressionBatchPoints;
 import com.aliyun.hitsdb.client.value.request.DumpMetaValue;
 import com.aliyun.hitsdb.client.value.request.MetricTimeRange;
 import com.aliyun.hitsdb.client.value.request.Point;
@@ -53,11 +51,17 @@ import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
 import com.google.common.util.concurrent.RateLimiter;
+import org.apache.http.HttpResponse;
+import org.apache.http.concurrent.FutureCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HiTSDBClient implements HiTSDB {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HiTSDBClient.class);
 	private final DataQueue queue;
+	private final CompressionBatchPointsQueue compressionBatchPointsQueue;
 	private final Consumer consumer;
+	private final Consumer loadConsumer;
 	private final HttpResponseCallbackFactory httpResponseCallbackFactory;
 	private final boolean httpCompress;
 	private final HttpClient httpclient;
@@ -92,12 +96,17 @@ public class HiTSDBClient implements HiTSDB {
 			int batchPutTimeLimit = config.getBatchPutTimeLimit();
 			boolean backpressure = config.isBackpressure();
 			this.queue = DataQueueFactory.createDataPointQueue(batchPutBufferSize, batchPutTimeLimit, backpressure);
+			this.compressionBatchPointsQueue = DataQueueFactory.createCompressionBatchPointsQueue(batchPutBufferSize, batchPutTimeLimit, backpressure);
 			this.consumer = ConsumerFactory.createConsumer(queue, httpclient, rateLimter, config);
 			this.consumer.start();
+			this.loadConsumer = ConsumerFactory.createLoadConsumer(compressionBatchPointsQueue, httpclient, rateLimter, config);
+            this.loadConsumer.start();
 		} else {
 			this.httpResponseCallbackFactory = null;
 			this.queue = null;
 			this.consumer = null;
+			this.compressionBatchPointsQueue = null;
+			this.loadConsumer = null;
 		}
 
 		this.httpclient.start();
@@ -258,7 +267,6 @@ public class HiTSDBClient implements HiTSDB {
 
 	@Override
 	public void query(Query query, QueryCallback callback) {
-
 		FutureCallback<HttpResponse> httpCallback = null;
 		String address = httpclient.getHttpAddressManager().getAddress();
 
@@ -516,4 +524,10 @@ public class HiTSDBClient implements HiTSDB {
 		return putSync(resultType, Arrays.asList(points));
 	}
 
+    @Override
+    public void load(CompressionBatchPoints compressionBatchPoints) {
+        compressionBatchPoints.compressTS();
+        compressionBatchPointsQueue.send(compressionBatchPoints);
+    }
+   
 }

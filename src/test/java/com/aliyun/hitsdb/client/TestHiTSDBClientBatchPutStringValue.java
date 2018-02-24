@@ -59,7 +59,7 @@ public class TestHiTSDBClientBatchPutStringValue {
         };
         
         HiTSDBConfig config = HiTSDBConfig
-                .address("127.0.0.1")
+                .address("127.0.0.1",8242)
                 .listenBatchPut(pcb)
                 .config();
         tsdb = HiTSDBClientFactory.connect(config);

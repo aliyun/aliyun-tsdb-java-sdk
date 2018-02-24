@@ -51,6 +51,13 @@
 			<version>1.7.21</version>
 			<scope>test</scope>
 		</dependency>
+		
+		<!-- gorilla -->
+		<dependency>
+		    <groupId>fi.iki.yak</groupId>
+		    <artifactId>compression-gorilla</artifactId>
+		    <version>2.0.3</version>
+		</dependency>
 
 		<!-- Test -->
 		<dependency>

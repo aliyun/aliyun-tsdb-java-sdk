@@ -9,8 +9,10 @@ import org.apache.http.concurrent.FutureCallback;
 
 import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.LoadCallback;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.http.HttpClient;
+import com.aliyun.hitsdb.client.value.request.CompressionBatchPoints;
 import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.value.request.Query;
 
@@ -19,7 +21,7 @@ public class HttpResponseCallbackFactory {
     private final HttpClient hitsdbHttpclient;
     private final boolean httpCompress;
 
-    public HttpResponseCallbackFactory(AtomicInteger unCompletedTaskNum,HttpClient httpclient,boolean httpCompress) {
+    public HttpResponseCallbackFactory(AtomicInteger unCompletedTaskNum, HttpClient httpclient, boolean httpCompress) {
         this.unCompletedTaskNum = unCompletedTaskNum;
         this.hitsdbHttpclient = httpclient;
         this.httpCompress = httpCompress;
@@ -31,45 +33,66 @@ public class HttpResponseCallbackFactory {
     }
 
     public FutureCallback<HttpResponse> createQueryCallback(final String address, final QueryCallback callback, final Query query) {
-        FutureCallback<HttpResponse> httpCallback = new QueryHttpResponseCallback(address, query, callback,this.httpCompress);
+        FutureCallback<HttpResponse> httpCallback = new QueryHttpResponseCallback(address, query, callback, this.httpCompress);
         return httpCallback;
     }
 
     public FutureCallback<HttpResponse> createBatchPutDataCallback(
-    			final String address,
-            final AbstractBatchPutCallback<?> batchPutCallback,
-            final List<Point> pointList,
-            final HiTSDBConfig config,
-            final int batchPutRetryCount
-    ) {
-        FutureCallback<HttpResponse> httpCallback = new BatchPutHttpResponseCallback (
-					address,
-					hitsdbHttpclient,
-					batchPutCallback,
-					pointList,
-					config,
-					config.getBatchPutRetryCount()
-                );
+        final String address,
+        final AbstractBatchPutCallback<?> batchPutCallback,
+        final List<Point> pointList,
+        final HiTSDBConfig config,
+        final int batchPutRetryCount) {
+        FutureCallback<HttpResponse> httpCallback = new BatchPutHttpResponseCallback(
+            address,
+            hitsdbHttpclient,
+            batchPutCallback,
+            pointList,
+            config,
+            config.getBatchPutRetryCount());
+        return httpCallback;
+    }
+
+    public FutureCallback<HttpResponse> createLoadCallback(
+        final String address,
+        final LoadCallback loadCallback,
+        final CompressionBatchPoints points,
+        final HiTSDBConfig config
+        ) {
+        FutureCallback<HttpResponse> httpCallback = new LoadHttpResponseCallback(
+            address,
+            hitsdbHttpclient,
+            loadCallback,
+            points,
+            config
+        );
         return httpCallback;
     }
     
-    
+    public FutureCallback<HttpResponse> createNoLogicLoadCallback(String address, CompressionBatchPoints points, HiTSDBConfig config) {
+        FutureCallback<HttpResponse> httpCallback = new LoadHttpResponseCallback(
+            address,
+            hitsdbHttpclient,
+            null,
+            points,
+            config
+        );
+        return httpCallback;
+    }
+
     public FutureCallback<HttpResponse> createNoLogicBatchPutHttpFutureCallback(
-    			final String address,
-            final List<Point> pointList,
-            final HiTSDBConfig config,
-            final int batchPutRetryTimes
-    ) {
-        FutureCallback<HttpResponse> httpCallback = 
-                new BatchPutHttpResponseCallback (
-					address,
-					hitsdbHttpclient,
-					null,
-					pointList,
-					config,
-					batchPutRetryTimes
-                );
+        final String address,
+        final List<Point> pointList,
+        final HiTSDBConfig config,
+        final int batchPutRetryTimes) {
+        FutureCallback<HttpResponse> httpCallback = new BatchPutHttpResponseCallback(
+            address,
+            hitsdbHttpclient,
+            null,
+            pointList,
+            config,
+            batchPutRetryTimes);
         return httpCallback;
     }
-    
+
 }

@@ -199,18 +199,18 @@ public class BatchPutRunnable implements Runnable {
     
     
     private void sendHttpRequest(List<Point> pointList,String strJson,Map<String,String> paramsMap) {
-    	String address = getAddressAndSemaphoreAcquire();
+        String address = getAddressAndSemaphoreAcquire();
     	
-    	// 发送
+    	    // 发送
         if (this.batchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
                     .createBatchPutDataCallback (
-                    	address,
+                        address,
 						this.batchPutCallback,
 						pointList,
 						config,
 						config.getBatchPutRetryCount()
-                	);
+            );
             
             try {
                 hitsdbHttpClient.postToAddress(address,HttpAPI.PUT, strJson, paramsMap, postHttpCallback);

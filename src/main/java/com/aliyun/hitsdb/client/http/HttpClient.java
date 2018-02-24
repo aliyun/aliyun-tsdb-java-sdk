@@ -13,6 +13,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
+import com.aliyun.hitsdb.client.HiTSDBConfig;
+import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
+import com.aliyun.hitsdb.client.exception.http.HttpClientException;
+import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.http.request.HttpDeleteWithEntity;
+import com.aliyun.hitsdb.client.http.request.HttpGetWithEntity;
+import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpPost;
@@ -24,14 +31,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.aliyun.hitsdb.client.HiTSDBConfig;
-import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
-import com.aliyun.hitsdb.client.exception.http.HttpClientException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
-import com.aliyun.hitsdb.client.http.request.HttpDeleteWithEntity;
-import com.aliyun.hitsdb.client.http.request.HttpGetWithEntity;
-import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 
 public class HttpClient {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HttpClient.class);
@@ -80,8 +79,6 @@ public class HttpClient {
 
 	HttpClient(HiTSDBConfig config, CloseableHttpAsyncClient httpclient, SemaphoreManager semaphoreManager)
 			throws HttpClientInitException {
-		this.host = config.getHost();
-		this.port = config.getPort();
 		this.httpCompress = config.isHttpCompress();
 		this.httpclient = httpclient;
 		this.semaphoreManager = semaphoreManager;
@@ -160,6 +157,21 @@ public class HttpClient {
 			unCompletedTaskNum.decrementAndGet();
 		}
 	}
+	
+	private void executeCallback(HttpEntityEnclosingRequestBase request, byte[] data, FutureCallback<HttpResponse> httpCallback) {
+        if (data != null && data.length > 0) {
+            request.addHeader("Content-Type", "application/tsc-data");
+            request.setEntity(generateBytesEntity(data));
+        }
+
+        FutureCallback<HttpResponse> responseCallback = null;
+        if (httpCallback != null) {
+            unCompletedTaskNum.incrementAndGet();
+            responseCallback = this.httpResponseCallbackFactory.wrapUpBaseHttpFutureCallback(httpCallback);
+        }
+
+        httpclient.execute(request,responseCallback);
+    }
 
 	private void executeCallback(HttpEntityEnclosingRequestBase request, String json, FutureCallback<HttpResponse> httpCallback) {
 		if (json != null && json.length() > 0) {
@@ -180,11 +192,16 @@ public class HttpClient {
 
 		httpclient.execute(request,responseCallback);
 	}
-
+	
 	private StringEntity generateStringEntity(String json) {
 		StringEntity stringEntity = new StringEntity(json, Charset.forName("UTF-8"));
 		return stringEntity;
 	}
+	
+	private ByteArrayEntity generateBytesEntity(byte[] data) {
+	    ByteArrayEntity byteArrayEntity = new ByteArrayEntity(data);
+        return byteArrayEntity;
+    }
 
 	private ByteArrayEntity generateGZIPCompressEntity(String json) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -255,7 +272,7 @@ public class HttpClient {
 	public HttpResponse post(String apiPath, String json) throws HttpClientException {
 		return this.post(apiPath, json, new HashMap<String, String>());
 	}
-
+	
 	public void post(String apiPath, String json, FutureCallback<HttpResponse> httpCallback) {
 		this.post(apiPath, json, null, httpCallback);
 	}
@@ -271,12 +288,33 @@ public class HttpClient {
 		executeCallback(request, json, httpCallback);
 	}
 	
+	public void post(String apiPath, byte[] data, Map<String, String> params, FutureCallback<HttpResponse> httpCallback) {
+        String httpFullAPI = getUrl(apiPath);
+        URI uri = createURI(httpFullAPI, params);
+        final HttpPost request = new HttpPost(uri);
+        executeCallback(request, data, httpCallback);
+    }
+	
 	public void postToAddress(String address, String apiPath, String json, Map<String, String> params, FutureCallback<HttpResponse> httpCallback) {
 		String httpFullAPI = "http://" + address + apiPath;
 		URI uri = createURI(httpFullAPI, params);
 		final HttpPost request = new HttpPost(uri);
 		executeCallback(request, json, httpCallback);
 	}
+	
+	public void postToAddress(String address, String apiPath, byte[] data, Map<String, String> params, FutureCallback<HttpResponse> httpCallback) {
+        String httpFullAPI = "http://" + address + apiPath;
+        URI uri = createURI(httpFullAPI, params);
+        final HttpPost request = new HttpPost(uri);
+        executeCallback(request, data, httpCallback);
+    }
+	
+	public void postToAddress(String address, String apiPath, byte[] data, FutureCallback<HttpResponse> httpCallback) {
+        String httpFullAPI = "http://" + address + apiPath;
+        URI uri = createURI(httpFullAPI, null);
+        final HttpPost request = new HttpPost(uri);
+        executeCallback(request, data, httpCallback);
+    }
 
 	public HttpResponse post(String apiPath, String json, Map<String, String> params) throws HttpClientException {
 		String httpFullAPI = getUrl(apiPath);

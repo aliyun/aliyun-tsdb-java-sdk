@@ -1,5 +1,7 @@
 package com.aliyun.hitsdb.client.http;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -24,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
+import com.aliyun.hitsdb.client.util.TSDBNetAddress;
 
 public class HttpClientFactory {
 
@@ -116,11 +119,13 @@ public class HttpClientFactory {
 		int httpConnectionPool = config.getHttpConnectionPool();
 		SemaphoreManager semaphoreManager = null;
 		if (httpConnectionPool > 0) {
-			String host = config.getHost();
-			int port = config.getPort();
 			int putRequestLimit = config.getPutRequestLimit();
-			String address = String.format("%s:%d", host,port);
-			semaphoreManager = SemaphoreManager.create(address, putRequestLimit);
+			List<TSDBNetAddress> netAddressList = config.getNetAddress();
+			List<String> addresses = new ArrayList<String>();
+			for(TSDBNetAddress netAddress:netAddressList) {
+			    addresses.add(netAddress.getHost() + ":" + netAddress.getPort());
+			}
+			semaphoreManager = SemaphoreManager.create(addresses, putRequestLimit);
 		}
 		
 		return semaphoreManager;

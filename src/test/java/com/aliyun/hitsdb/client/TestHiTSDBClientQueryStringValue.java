@@ -26,7 +26,7 @@ public class TestHiTSDBClientQueryStringValue {
 
     @Before
     public void init() throws HttpClientInitException {
-        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1")
+        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1",8242)
                     .config();
         tsdb = HiTSDBClientFactory.connect(config);
     }
