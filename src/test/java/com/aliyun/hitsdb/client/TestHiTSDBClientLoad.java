@@ -1,15 +1,11 @@
 package com.aliyun.hitsdb.client;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.aliyun.hitsdb.client.callback.BatchPutCallback;
 import com.aliyun.hitsdb.client.callback.LoadCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.CompressionBatchPoints;
-import com.aliyun.hitsdb.client.value.request.Point;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
