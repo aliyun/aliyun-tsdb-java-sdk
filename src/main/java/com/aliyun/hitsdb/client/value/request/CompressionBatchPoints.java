@@ -14,6 +14,8 @@ import fi.iki.yak.ts.compression.gorilla.LongArrayOutput;
 import fi.iki.yak.ts.compression.gorilla.Pair;
 
 public class CompressionBatchPoints {
+    private CompressionBatchPoints () {}
+    
     public static class MetricBuilder {
         private String metric;
         private Map<String, String> tags = new HashMap<String, String>();
@@ -79,6 +81,12 @@ public class CompressionBatchPoints {
             points.pairs = this.pairs;
             return points;
         }
+    }
+    
+    public static MetricBuilder metric(String metric) {
+        MetricBuilder metricBuilder = new MetricBuilder();
+        metricBuilder.metric = metric;
+        return metricBuilder;
     }
 
     private String metric;

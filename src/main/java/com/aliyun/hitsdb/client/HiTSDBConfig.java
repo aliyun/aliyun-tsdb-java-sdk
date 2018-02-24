@@ -180,6 +180,11 @@ public class HiTSDBConfig {
 			this.batchPutCallback = cb;
 			return this;
 		}
+		
+		public Builder listenLoad(LoadCallback loadCallback) {
+            this.loadCallback = loadCallback;
+            return this;
+        }
 
 		public Builder openHttpCompress() {
 			this.httpCompress = true;
