@@ -124,7 +124,7 @@ public class LoadRunnable implements Runnable {
                 	);
             
             try {
-                hitsdbHttpClient.postToAddress(address,HttpAPI.PUT, points.getCompressData(), paramsMap, postHttpCallback);
+                hitsdbHttpClient.postToAddress(address,HttpAPI.LOAD, points.getCompressData(), paramsMap, postHttpCallback);
             } catch (Exception ex) {
         			this.semaphoreManager.release(address);
         			this.loadCallback.failed(address, points, ex);
@@ -137,7 +137,7 @@ public class LoadRunnable implements Runnable {
                     		config
                     	);
             try {
-                hitsdbHttpClient.postToAddress(address,HttpAPI.PUT, points.getCompressData(), noLogicLoadCallback);
+                hitsdbHttpClient.postToAddress(address,HttpAPI.LOAD, points.getCompressData(), noLogicLoadCallback);
             } catch (Exception ex) {
             		this.semaphoreManager.release(address);
             		noLogicLoadCallback.failed(ex);

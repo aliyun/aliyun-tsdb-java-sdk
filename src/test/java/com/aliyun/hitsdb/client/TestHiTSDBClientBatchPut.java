@@ -58,7 +58,7 @@ public class TestHiTSDBClientBatchPut {
             
         };
         
-        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 3242)
+        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 8242)
                 .listenBatchPut(pcb)
                 .httpConnectTimeout(90)
                 .config();
@@ -80,7 +80,7 @@ public class TestHiTSDBClientBatchPut {
     		int t = (int) (1508742134297l/1000);  // 1508742134
     		int t1 = t - 1;
         Point point = Point
-        			.metric("test-test-test")
+        			.metric("test-metric")
         			.tag("a", "1")
         			.tag("b","2")
                 .timestamp(t1)

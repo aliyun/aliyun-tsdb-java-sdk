@@ -160,7 +160,7 @@ public class HttpClient {
 	
 	private void executeCallback(HttpEntityEnclosingRequestBase request, byte[] data, FutureCallback<HttpResponse> httpCallback) {
         if (data != null && data.length > 0) {
-            request.addHeader("Content-Type", "application/tsc-data");
+            request.addHeader("Content-Type", "application/ts-compress-data");
             request.setEntity(generateBytesEntity(data));
         }
 

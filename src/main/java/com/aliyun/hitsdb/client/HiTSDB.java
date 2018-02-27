@@ -38,7 +38,7 @@ public interface HiTSDB extends Closeable {
 	 * Asynchronous put points
 	 * @param compressionBatchPoints
 	 */
-	void load(CompressionBatchPoints compressionBatchPoints);
+	void load(CompressionBatchPoints compressionBatchPoints) throws IOException;
 
 	/**
 	 * Synchronous put method

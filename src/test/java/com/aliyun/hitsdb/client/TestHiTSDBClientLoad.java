@@ -29,7 +29,7 @@ public class TestHiTSDBClientLoad {
             }
         };
 
-        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 3242)
+        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 8242)
             .listenLoad(lcb)
             .httpConnectTimeout(90)
             .config();
@@ -47,7 +47,7 @@ public class TestHiTSDBClientLoad {
     }
 
     @Test
-    public void testPutData() {
+    public void testPutData() throws IOException {
         CompressionBatchPoints.MetricBuilder builder = CompressionBatchPoints.metric("load-metric").tag("asdf","asdf");
         builder.appendDouble(1500405481623L, 69087);
         builder.appendDouble(1500405488693L, 65640);
@@ -303,7 +303,6 @@ public class TestHiTSDBClientLoad {
         builder.appendDouble(1500407978023L, 5175);
         builder.appendDouble(1500407987923L, 63350);
         builder.appendDouble(1500407997833L, 44081);
-        
         
         CompressionBatchPoints points = builder.build();
         tsdb.load(points);

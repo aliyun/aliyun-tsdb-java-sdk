@@ -9,4 +9,5 @@ public interface HttpAPI {
     public final static String DELETE_META = "/api/delete_meta";
     public final static String SUGGEST = "/api/suggest";
     public final static String DUMP_META = "/api/dump_meta";
+    public final static String LOAD = "/api/load";
 }

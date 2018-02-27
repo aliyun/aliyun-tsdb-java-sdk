@@ -3,11 +3,14 @@ package com.aliyun.hitsdb.client.value.request;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import com.alibaba.fastjson.JSONObject;
 
 import fi.iki.yak.ts.compression.gorilla.GorillaCompressor;
 import fi.iki.yak.ts.compression.gorilla.LongArrayOutput;
@@ -110,7 +113,16 @@ public class CompressionBatchPoints {
         return pairs.get(index);
     }
 
-    public void compressTS() {
+    public void compressTS() throws IOException {
+        JSONObject json = new JSONObject();
+        json.put("metric", this.metric);
+        json.put("tags", this.tags);
+        if(this.pairs != null || this.pairs.size() > 0) {
+            Pair pair = this.pairs.get(0);
+            json.put("timestamp", pair.getTimestamp());
+        }
+        String jsonString = json.toJSONString();
+        
         LongArrayOutput output = new LongArrayOutput();
         if (this.size() > 0) {
             Pair pair0 = this.get(0);
@@ -125,23 +137,26 @@ public class CompressionBatchPoints {
         }
 
         long[] longArray = output.getLongArray();
-        byte[] bsdata = getBytesFromLongArray(longArray);
-        this.compressData = bsdata;
+        ByteArrayOutputStream ba = new ByteArrayOutputStream(4 + jsonString.length() + longArray.length * 8);
+        DataOutputStream da = new DataOutputStream(ba);
+        
+        // 写长度
+        da.writeInt(jsonString.length());
+        
+        // 写json部分
+        byte[] bytes = jsonString.getBytes();
+        da.write(bytes);
+        
+        // 写数据
+        appendBytes(da, longArray);
+        byte[] rtn = ba.toByteArray();
+        this.compressData = rtn;
     }
 
-    private byte[] getBytesFromLongArray(long[] input) {
-        ByteArrayOutputStream ba = new ByteArrayOutputStream(input.length * 8);
-        DataOutputStream da = new DataOutputStream(ba);
+    private void appendBytes(DataOutputStream da, long[] input) throws IOException {
         for (long v : input) {
-            try {
-                da.writeLong(v);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            da.writeLong(v);
         }
-        byte[] rtn = ba.toByteArray();
-        assert (rtn.length == input.length * 8);
-        return rtn;
     }
 
     public byte[] getCompressData() {

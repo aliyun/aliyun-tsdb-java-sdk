@@ -525,7 +525,7 @@ public class HiTSDBClient implements HiTSDB {
 	}
 
     @Override
-    public void load(CompressionBatchPoints compressionBatchPoints) {
+    public void load(CompressionBatchPoints compressionBatchPoints) throws IOException {
         compressionBatchPoints.compressTS();
         compressionBatchPointsQueue.send(compressionBatchPoints);
     }
