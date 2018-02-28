@@ -3,7 +3,6 @@ package com.aliyun.hitsdb.client.value.request;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,7 +21,8 @@ public class CompressionBatchPoints {
     public static class MetricBuilder {
         private String metric;
         private Map<String, String> tags = new HashMap<String, String>();
-        private List<Pair> pairs = new LinkedList<Pair>();
+        private LongArrayOutput output = new LongArrayOutput();
+        private GorillaCompressor compressor;
 
         public MetricBuilder() {}
 
@@ -58,13 +58,20 @@ public class CompressionBatchPoints {
         }
 
         public MetricBuilder appendDouble(long timestamp, double value) {
-            long doubleToRawLongBits = Double.doubleToRawLongBits(value);
-            this.pairs.add(new Pair(timestamp, doubleToRawLongBits));
+            if(this.compressor != null) {
+                this.compressor = new GorillaCompressor(timestamp, output);
+            }
+            
+            this.compressor.addValue(timestamp,value);
             return this;
         }
 
         public MetricBuilder appendLong(long timestamp, long value) {
-            this.pairs.add(new Pair(timestamp, value));
+            if(this.compressor != null) {
+                this.compressor = new GorillaCompressor(timestamp, output);
+            }
+            
+            this.compressor.addValue(timestamp,value);
             return this;
         }
 
@@ -81,7 +88,10 @@ public class CompressionBatchPoints {
             CompressionBatchPoints points = new CompressionBatchPoints();
             points.metric = this.metric;
             points.tags = this.tags;
-            points.pairs = this.pairs;
+            points.output = this.output;
+            if(this.compressor != null) {
+                this.compressor.close();
+            }
             return points;
         }
     }
@@ -96,6 +106,7 @@ public class CompressionBatchPoints {
     private Map<String, String> tags = new HashMap<String, String>();
     private List<Pair> pairs = new LinkedList<Pair>();
     private byte[] compressData;
+    private LongArrayOutput output;
 
     public String getMetric() {
         return metric;
@@ -122,20 +133,6 @@ public class CompressionBatchPoints {
             json.put("timestamp", pair.getTimestamp());
         }
         String jsonString = json.toJSONString();
-        
-        LongArrayOutput output = new LongArrayOutput();
-        if (this.size() > 0) {
-            Pair pair0 = this.get(0);
-            GorillaCompressor c = new GorillaCompressor(pair0.getTimestamp(), output);
-
-            for (int i = 0; i < this.size(); i++) {
-                Pair pair = this.get(i);
-                c.addValue(pair.getTimestamp(), pair.getLongValue());
-            }
-
-            c.close();
-        }
-
         long[] longArray = output.getLongArray();
         ByteArrayOutputStream ba = new ByteArrayOutputStream(4 + jsonString.length() + longArray.length * 8);
         DataOutputStream da = new DataOutputStream(ba);

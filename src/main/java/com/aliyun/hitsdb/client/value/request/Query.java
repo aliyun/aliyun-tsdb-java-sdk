@@ -82,6 +82,7 @@ public class Query extends JSONValue {
 		}
 		
 		public Builder msResolution() {
+		    this.msResolution = true;
             return this;
         }
 
