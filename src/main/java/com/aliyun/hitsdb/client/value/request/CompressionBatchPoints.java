@@ -23,6 +23,7 @@ public class CompressionBatchPoints {
         private Map<String, String> tags = new HashMap<String, String>();
         private LongArrayOutput output = new LongArrayOutput();
         private GorillaCompressor compressor;
+        private int size = 0;
 
         public MetricBuilder() {}
 
@@ -58,19 +59,19 @@ public class CompressionBatchPoints {
         }
 
         public MetricBuilder appendDouble(long timestamp, double value) {
-            if(this.compressor != null) {
+            if(this.compressor == null) {
                 this.compressor = new GorillaCompressor(timestamp, output);
             }
-            
+            size++;
             this.compressor.addValue(timestamp,value);
             return this;
         }
 
         public MetricBuilder appendLong(long timestamp, long value) {
-            if(this.compressor != null) {
+            if(this.compressor == null) {
                 this.compressor = new GorillaCompressor(timestamp, output);
             }
-            
+            size++;
             this.compressor.addValue(timestamp,value);
             return this;
         }
@@ -92,6 +93,7 @@ public class CompressionBatchPoints {
             if(this.compressor != null) {
                 this.compressor.close();
             }
+            points.size = this.size;
             return points;
         }
     }
@@ -107,6 +109,7 @@ public class CompressionBatchPoints {
     private List<Pair> pairs = new LinkedList<Pair>();
     private byte[] compressData;
     private LongArrayOutput output;
+    private int size;
 
     public String getMetric() {
         return metric;
@@ -158,6 +161,10 @@ public class CompressionBatchPoints {
 
     public byte[] getCompressData() {
         return compressData;
+    }
+
+    public int getSize() {
+        return size;
     }
 
 }
