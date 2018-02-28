@@ -12,12 +12,14 @@ public class Query extends JSONValue {
 	private long end;
 	private Boolean delete;
 	private List<SubQuery> queries;
+	private boolean msResolution;
 
 	public static class Builder {
 		private long startTime;
 		private long endTime;
 		private Boolean delete;
 		private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
+		private boolean msResolution = false;
 
 		public Builder(long startTime) {
 			this.startTime = startTime;
@@ -73,6 +75,15 @@ public class Query extends JSONValue {
 			}
 			return this;
 		}
+		
+		public Builder msResolution(boolean msResolution) {
+		    this.msResolution = msResolution;
+		    return this;
+		}
+		
+		public Builder msResolution() {
+            return this;
+        }
 
 		public Query build() {
 			Query query = new Query();
@@ -80,6 +91,7 @@ public class Query extends JSONValue {
 			query.end = this.endTime;
 			query.queries = this.subQueryList;
 			query.delete = this.delete;
+			query.msResolution = this.msResolution;
 			return query;
 		}
 
@@ -141,5 +153,9 @@ public class Query extends JSONValue {
 	public List<SubQuery> getQueries() {
 		return queries;
 	}
+
+    public boolean isMsResolution() {
+        return msResolution;
+    }
 
 }
