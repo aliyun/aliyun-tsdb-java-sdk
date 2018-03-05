@@ -4,8 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -13,22 +11,30 @@ import com.alibaba.fastjson.JSONObject;
 
 import fi.iki.yak.ts.compression.gorilla.GorillaCompressor;
 import fi.iki.yak.ts.compression.gorilla.LongArrayOutput;
-import fi.iki.yak.ts.compression.gorilla.Pair;
 
 public class CompressionBatchPoints {
-    private CompressionBatchPoints () {}
-    
+    private CompressionBatchPoints() {}
+
     public static class MetricBuilder {
         private String metric;
         private Map<String, String> tags = new HashMap<String, String>();
         private LongArrayOutput output = new LongArrayOutput();
         private GorillaCompressor compressor;
         private int size = 0;
+        private long timestamp;
 
         public MetricBuilder() {}
 
         public MetricBuilder(final String metric) {
             this.metric = metric;
+        }
+
+        public String getMetric() {
+            return this.metric;
+        }
+
+        public Map<String, String> getTags() {
+            return this.tags;
         }
 
         /**
@@ -59,20 +65,22 @@ public class CompressionBatchPoints {
         }
 
         public MetricBuilder appendDouble(long timestamp, double value) {
-            if(this.compressor == null) {
+            if (this.compressor == null) {
+                this.timestamp = timestamp;
                 this.compressor = new GorillaCompressor(timestamp, output);
             }
             size++;
-            this.compressor.addValue(timestamp,value);
+            this.compressor.addValue(timestamp, value);
             return this;
         }
 
         public MetricBuilder appendLong(long timestamp, long value) {
-            if(this.compressor == null) {
+            if (this.compressor == null) {
+                this.timestamp = timestamp;
                 this.compressor = new GorillaCompressor(timestamp, output);
             }
             size++;
-            this.compressor.addValue(timestamp,value);
+            this.compressor.addValue(timestamp, value);
             return this;
         }
 
@@ -90,14 +98,15 @@ public class CompressionBatchPoints {
             points.metric = this.metric;
             points.tags = this.tags;
             points.output = this.output;
-            if(this.compressor != null) {
+            if (this.compressor != null) {
                 this.compressor.close();
             }
+            points.timestamp = timestamp;
             points.size = this.size;
             return points;
         }
     }
-    
+
     public static MetricBuilder metric(String metric) {
         MetricBuilder metricBuilder = new MetricBuilder();
         metricBuilder.metric = metric;
@@ -106,10 +115,10 @@ public class CompressionBatchPoints {
 
     private String metric;
     private Map<String, String> tags = new HashMap<String, String>();
-    private List<Pair> pairs = new LinkedList<Pair>();
     private byte[] compressData;
     private LongArrayOutput output;
     private int size;
+    private long timestamp;
 
     public String getMetric() {
         return metric;
@@ -120,33 +129,31 @@ public class CompressionBatchPoints {
     }
 
     public int size() {
-        return pairs.size();
-    }
-
-    public Pair get(int index) {
-        return pairs.get(index);
+        return this.size;
     }
 
     public void compressTS() throws IOException {
+        if (size <= 0) {
+            throw new IOException("compress size <= 0");
+        }
         JSONObject json = new JSONObject();
         json.put("metric", this.metric);
         json.put("tags", this.tags);
-        if(this.pairs != null || this.pairs.size() > 0) {
-            Pair pair = this.pairs.get(0);
-            json.put("timestamp", pair.getTimestamp());
-        }
+        json.put("timestamp", timestamp);
+        json.put("size", this.size);
+
         String jsonString = json.toJSONString();
         long[] longArray = output.getLongArray();
         ByteArrayOutputStream ba = new ByteArrayOutputStream(4 + jsonString.length() + longArray.length * 8);
         DataOutputStream da = new DataOutputStream(ba);
-        
+
         // 写长度
         da.writeInt(jsonString.length());
-        
+
         // 写json部分
         byte[] bytes = jsonString.getBytes();
         da.write(bytes);
-        
+
         // 写数据
         appendBytes(da, longArray);
         byte[] rtn = ba.toByteArray();

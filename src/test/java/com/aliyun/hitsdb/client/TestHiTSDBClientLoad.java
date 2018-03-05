@@ -2,6 +2,8 @@ package com.aliyun.hitsdb.client;
 
 import java.io.IOException;
 
+import com.alibaba.fastjson.JSON;
+
 import com.aliyun.hitsdb.client.callback.LoadCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.value.Result;
@@ -305,6 +307,11 @@ public class TestHiTSDBClientLoad {
         builder.appendDouble(1500407997833L, 44081);
         
         CompressionBatchPoints points = builder.build();
-        tsdb.load(points);
+        String jsonString = JSON.toJSONString(points);
+        System.out.println(jsonString);
+        
+//        tsdb.load(points);
+        
+        
     }
 }
