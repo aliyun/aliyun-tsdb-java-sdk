@@ -14,10 +14,11 @@ public class HttpAddressManager {
 	private HttpAddressManager(HiTSDBConfig config) {
 	    List<TSDBNetAddress> netAddressList = config.getNetAddress();
 	    this.addresses = new ArrayList<String>(netAddressList.size());
-	    this.ari = new AtomicRoundInteger(this.addresses.size());
 	    for(TSDBNetAddress netAddress : netAddressList) {
-	        this.addresses.add(netAddress.getHost() + ":" + netAddress.getPort());
-	    }
+            this.addresses.add(netAddress.getHost() + ":" + netAddress.getPort());
+        }
+	    
+	    this.ari = new AtomicRoundInteger(this.addresses.size());
 	}
 	
 	public static HttpAddressManager createHttpAddressManager(HiTSDBConfig config) {

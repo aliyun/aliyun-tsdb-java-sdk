@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSON;
 
 import com.aliyun.hitsdb.client.callback.LoadCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.util.TSDBNetAddress;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.CompressionBatchPoints;
 import org.junit.After;
@@ -23,7 +24,7 @@ public class TestHiTSDBClientLoad {
             public void response(String address, CompressionBatchPoints points, Result result) {
                 System.out.println("已处理" + points.size() + "个点");
             }
-            
+
             @Override
             public void failed(String address, CompressionBatchPoints points, Exception ex) {
                 System.err.println("业务回调出错！" + points.size() + " error!");
@@ -31,10 +32,16 @@ public class TestHiTSDBClientLoad {
             }
         };
 
-        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 8242)
-            .listenLoad(lcb)
+        TSDBNetAddress tsdbNetAddress0 = new TSDBNetAddress("127.0.0.1", 8242);
+        TSDBNetAddress tsdbNetAddress1 = new TSDBNetAddress("127.0.0.1", 8243);
+        TSDBNetAddress tsdbNetAddress2 = new TSDBNetAddress("127.0.0.1", 8244);
+        HiTSDBConfig config = HiTSDBConfig.address(tsdbNetAddress0, tsdbNetAddress1,tsdbNetAddress2)
             .httpConnectTimeout(90)
             .config();
+        // HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 8242)
+        // .listenLoad(lcb)
+        // .httpConnectTimeout(90)
+        // .config();
         tsdb = HiTSDBClientFactory.connect(config);
     }
 
@@ -50,7 +57,7 @@ public class TestHiTSDBClientLoad {
 
     @Test
     public void testPutData() throws IOException {
-        CompressionBatchPoints.MetricBuilder builder = CompressionBatchPoints.metric("load-metric").tag("asdf","asdf");
+        CompressionBatchPoints.MetricBuilder builder = CompressionBatchPoints.metric("load-metric").tag("asdf", "asdf");
         builder.appendDouble(1500405481623L, 69087);
         builder.appendDouble(1500405488693L, 65640);
         builder.appendDouble(1500405495993L, 58155);
@@ -305,13 +312,20 @@ public class TestHiTSDBClientLoad {
         builder.appendDouble(1500407978023L, 5175);
         builder.appendDouble(1500407987923L, 63350);
         builder.appendDouble(1500407997833L, 44081);
-        
+
         CompressionBatchPoints points = builder.build();
-        String jsonString = JSON.toJSONString(points);
-        System.out.println(jsonString);
-        
-//        tsdb.load(points);
-        
-        
+        // String jsonString = JSON.toJSONString(points);
+        // System.out.println(jsonString);
+        tsdb.load(points);
     }
+
+    @Test
+    public void testPutData000() throws IOException, InterruptedException {
+        for (int i = 0; i < 15; i++) {
+            this.testPutData();
+        }
+        
+        Thread.sleep(1000*1000);
+    }
+
 }
