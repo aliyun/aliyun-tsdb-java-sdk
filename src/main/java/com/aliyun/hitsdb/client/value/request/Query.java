@@ -10,12 +10,14 @@ import com.aliyun.hitsdb.client.value.JSONValue;
 public class Query extends JSONValue {
 	private long start;
 	private long end;
+	private Boolean msResolution;
 	private Boolean delete;
 	private List<SubQuery> queries;
 
 	public static class Builder {
 		private long startTime;
 		private long endTime;
+		private Boolean msResolution;
 		private Boolean delete;
 		private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
 
@@ -30,6 +32,20 @@ public class Query extends JSONValue {
 
 		public Builder end(long endTime) {
 			this.endTime = endTime;
+			return this;
+		}
+
+		public Builder msResolution(Boolean msResolution) {
+			if (msResolution) {
+				this.msResolution = true;
+			} else {
+				this.msResolution = null;
+			}
+			return this;
+		}
+
+		public Builder msResolution() {
+			this.msResolution = true;
 			return this;
 		}
 
@@ -80,6 +96,7 @@ public class Query extends JSONValue {
 			query.end = this.endTime;
 			query.queries = this.subQueryList;
 			query.delete = this.delete;
+			query.msResolution = this.msResolution;
 			return query;
 		}
 
@@ -136,6 +153,10 @@ public class Query extends JSONValue {
 
 	public Boolean getDelete() {
 		return delete;
+	}
+
+	public Boolean getMsResolution() {
+		return msResolution;
 	}
 
 	public List<SubQuery> getQueries() {
