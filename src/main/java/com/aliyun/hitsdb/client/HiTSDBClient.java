@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 import org.slf4j.Logger;
@@ -395,7 +396,7 @@ public class HiTSDBClient implements HiTSDB {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Result> T putSync(Collection<Point> points, Class<T> resultType) {
-		String jsonString = JSON.toJSONString(points);
+		String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
 
 		HttpResponse httpResponse;
 		if (resultType.equals(Result.class)) {

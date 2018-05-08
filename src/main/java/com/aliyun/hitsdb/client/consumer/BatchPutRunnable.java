@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 import org.slf4j.Logger;
@@ -247,7 +248,7 @@ public class BatchPutRunnable implements Runnable {
             sb.setCharAt(sb.length() - 1, ']');
             return sb.toString();
         } else {
-            return JSON.toJSONString(pointList);
+            return JSON.toJSONString(pointList, SerializerFeature.DisableCircularReferenceDetect);
         }
 
     }

@@ -1,9 +1,13 @@
 package com.aliyun.hitsdb.client;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,10 +58,29 @@ public class TestHiTSDBClientSyncPut {
 
 	@Test
 	public void testPutData() {
-		int t = (int) (1508742134297l / 1000); // 1508742134
+		int t = (int) (1508742134297L / 1000); // 1508742134
 		int t1 = t - 1;
 		Point point = Point.metric("test-test-test").tag("level", "500").timestamp(t1).value(123.4567).build();
 		Result result = tsdb.putSync(point);
+		System.out.println(result);
+	}
+
+	@Test
+	public void testPutPoints() {
+		int t = (int) (1508742134297L / 1000); // 1508742134
+		int t1 = t - 10;
+		List<Point> points = new ArrayList<Point>();
+		Map<String, String> tags = new HashMap<String, String>();
+		tags.put("host", "server1");
+		for(long i=0; i<10; i++) {
+			Point point = new Point();
+			point.setMetric("cpu");
+			point.setValue(10);
+			point.setTimestamp(t1 + i);
+			point.setTags(tags);
+			points.add(point);
+		}
+		Result result = tsdb.putSync(points, DetailsResult.class);
 		System.out.println(result);
 	}
 }
