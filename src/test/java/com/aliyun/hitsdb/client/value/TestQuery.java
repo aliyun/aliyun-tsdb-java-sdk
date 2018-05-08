@@ -189,4 +189,28 @@ public class TestQuery {
         Assert.assertEquals(json,
                 "{\"delete\":true,\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
     }
+
+    @Test
+    public void testQueryMsResolution() throws ParseException {
+        String strDate = "2017-08-01 13:14:15";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = sdf.parse(strDate);
+
+        int endTime = (int) (date.getTime() / 1000);
+        int startTime = endTime - 60 * 60;
+
+        SubQuery subQuery1 = SubQuery.metric("test1").aggregator(Aggregator.SUM).rate().tag("tagk1", "tagv1")
+                .tag("tagk2", "tagv2").build();
+
+        SubQuery subQuery2 = SubQuery.metric("test2").aggregator(Aggregator.AVG).rate().tag("tagk1", "tagv1")
+                .tag("tagk2", "tagv2").build();
+
+        Query query = Query.timeRange(startTime, endTime)
+                .msResolution(true)
+                .sub(subQuery1).sub(subQuery2).build();
+
+        String json = query.toJSON();
+        Assert.assertEquals(json,
+                "{\"end\":1501564455,\"msResolution\":true,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
+    }
 }

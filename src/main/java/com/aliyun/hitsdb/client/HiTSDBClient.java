@@ -340,14 +340,14 @@ public class HiTSDBClient implements HiTSDB {
 		List<QueryResult> queryResults = this.query(query);
 		for (QueryResult queryResult : queryResults) {
 			{
-				LinkedHashMap<Integer, Number> dps = queryResult.getDps();
+				LinkedHashMap<Long, Number> dps = queryResult.getDps();
 				if (dps != null) {
-					LinkedHashMap<Integer, Number> newDps = new LinkedHashMap<Integer, Number>(num);
-					Entry<Integer, Number> lastEntry = LinkedHashMapUtils.getTail(dps);
+					LinkedHashMap<Long, Number> newDps = new LinkedHashMap<Long, Number>(num);
+					Entry<Long, Number> lastEntry = LinkedHashMapUtils.getTail(dps);
 					if (lastEntry != null) {
 						newDps.put(lastEntry.getKey(), lastEntry.getValue());
 						for (int count = 1; count < num; count++) {
-							Entry<Integer, Number> beforeEntry = LinkedHashMapUtils.getBefore(lastEntry);
+							Entry<Long, Number> beforeEntry = LinkedHashMapUtils.getBefore(lastEntry);
 							if (beforeEntry != null) {
 								newDps.put(beforeEntry.getKey(), beforeEntry.getValue());
 								lastEntry = beforeEntry;
@@ -362,14 +362,14 @@ public class HiTSDBClient implements HiTSDB {
 			}
 
 			{
-				LinkedHashMap<Integer, String> sdps = queryResult.getSdps();
+				LinkedHashMap<Long, String> sdps = queryResult.getSdps();
 				if (sdps != null) {
-					LinkedHashMap<Integer, String> newDps = new LinkedHashMap<Integer, String>(num);
-					Entry<Integer, String> lastEntry = LinkedHashMapUtils.getTail(sdps);
+					LinkedHashMap<Long, String> newDps = new LinkedHashMap<Long, String>(num);
+					Entry<Long, String> lastEntry = LinkedHashMapUtils.getTail(sdps);
 					if (lastEntry != null) {
 						newDps.put(lastEntry.getKey(), lastEntry.getValue());
 						for (int count = 1; count < num; count++) {
-							Entry<Integer, String> beforeEntry = LinkedHashMapUtils.getBefore(lastEntry);
+							Entry<Long, String> beforeEntry = LinkedHashMapUtils.getBefore(lastEntry);
 							if (beforeEntry != null) {
 								newDps.put(beforeEntry.getKey(), beforeEntry.getValue());
 								lastEntry = beforeEntry;

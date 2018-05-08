@@ -10,8 +10,8 @@ public class QueryResult extends JSONValue {
     private String metric;
     private Map<String, String> tags;
     private List<String> aggregateTags;
-    private LinkedHashMap<Integer, Number> dps = new LinkedHashMap<Integer, Number>();
-    private LinkedHashMap<Integer, String> sdps = new LinkedHashMap<Integer, String>();
+    private LinkedHashMap<Long, Number> dps = new LinkedHashMap<Long, Number>();
+    private LinkedHashMap<Long, String> sdps = new LinkedHashMap<Long, String>();
 
     public List<String> getAggregateTags() {
         return aggregateTags;
@@ -21,7 +21,7 @@ public class QueryResult extends JSONValue {
         this.aggregateTags = aggregateTags;
     }
 
-    public LinkedHashMap<Integer, Number> getDps() {
+    public LinkedHashMap<Long, Number> getDps() {
         return dps;
     }
 
@@ -33,7 +33,7 @@ public class QueryResult extends JSONValue {
         return tags;
     }
 
-    public void setDps(LinkedHashMap<Integer, Number> dps) {
+    public void setDps(LinkedHashMap<Long, Number> dps) {
         this.dps = dps;
     }
 
@@ -45,11 +45,11 @@ public class QueryResult extends JSONValue {
         this.tags = tags;
     }
 
-    public LinkedHashMap<Integer, String> getSdps() {
+    public LinkedHashMap<Long, String> getSdps() {
         return sdps;
     }
 
-    public void setSdps(LinkedHashMap<Integer, String> sdps) {
+    public void setSdps(LinkedHashMap<Long, String> sdps) {
         this.sdps = sdps;
     }
 
