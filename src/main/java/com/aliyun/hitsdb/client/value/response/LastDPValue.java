@@ -5,7 +5,7 @@ import java.util.Map;
 public class LastDPValue {
 	private String metric;
 	private long timestamp;
-	private Number value;
+	private Object value;
 	private Map<String, String> tags;
 	private int version;
 
@@ -25,11 +25,11 @@ public class LastDPValue {
 		this.timestamp = timestamp;
 	}
 
-	public Number getValue() {
+	public Object getValue() {
 		return value;
 	}
 
-	public void setValue(Number value) {
+	public void setValue(Object value) {
 		this.value = value;
 	}
 

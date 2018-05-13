@@ -25,6 +25,9 @@ public class SubQuery {
 	private String granularity;
 	private Boolean explicitTags;
 	private Integer realTimeSeconds;
+	private Integer limit;
+	private Integer offset;
+	private String dpValue;
 	private List<Filter> filters;
 
 	public static class Builder {
@@ -32,6 +35,9 @@ public class SubQuery {
 		private String metric;
 		private String downsample;
 		private Boolean rate;
+		private Integer limit;
+		private Integer offset;
+		private String dpValue;
 		private Map<String, String> tags = new HashMap<String, String>();
 		private Granularity granularityType;
 		private Boolean explicitTags;
@@ -45,6 +51,21 @@ public class SubQuery {
 
 		public Builder rate() {
 			this.rate = true;
+			return this;
+		}
+
+		public Builder limit() {
+			this.limit = 0;
+			return this;
+		}
+
+		public Builder offset() {
+			this.offset = 0;
+			return this;
+		}
+
+		public Builder dpValue() {
+			this.dpValue = null;
 			return this;
 		}
 
@@ -122,6 +143,21 @@ public class SubQuery {
 			return this;
 		}
 
+		public Builder limit(Integer limit) {
+			this.limit = limit;
+			return this;
+		}
+
+		public Builder offset(Integer offset) {
+			this.offset = offset;
+			return this;
+			}
+
+		public Builder dpValue(String dpValue) {
+			this.dpValue = dpValue;
+			return this;
+		}
+
 		/**
 		 * set the downsample
 		 * @param downsample downsample
@@ -184,6 +220,19 @@ public class SubQuery {
 			subQuery.granularityType = this.granularityType;
 			subQuery.realTimeSeconds = this.realTimeSeconds;
 			subQuery.explicitTags = this.explicitTags;
+
+			if (this.limit != null && this.limit > 0) {
+				subQuery.limit = this.limit;
+			}
+
+			if (this.offset != null && this.offset > 0) {
+				subQuery.offset = this.offset;
+			}
+
+			if (this.dpValue != null) {
+				subQuery.dpValue = this.dpValue;
+			}
+
 			if (this.granularityType != null) {
 				subQuery.granularity = this.granularityType.getName();
 			}
@@ -289,4 +338,15 @@ public class SubQuery {
 		return filters;
 	}
 
+	public Integer getLimit() {
+		return limit;
+	}
+
+	public Integer getOffset() {
+		return offset;
+	}
+
+	public String getDpValue() {
+		return dpValue;
+	}
 }
