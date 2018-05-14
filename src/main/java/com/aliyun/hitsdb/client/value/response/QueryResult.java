@@ -10,7 +10,7 @@ public class QueryResult extends JSONValue {
     private String metric;
     private Map<String, String> tags;
     private List<String> aggregateTags;
-    private LinkedHashMap<Long, Number> dps = new LinkedHashMap<Long, Number>();
+    private LinkedHashMap<Long, Object> dps = new LinkedHashMap<Long, Object>();
     private LinkedHashMap<Long, String> sdps = new LinkedHashMap<Long, String>();
 
     public List<String> getAggregateTags() {
@@ -21,7 +21,7 @@ public class QueryResult extends JSONValue {
         this.aggregateTags = aggregateTags;
     }
 
-    public LinkedHashMap<Long, Number> getDps() {
+    public LinkedHashMap<Long, Object> getDps() {
         return dps;
     }
 
@@ -33,7 +33,7 @@ public class QueryResult extends JSONValue {
         return tags;
     }
 
-    public void setDps(LinkedHashMap<Long, Number> dps) {
+    public void setDps(LinkedHashMap<Long, Object> dps) {
         this.dps = dps;
     }
 

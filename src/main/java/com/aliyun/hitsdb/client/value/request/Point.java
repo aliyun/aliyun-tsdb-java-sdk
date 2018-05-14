@@ -18,7 +18,7 @@ public class Point extends JSONValue {
 	public static class MetricBuilder {
 		private String metric;
 		private Map<String, String> tags = new HashMap<String, String>();
-		private Number value;
+		private Object value;
 		private long timestamp;
 		private Granularity granularityType;
 		private String granularity;
@@ -93,7 +93,7 @@ public class Point extends JSONValue {
 		 * @param value value
 		 * @return MetricBuilder
 		 */
-		public MetricBuilder value(Number value) {
+		public MetricBuilder value(Object value) {
 			Objects.requireNonNull(value);
 			this.value = value;
 			return this;
@@ -105,7 +105,7 @@ public class Point extends JSONValue {
 		 * @param value doube, long, int 
 		 * @return MetricBuilder
 		 */
-		public MetricBuilder value(long timestamp, Number value) {
+		public MetricBuilder value(long timestamp, Object value) {
 			Objects.requireNonNull(value);
 			this.timestamp = timestamp;
 			this.value = value;
@@ -118,7 +118,7 @@ public class Point extends JSONValue {
 		 * @param value doube, long, int 
 		 * @return MetricBuilder
 		 */
-		public MetricBuilder value(Date date, Number value) {
+		public MetricBuilder value(Date date, Object value) {
 			Objects.requireNonNull(value);
 			Objects.requireNonNull(date);
 			this.timestamp = date.getTime();
@@ -199,7 +199,7 @@ public class Point extends JSONValue {
 	private String metric;
 	private Map<String, String> tags;
 	private Long timestamp;
-	private Number value;
+	private Object value;
 	private String granularity;
 	private String aggregator;
 	private String json;
@@ -217,7 +217,7 @@ public class Point extends JSONValue {
 		return timestamp;
 	}
 
-	public Number getValue() {
+	public Object getValue() {
 		return value;
 	}
 
@@ -248,7 +248,7 @@ public class Point extends JSONValue {
 		this.timestamp = timestamp;
 	}
 
-	public void setValue(Number value) {
+	public void setValue(Object value) {
 		this.value = value;
 	}
 
@@ -312,15 +312,19 @@ public class Point extends JSONValue {
 			throw new IllegalArgumentException("The value can't be all null");
 		}
 
-		if (point.value == (Number) Double.NaN) {
+		if (point.value instanceof String && ((String) point.value).isEmpty()) {
+			throw new IllegalArgumentException("The value can't be empty");
+		}
+
+		if (point.value instanceof Number && point.value == (Number) Double.NaN) {
 			throw new IllegalArgumentException("The value can't be NaN");
 		}
 
-		if (point.value == (Number) Double.POSITIVE_INFINITY) {
+		if (point.value instanceof Number && point.value == (Number) Double.POSITIVE_INFINITY) {
 			throw new IllegalArgumentException("The value can't be POSITIVE_INFINITY");
 		}
 
-		if (point.value == (Number) Double.NEGATIVE_INFINITY) {
+		if (point.value instanceof Number && point.value == (Number) Double.NEGATIVE_INFINITY) {
 			throw new IllegalArgumentException("The value can't be NEGATIVE_INFINITY");
 		}
 

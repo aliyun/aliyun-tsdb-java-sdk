@@ -11,13 +11,17 @@ import java.util.concurrent.TimeUnit;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.value.Result;
+import com.aliyun.hitsdb.client.value.request.LookupRequest;
 import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.value.request.Query;
 import com.aliyun.hitsdb.client.value.request.Timeline;
 import com.aliyun.hitsdb.client.value.response.LastDPValue;
+import com.aliyun.hitsdb.client.value.response.LastDataValue;
 import com.aliyun.hitsdb.client.value.response.QueryResult;
 import com.aliyun.hitsdb.client.value.response.TagResult;
+import com.aliyun.hitsdb.client.value.response.LookupResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
+import com.aliyun.hitsdb.client.value.request.LookupTagFilter;
 
 public interface HiTSDB extends Closeable {
 	/**
@@ -166,6 +170,20 @@ public interface HiTSDB extends Closeable {
 	List<String> suggest(Suggest type, String prefix, int max) throws HttpUnknowStatusException;
 
 	/**
+	 * @param metric
+	 * @param tags
+	 * @param max
+	 * @return
+	 */
+	List<LookupResult> lookup(String metric, List<LookupTagFilter> tags, int max) throws HttpUnknowStatusException;
+
+	/**
+	 * @param lookupRequest
+	 * @return
+	 */
+	List<LookupResult> lookup(LookupRequest lookupRequest) throws HttpUnknowStatusException;
+
+	/**
 	 * dumpMeta method
 	 * @param tagkey tagkey
 	 * @param tagValuePrefix the prefix of the tagvalue
@@ -197,4 +215,36 @@ public interface HiTSDB extends Closeable {
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException;
+
+	/**
+	 * /api/query/last endpoint
+	 * @param timelines timelimes
+	 * @return result
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	List<LastDataValue> queryLast(Collection<Timeline> timelines) throws HttpUnknowStatusException;
+
+	/**
+	 * /api/query/last endpoint
+	 * @param timelines timelimes
+	 * @return List
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	List<LastDataValue> queryLast(Timeline... timelines) throws HttpUnknowStatusException;
+
+	/**
+	 * /api/query/last endpoint with tsuids
+	 * @param tsuids tsuids
+	 * @return result
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	List<LastDataValue> queryLast(List<String> tsuids) throws HttpUnknowStatusException;
+
+	/**
+	 * /api/query/last endpoint with tsuids
+	 * @param tsuids tsuids
+	 * @return List
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	List<LastDataValue> queryLast(String... tsuids) throws HttpUnknowStatusException;
 }

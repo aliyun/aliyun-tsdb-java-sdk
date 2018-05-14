@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
@@ -46,10 +47,14 @@ import com.aliyun.hitsdb.client.value.request.Query;
 import com.aliyun.hitsdb.client.value.request.SuggestValue;
 import com.aliyun.hitsdb.client.value.request.TTLValue;
 import com.aliyun.hitsdb.client.value.request.Timeline;
+import com.aliyun.hitsdb.client.value.request.LookupRequest;
+import com.aliyun.hitsdb.client.value.request.LookupTagFilter;
 import com.aliyun.hitsdb.client.value.response.LastDPValue;
 import com.aliyun.hitsdb.client.value.response.QueryResult;
 import com.aliyun.hitsdb.client.value.response.TTLResult;
 import com.aliyun.hitsdb.client.value.response.TagResult;
+import com.aliyun.hitsdb.client.value.response.LastDataValue;
+import com.aliyun.hitsdb.client.value.response.LookupResult;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
@@ -290,6 +295,31 @@ public class HiTSDBClient implements HiTSDB {
 		}
 	}
 
+    @Override
+    public List<LookupResult> lookup(String metric, List<LookupTagFilter> tags, int max) {
+	    LookupRequest lookupRequest = new LookupRequest(metric, tags, max);
+	    return lookup(lookupRequest);
+    }
+
+    @Override
+    public List<LookupResult> lookup(LookupRequest lookupRequest) {
+	    HttpResponse httpResponse = httpclient.post(HttpAPI.LOOKUP, lookupRequest.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                List<LookupResult> list = JSON.parseArray("["+content+"]", LookupResult.class);
+                return list;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
 	@Override
 	public int ttl() {
 		HttpResponse httpResponse = httpclient.get(HttpAPI.TTL, null);
@@ -341,14 +371,14 @@ public class HiTSDBClient implements HiTSDB {
 		List<QueryResult> queryResults = this.query(query);
 		for (QueryResult queryResult : queryResults) {
 			{
-				LinkedHashMap<Long, Number> dps = queryResult.getDps();
+				LinkedHashMap<Long, Object> dps = queryResult.getDps();
 				if (dps != null) {
-					LinkedHashMap<Long, Number> newDps = new LinkedHashMap<Long, Number>(num);
-					Entry<Long, Number> lastEntry = LinkedHashMapUtils.getTail(dps);
+					LinkedHashMap<Long, Object> newDps = new LinkedHashMap<Long, Object>(num);
+					Entry<Long, Object> lastEntry = LinkedHashMapUtils.getTail(dps);
 					if (lastEntry != null) {
 						newDps.put(lastEntry.getKey(), lastEntry.getValue());
 						for (int count = 1; count < num; count++) {
-							Entry<Long, Number> beforeEntry = LinkedHashMapUtils.getBefore(lastEntry);
+							Entry<Long, Object> beforeEntry = LinkedHashMapUtils.getBefore(lastEntry);
 							if (beforeEntry != null) {
 								newDps.put(beforeEntry.getKey(), beforeEntry.getValue());
 								lastEntry = beforeEntry;
@@ -493,6 +523,70 @@ public class HiTSDBClient implements HiTSDB {
 	@Override
 	public List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException {
 		return lastdp(Arrays.asList(timelines));
+	}
+
+	@Override
+	public List<LastDataValue> queryLast(Collection<Timeline> timelines) throws HttpUnknowStatusException {
+		Object timelinesJSON = JSON.toJSON(timelines);
+		JSONObject obj = new JSONObject();
+		obj.put("queries", timelinesJSON);
+		String jsonString = obj.toJSONString();
+		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<LastDataValue> queryResultList = JSON.parseArray(content, LastDataValue.class);
+				return queryResultList;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	@Override
+	public List<LastDataValue> queryLast(Timeline... timelines) throws HttpUnknowStatusException {
+		return queryLast(Arrays.asList(timelines));
+	}
+
+	@Override
+	public List<LastDataValue> queryLast(List<String> tsuids) throws HttpUnknowStatusException {
+		Object tsuidsJSONList = JSON.toJSON(tsuids); /* Convert to ["000001000001000001","000001000001000002,...] */
+		JSONObject tsuidsJSONObj = new JSONObject();
+		tsuidsJSONObj.put("tsuids", tsuidsJSONList); /* Convert to "tsuid":["000001000001000001","000001000001000002,...] */
+        List<JSONObject> tsuidsJSONObjList = new LinkedList<>();
+        tsuidsJSONObjList.add(tsuidsJSONObj);
+		JSONObject obj = new JSONObject();
+		obj.put("queries", tsuidsJSONObjList); /* Convert to "queries":[{"tsuid":["000001000001000001","000001000001000002,...]}] */
+		String jsonString = obj.toJSONString();
+		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<LastDataValue> queryResultList = JSON.parseArray(content, LastDataValue.class);
+				return queryResultList;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	@Override
+	public List<LastDataValue> queryLast(String... tsuids) throws HttpUnknowStatusException {
+		return queryLast(Arrays.asList(tsuids));
 	}
 
 	@Override

@@ -55,7 +55,7 @@ public class TestHiTSDBClientQueryStringValue {
         List<QueryResult> result = tsdb.query(query);
         QueryResult queryResult = result.get(0);
         LinkedHashMap<Long, String> sdps = queryResult.getSdps();
-        LinkedHashMap<Long, Number> dps = queryResult.getDps();
+        LinkedHashMap<Long, Object> dps = queryResult.getDps();
         System.out.println(sdps);
         System.out.println(dps);
         System.out.println("查询结果：" + result);
