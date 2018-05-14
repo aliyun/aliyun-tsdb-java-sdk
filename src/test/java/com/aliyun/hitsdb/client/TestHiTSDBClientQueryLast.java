@@ -72,7 +72,7 @@ public class TestHiTSDBClientQueryLast {
         List<LastDataValue> lastDataValues = tsdb.queryLast(Arrays.asList(doubleType, stringType, booleanType, integerType));
         System.out.println("Last Data Values: " + lastDataValues);
 
-        List<String> tsuids = new LinkedList<>();
+        List<String> tsuids = new LinkedList<String>();
         for (LastDataValue lastDataValue : lastDataValues) {
             String tsuid = lastDataValue.getTsuid();
             tsuids.add(tsuid);

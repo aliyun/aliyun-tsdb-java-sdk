@@ -560,7 +560,7 @@ public class HiTSDBClient implements HiTSDB {
 		Object tsuidsJSONList = JSON.toJSON(tsuids); /* Convert to ["000001000001000001","000001000001000002,...] */
 		JSONObject tsuidsJSONObj = new JSONObject();
 		tsuidsJSONObj.put("tsuids", tsuidsJSONList); /* Convert to "tsuid":["000001000001000001","000001000001000002,...] */
-        List<JSONObject> tsuidsJSONObjList = new LinkedList<>();
+        List<JSONObject> tsuidsJSONObjList = new LinkedList<JSONObject>();
         tsuidsJSONObjList.add(tsuidsJSONObj);
 		JSONObject obj = new JSONObject();
 		obj.put("queries", tsuidsJSONObjList); /* Convert to "queries":[{"tsuid":["000001000001000001","000001000001000002,...]}] */
