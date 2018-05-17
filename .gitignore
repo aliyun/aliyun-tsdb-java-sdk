@@ -1,3 +1,5 @@
+hitsdb-client.iml
+/.idea/
 /target/
 /.settings/
 /.classpath
