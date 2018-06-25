@@ -91,7 +91,7 @@ public class TestHiTSDBClientQueryLimitAndDpValue {
             // 写入数据
             List<Point> putlist_ts1 = new ArrayList<Point>();
             List<Point> putlist_ts2 = new ArrayList<Point>();
-            List<Point> checklist = new ArrayList<>(); // Used for query results comparing
+            List<Point> checklist = new ArrayList<Point>(); // Used for query results comparing
 
             for (int i = 0; i < 1000; i++) {
                 Point point = Point.metric(Metric).tag(Tagk1, Tagv1).timestamp(startTime + i)
@@ -139,7 +139,7 @@ public class TestHiTSDBClientQueryLimitAndDpValue {
 
             // 写入数据
             List<Point> putlist_ts1 = new ArrayList<Point>();
-            List<Point> checklist = new ArrayList<>(); // Used for query results comparing
+            List<Point> checklist = new ArrayList<Point>(); // Used for query results comparing
 
             for (int i = 0; i < 1000; i++) {
                 Point point = Point.metric(Metric).tag(Tagk1, Tagv1).timestamp(startTime + i)

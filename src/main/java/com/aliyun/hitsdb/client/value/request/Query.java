@@ -29,6 +29,11 @@ public class Query extends JSONValue {
 			this.startTime = startTime;
 			this.endTime = endTime;
 		}
+		
+		public Builder end(Date endDate) {
+            this.endTime = endDate.getTime();
+            return this;
+        }
 
 		public Builder end(long endTime) {
 			this.endTime = endTime;

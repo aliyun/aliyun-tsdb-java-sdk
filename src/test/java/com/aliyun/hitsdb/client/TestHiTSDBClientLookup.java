@@ -43,8 +43,8 @@ public class TestHiTSDBClientLookup {
         final String Tagv2_prefix = "v2.testLookupWithVariousOptions.";
 
         List<Point> putlist = new ArrayList<Point>();
-        Map<String, String> tagkv_1 = new HashMap<>();
-        Map<String, String> tagvk_2 = new HashMap<>();
+        Map<String, String> tagkv_1 = new HashMap<String, String>();
+        Map<String, String> tagvk_2 = new HashMap<String, String>();
         final int startTime = 1511927288;
 
         // 生成新的时间线
