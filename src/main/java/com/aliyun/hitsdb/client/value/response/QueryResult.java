@@ -1,8 +1,6 @@
 package com.aliyun.hitsdb.client.value.response;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.aliyun.hitsdb.client.value.JSONValue;
 
@@ -53,4 +51,22 @@ public class QueryResult extends JSONValue {
         this.sdps = sdps;
     }
 
+    public String tagsToString() {
+        if (tags == null || tags.isEmpty()) {
+            return null;
+        }
+        Set<String> tagks = new TreeSet<String>();
+        tagks.addAll(tags.keySet());
+        StringBuilder tagsString = new StringBuilder();
+        boolean firstTag = true;
+        for (String tagk : tagks) {
+            if (firstTag) {
+                tagsString.append(tagk).append("$").append(tags.get(tagk));
+                firstTag = false;
+            } else {
+                tagsString.append("$").append(tagk).append("$").append(tags.get(tagk));
+            }
+        }
+        return tagsString.toString();
+    }
 }
