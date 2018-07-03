@@ -9,8 +9,10 @@ public class QueryResult extends JSONValue {
     private Map<String, String> tags;
     private List<String> aggregateTags;
     private LinkedHashMap<Long, Object> dps = new LinkedHashMap<Long, Object>();
+    
+    @Deprecated
     private LinkedHashMap<Long, String> sdps = new LinkedHashMap<Long, String>();
-
+    
     public List<String> getAggregateTags() {
         return aggregateTags;
     }
@@ -43,10 +45,12 @@ public class QueryResult extends JSONValue {
         this.tags = tags;
     }
 
+    @Deprecated
     public LinkedHashMap<Long, String> getSdps() {
         return sdps;
     }
 
+    @Deprecated
     public void setSdps(LinkedHashMap<Long, String> sdps) {
         this.sdps = sdps;
     }
