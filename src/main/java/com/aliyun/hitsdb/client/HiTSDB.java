@@ -11,17 +11,9 @@ import java.util.concurrent.TimeUnit;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.value.Result;
-import com.aliyun.hitsdb.client.value.request.LookupRequest;
-import com.aliyun.hitsdb.client.value.request.Point;
-import com.aliyun.hitsdb.client.value.request.Query;
-import com.aliyun.hitsdb.client.value.request.Timeline;
-import com.aliyun.hitsdb.client.value.response.LastDPValue;
-import com.aliyun.hitsdb.client.value.response.LastDataValue;
-import com.aliyun.hitsdb.client.value.response.QueryResult;
-import com.aliyun.hitsdb.client.value.response.TagResult;
-import com.aliyun.hitsdb.client.value.response.LookupResult;
+import com.aliyun.hitsdb.client.value.request.*;
+import com.aliyun.hitsdb.client.value.response.*;
 import com.aliyun.hitsdb.client.value.type.Suggest;
-import com.aliyun.hitsdb.client.value.request.LookupTagFilter;
 
 public interface HiTSDB extends Closeable {
 	/**
@@ -35,6 +27,18 @@ public interface HiTSDB extends Closeable {
 	 * @param points points
 	 */
 	void put(Point... points);
+
+	/**
+	 * Asynchronous multi-valued put point
+	 * @param point point
+	 */
+	void multiValuedPut(MultiValuedPoint point);
+
+	/**
+	 * Asynchronous multi-valued put points
+	 * @param points points
+	 */
+	void multiValuedPut(MultiValuedPoint... points);
 
 	/**
 	 * Synchronous put method
@@ -76,7 +80,48 @@ public interface HiTSDB extends Closeable {
 	 * @return Result
 	 */
 	<T extends Result> T putSync(Class<T> resultType,Point... points);
-	
+
+	/**
+	 * Synchronous multi-valued put method
+	 * @param points points
+	 * @return Result
+	 */
+	Result multiValuedPutSync(Collection<MultiValuedPoint> points);
+
+	/**
+	 * Synchronous multi-valued put method
+	 * @param points points
+	 * @return Result
+	 */
+	Result multiValuedPutSync(MultiValuedPoint... points);
+
+	/**
+	 * Synchronous multi-valued put method
+	 * @param points points
+	 * @param resultType resultType
+	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
+	 * @return Result
+	 */
+	<T extends Result> T multiValuedPutSync(Collection<MultiValuedPoint> points, Class<T> resultType);
+
+	/**
+	 * Synchronous multi-valued put method
+	 * @param resultType resultType
+	 * @param points points
+	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
+	 * @return Result
+	 */
+	<T extends Result> T multiValuedPutSync(Class<T> resultType, Collection<MultiValuedPoint> points);
+
+	/**
+	 * Synchronous multi-valued put method
+	 * @param resultType resultType
+	 * @param points points
+	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
+	 * @return Result
+	 */
+	<T extends Result> T multiValuedPutSync(Class<T> resultType, MultiValuedPoint... points);
+
 	/**
 	 * query method
 	 * @param query query
@@ -90,6 +135,13 @@ public interface HiTSDB extends Closeable {
 	 * @return result : List
 	 */
 	List<QueryResult> query(Query query) throws HttpUnknowStatusException;
+
+	/**
+	 * Multi-valued query method. Multi-valued query does not support callback yet.
+	 * @param query
+	 * @return result : List
+	 */
+	MultiValuedQueryResult multiValuedQuery(MultiValuedQuery query) throws HttpUnknowStatusException;
 
 	/**
 	 * @param query query
@@ -215,6 +267,14 @@ public interface HiTSDB extends Closeable {
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException;
+
+	/**
+	 * /api/query/last endpoint
+	 * @param queryLastRequest multi-valued query last request
+	 * @return result
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException;
 
 	/**
 	 * /api/query/last endpoint

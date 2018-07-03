@@ -49,7 +49,9 @@ public class LookupRequest extends JSONValue {
         }
 
         public LookupRequest.Builder tags(List<LookupTagFilter> tags) {
-            this.tags.addAll(tags);
+            if (tags != null) {
+                this.tags.addAll(tags);
+            }
             return this;
         }
 

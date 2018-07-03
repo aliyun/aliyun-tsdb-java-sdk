@@ -11,9 +11,12 @@ import com.alibaba.fastjson.annotation.JSONType;
 import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.value.JSONValue;
 import com.aliyun.hitsdb.client.value.type.Granularity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @JSONType(ignores = { "granularityType" })
 public class Point extends JSONValue {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Point.class);
 
 	public static class MetricBuilder {
 		private String metric;
@@ -43,7 +46,9 @@ public class Point extends JSONValue {
 			Objects.requireNonNull(value, "value");
 			if (!tagName.isEmpty() && !value.isEmpty()) {
 				tags.put(tagName, value);
-			}
+			} else {
+			    LOGGER.warn("Warning. Tagk/tagv is empty. We will ignore them as we cannot process the empty tagkv.");
+            }
 			return this;
 		}
 
@@ -53,7 +58,9 @@ public class Point extends JSONValue {
 		 * @return MetricBuilder
 		 */
 		public MetricBuilder tag(final Map<String, String> tags) {
-			this.tags.putAll(tags);
+		    if (tags != null) {
+                this.tags.putAll(tags);
+            }
 			return this;
 		}
 

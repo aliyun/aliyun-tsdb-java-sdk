@@ -1,6 +1,8 @@
 package com.aliyun.hitsdb.client.value.response;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class LastDataValue {
     private String metric;
@@ -55,4 +57,22 @@ public class LastDataValue {
                 + ", tsuid=" + tsuid + "]";
     }
 
+    public String tagsToString() {
+        if (tags == null || tags.isEmpty()) {
+            return null;
+        }
+        Set<String> tagks = new TreeSet<String>();
+        tagks.addAll(tags.keySet());
+        StringBuilder tagsString = new StringBuilder();
+        boolean firstTag = true;
+        for (String tagk : tagks) {
+            if (firstTag) {
+                tagsString.append(tagk).append("$").append(tags.get(tagk));
+                firstTag = false;
+            } else {
+                tagsString.append("$").append(tagk).append("$").append(tags.get(tagk));
+            }
+        }
+        return tagsString.toString();
+    }
 }

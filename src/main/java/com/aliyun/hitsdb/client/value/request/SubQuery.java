@@ -1,9 +1,6 @@
 package com.aliyun.hitsdb.client.value.request;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSON;
@@ -45,7 +42,9 @@ public class SubQuery {
 		private List<Filter> filters;
 
 		public Builder(String metric, Aggregator aggregator) {
-			this.metric = metric;
+            Objects.requireNonNull(metric, "metric");
+            Objects.requireNonNull(aggregator, "aggregator");
+            this.metric = metric;
 			this.aggregatorType = aggregator;
 		}
 
@@ -129,6 +128,9 @@ public class SubQuery {
 		 * @return Builder
 		 */
 		public Builder filter(FilterType type, String tagk, String filter) {
+		    if (type == null || tagk == null || tagk.isEmpty() || filter == null || filter.isEmpty()) {
+		        return this;
+            }
 			this.filter(type, tagk, filter, null);
 			return this;
 		}
@@ -138,23 +140,31 @@ public class SubQuery {
 		 * @param rate rate
 		 * @return Builder
 		 */
-		public Builder rate(boolean rate) {
-			this.rate = rate;
+		public Builder rate(Boolean rate) {
+			if (rate != null) {
+				this.rate = rate;
+			}
 			return this;
 		}
 
 		public Builder limit(Integer limit) {
-			this.limit = limit;
+			if (limit != null) {
+				this.limit = limit;
+			}
 			return this;
 		}
 
 		public Builder offset(Integer offset) {
-			this.offset = offset;
-			return this;
+			if (offset != null) {
+				this.offset = offset;
 			}
+			return this;
+        }
 
 		public Builder dpValue(String dpValue) {
-			this.dpValue = dpValue;
+			if (dpValue != null && !dpValue.isEmpty()) {
+				this.dpValue = dpValue;
+			}
 			return this;
 		}
 
@@ -164,7 +174,9 @@ public class SubQuery {
 		 * @return Builder
 		 */
 		public Builder downsample(String downsample) {
-			this.downsample = downsample;
+			if (downsample != null && !downsample.isEmpty()) {
+				this.downsample = downsample;
+			}
 			return this;
 		}
 
@@ -175,6 +187,9 @@ public class SubQuery {
 		 * @return Builder
 		 */
 		public Builder tag(String tagk, String tagv) {
+		    if (tagk == null || tagk.isEmpty() || tagv == null || tagv.isEmpty()) {
+		        return this;
+            }
 			this.tags.put(tagk, tagv);
 			return this;
 		}
@@ -185,7 +200,9 @@ public class SubQuery {
 		 * @return Builder
 		 */
 		public Builder tag(Map<String, String> tags) {
-			this.tags.putAll(tags);
+		    if (tags != null) {
+                this.tags.putAll(tags);
+            }
 			return this;
 		}
 
@@ -194,18 +211,24 @@ public class SubQuery {
 			return this;
 		}
 
-		public Builder explicitTags(boolean explicitTags) {
-			this.explicitTags = explicitTags;
+		public Builder explicitTags(Boolean explicitTags) {
+		    if (explicitTags != null) {
+                this.explicitTags = explicitTags;
+            }
 			return this;
 		}
 
 		public Builder realtime(Integer secondes) {
-			this.realTimeSeconds = secondes;
+		    if (secondes != null) {
+                this.realTimeSeconds = secondes;
+            }
 			return this;
 		}
 
-		public Builder realtime(long time, TimeUnit unit) {
-			this.realTimeSeconds = (int) unit.toSeconds(time);
+		public Builder realtime(Long time, TimeUnit unit) {
+		    if (time != null && unit != null) {
+                this.realTimeSeconds = (int) unit.toSeconds(time);
+            }
 			return this;
 		}
 
