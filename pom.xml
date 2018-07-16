@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.aliyun</groupId>
 	<artifactId>hitsdb-client</artifactId>
-	<version>0.0.10</version>
+	<version>0.0.11</version>
 	<name>HiTSDB Client SDK</name>
 	<description>The Alibaba HiTSDB SDK for Java used for accessing High Performance Time Series Database</description>
 	<url>https://www.aliyun.com/product/hitsdb</url>
