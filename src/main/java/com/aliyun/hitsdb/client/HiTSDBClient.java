@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.value.request.*;
 import com.aliyun.hitsdb.client.value.response.*;
@@ -99,7 +100,7 @@ public class HiTSDBClient implements HiTSDB {
 
 	/**
 	 * 强制关闭
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	private void forceClose() throws IOException {
@@ -115,7 +116,7 @@ public class HiTSDBClient implements HiTSDB {
 
 	/**
 	 * 优雅关闭
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	private void gracefulClose() throws IOException {
@@ -153,14 +154,14 @@ public class HiTSDBClient implements HiTSDB {
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccess:
-			return;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccess:
+				return;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
@@ -183,36 +184,65 @@ public class HiTSDBClient implements HiTSDB {
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccess:
-			return;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccess:
+				return;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
 	@Override
 	public List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) {
 		DumpMetaValue dumpMetaValue = new DumpMetaValue(tagkey, tagValuePrefix, max);
+		return doDumpMeta(dumpMetaValue);
+	}
+
+	@Override
+	public List<TagResult> dumpMeta(String metric, String tagkey, String tagValuePrefix, int max) {
+		DumpMetaValue dumpMetaValue = new DumpMetaValue(metric,tagkey, tagValuePrefix, max);
+		return doDumpMeta(dumpMetaValue);
+	}
+
+
+	private List<TagResult> doDumpMeta(DumpMetaValue dumpMetaValue){
 		HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccess:
-			String content = resultResponse.getContent();
-			List<TagResult> tagResults = TagResult.parseList(content);
-			return tagResults;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<TagResult> tagResults = TagResult.parseList(content);
+				return tagResults;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
+	}
 
+	@Override
+	public List<String> dumpMetric(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException {
+		DumpMetaValue dumpMetaValue = new DumpMetaValue(tagkey, tagValuePrefix, max,true);
+		HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON());
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				return  JSON.parseArray(content,String.class);
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
 	}
 
 	@Override
@@ -236,188 +266,188 @@ public class HiTSDBClient implements HiTSDB {
 		}
 	}
 
-    @Override
-    public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery multiValuedQuery) {
-	    if (multiValuedQuery.getQueries().size() != 1) {
-	        LOGGER.error("Sorry. SDK does not support multiple multi-valued sub queries for now.");
-	        throw new HttpClientException("Sorry. SDK does not support multiple multi-valued sub queries for now.");
-        }
+	@Override
+	public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery multiValuedQuery) {
+		if (multiValuedQuery.getQueries().size() != 1) {
+			LOGGER.error("Sorry. SDK does not support multiple multi-valued sub queries for now.");
+			throw new HttpClientException("Sorry. SDK does not support multiple multi-valued sub queries for now.");
+		}
 
-        List<SubQuery> singleValuedSubQueries = new ArrayList<>();
-	    long startTime = multiValuedQuery.getStart();
-	    long endTime = multiValuedQuery.getEnd();
-	    for (MultiValuedSubQuery subQuery : multiValuedQuery.getQueries()) {
-            for (MultiValuedQueryMetricDetails metricDetails : subQuery.getFieldsInfo()) {
-                SubQuery singleValuedSubQuery = SubQuery.metric(metricDetails.getField()).aggregator(metricDetails.getAggregatorType())
-                        .tag(subQuery.getTags())
-                        .downsample(metricDetails.getDownsample())
-                        .rate(metricDetails.getRate())
-                        .dpValue(metricDetails.getDpValue())
-                        .build();
-                singleValuedSubQueries.add(singleValuedSubQuery);
-            }
-        }
-        Query query = Query.timeRange(startTime, endTime).sub(singleValuedSubQueries).build();
+		List<SubQuery> singleValuedSubQueries = new ArrayList<>();
+		long startTime = multiValuedQuery.getStart();
+		long endTime = multiValuedQuery.getEnd();
+		for (MultiValuedSubQuery subQuery : multiValuedQuery.getQueries()) {
+			for (MultiValuedQueryMetricDetails metricDetails : subQuery.getFieldsInfo()) {
+				SubQuery singleValuedSubQuery = SubQuery.metric(metricDetails.getField()).aggregator(metricDetails.getAggregatorType())
+						.tag(subQuery.getTags())
+						.downsample(metricDetails.getDownsample())
+						.rate(metricDetails.getRate())
+						.dpValue(metricDetails.getDpValue())
+						.build();
+				singleValuedSubQueries.add(singleValuedSubQuery);
+			}
+		}
+		Query query = Query.timeRange(startTime, endTime).sub(singleValuedSubQueries).build();
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
-        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
-            case ServerSuccess:
-                String content = resultResponse.getContent();
-                List<QueryResult> queryResultList;
-                queryResultList = JSON.parseArray(content, QueryResult.class);
-                if (queryResultList == null || queryResultList.isEmpty()) {
-                    LOGGER.error("Empty result from HiTSDB server. {} ", queryResultList.toString());
-                    return null;
-                }
+		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<QueryResult> queryResultList;
+				queryResultList = JSON.parseArray(content, QueryResult.class);
+				if (queryResultList == null || queryResultList.isEmpty()) {
+					LOGGER.error("Empty result from HiTSDB server. {} ", queryResultList.toString());
+					return null;
+				}
 
-                // We need to obtain the measurement name from the sub query's metric.
-                MultiValuedQueryResult tupleFormat = convertQueryResultIntoTupleFormat(queryResultList,
-                                                                                       multiValuedQuery.getQueries().get(0).getMetric(),
-                                                                                       multiValuedQuery.getQueries().get(0).getLimit(),
-                                                                                       multiValuedQuery.getQueries().get(0).getOffset());
-                return tupleFormat;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
-    }
+				// We need to obtain the measurement name from the sub query's metric.
+				MultiValuedQueryResult tupleFormat = convertQueryResultIntoTupleFormat(queryResultList,
+						multiValuedQuery.getQueries().get(0).getMetric(),
+						multiValuedQuery.getQueries().get(0).getLimit(),
+						multiValuedQuery.getQueries().get(0).getOffset());
+				return tupleFormat;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
 
-    public MultiValuedQueryResult convertQueryResultIntoTupleFormat(List<QueryResult> queryResults, String metric, Integer limit, Integer offset) {
-        long startTime = System.currentTimeMillis();
-        long dpsCounter = 0;
-        Boolean reverseOrder = false;
-	    Set<Long> alignedTimestamps;
-	    // Reverse limit?
-        if (limit != null && limit < 0) {
-            limit = limit * -1;
-            reverseOrder = true;
-            alignedTimestamps = new TreeSet<Long>(Collections.reverseOrder());
-        } else {
-            alignedTimestamps = new TreeSet<Long>();
-        }
-        Set<String> tagks = new TreeSet<String>();
-        Set<String> fields = new TreeSet<String>();
-        List<List<String>> aggregateTags = new ArrayList<List<String>>();
-        if (metric == null || metric.isEmpty()) {
-            LOGGER.error("Failed to obtain measurement metric from tags. This should never happen");
-            return null;
-        }
+	public MultiValuedQueryResult convertQueryResultIntoTupleFormat(List<QueryResult> queryResults, String metric, Integer limit, Integer offset) {
+		long startTime = System.currentTimeMillis();
+		long dpsCounter = 0;
+		Boolean reverseOrder = false;
+		Set<Long> alignedTimestamps;
+		// Reverse limit?
+		if (limit != null && limit < 0) {
+			limit = limit * -1;
+			reverseOrder = true;
+			alignedTimestamps = new TreeSet<Long>(Collections.reverseOrder());
+		} else {
+			alignedTimestamps = new TreeSet<Long>();
+		}
+		Set<String> tagks = new TreeSet<String>();
+		Set<String> fields = new TreeSet<String>();
+		List<List<String>> aggregateTags = new ArrayList<List<String>>();
+		if (metric == null || metric.isEmpty()) {
+			LOGGER.error("Failed to obtain measurement metric from tags. This should never happen");
+			return null;
+		}
 
-        // Timestamps, Tagks and Fields alignment based all query result
-        for (QueryResult queryResult : queryResults) {
-            alignedTimestamps.addAll(queryResult.getDps().keySet());
-            tagks.addAll(queryResult.getTags().keySet());
-            fields.add(queryResult.getMetric());
-            aggregateTags.add(queryResult.getAggregateTags());
-            dpsCounter += queryResult.getDps().size();
-        }
+		// Timestamps, Tagks and Fields alignment based all query result
+		for (QueryResult queryResult : queryResults) {
+			alignedTimestamps.addAll(queryResult.getDps().keySet());
+			tagks.addAll(queryResult.getTags().keySet());
+			fields.add(queryResult.getMetric());
+			aggregateTags.add(queryResult.getAggregateTags());
+			dpsCounter += queryResult.getDps().size();
+		}
 
-        /**
-         * Final Result Columns: Timestamps + Ordered Tagk + Fields/Metrics
-         * Tuples will have columns' values.
-         */
-        List<String> finalColumns = new ArrayList<String>();
-        finalColumns.add("timestamp");
-        finalColumns.addAll(tagks);
-        finalColumns.addAll(fields);
+		/**
+		 * Final Result Columns: Timestamps + Ordered Tagk + Fields/Metrics
+		 * Tuples will have columns' values.
+		 */
+		List<String> finalColumns = new ArrayList<String>();
+		finalColumns.add("timestamp");
+		finalColumns.addAll(tagks);
+		finalColumns.addAll(fields);
 
-        Set<List<Object>> resultTuples = new TreeSet<List<Object>>(new MultiValuedTupleComparator(reverseOrder));
+		Set<List<Object>> resultTuples = new TreeSet<List<Object>>(new MultiValuedTupleComparator(reverseOrder));
 
-        // Group Query Result by tags.
-        Map<String, List<QueryResult>> queryResultsWithSameTags = new HashMap<String, List<QueryResult>>();
-        for (QueryResult queryResult : queryResults) {
-            String tags = queryResult.tagsToString();
-            List<QueryResult> queryResultWithSameTagsList = new ArrayList<>();
-            queryResultWithSameTagsList.add(queryResult);
-            List<QueryResult> existingList = queryResultsWithSameTags.putIfAbsent(tags, queryResultWithSameTagsList);
-            if (existingList != null) {
-                existingList.add(queryResult);
-            }
-        }
+		// Group Query Result by tags.
+		Map<String, List<QueryResult>> queryResultsWithSameTags = new HashMap<String, List<QueryResult>>();
+		for (QueryResult queryResult : queryResults) {
+			String tags = queryResult.tagsToString();
+			List<QueryResult> queryResultWithSameTagsList = new ArrayList<>();
+			queryResultWithSameTagsList.add(queryResult);
+			List<QueryResult> existingList = queryResultsWithSameTags.putIfAbsent(tags, queryResultWithSameTagsList);
+			if (existingList != null) {
+				existingList.add(queryResult);
+			}
+		}
 
-        List<List<Object>> values = new ArrayList<List<Object>>();
-        for (long timestamp : alignedTimestamps) {
-            for (Map.Entry<String, List<QueryResult>> sameTagsResultList : queryResultsWithSameTags.entrySet()) {
-                List<Object> tupleValues = new ArrayList<Object>();
-                tupleValues.add(timestamp);
-                Boolean tagValueFilled = false;
-                Map<String, Object> fieldsMap = new TreeMap<String, Object>();
-                for (int index = 0; index < sameTagsResultList.getValue().size(); index++) {
-                    QueryResult result = sameTagsResultList.getValue().get(index);
-                    // Fill Tagk values
-                    if (!tagValueFilled) {
-                        for (String tagk : tagks) {
-                            String tagv = result.getTags().get(tagk);
-                            tupleValues.add(tagv);
-                        }
-                        tagValueFilled = true;
-                    }
+		List<List<Object>> values = new ArrayList<List<Object>>();
+		for (long timestamp : alignedTimestamps) {
+			for (Map.Entry<String, List<QueryResult>> sameTagsResultList : queryResultsWithSameTags.entrySet()) {
+				List<Object> tupleValues = new ArrayList<Object>();
+				tupleValues.add(timestamp);
+				Boolean tagValueFilled = false;
+				Map<String, Object> fieldsMap = new TreeMap<String, Object>();
+				for (int index = 0; index < sameTagsResultList.getValue().size(); index++) {
+					QueryResult result = sameTagsResultList.getValue().get(index);
+					// Fill Tagk values
+					if (!tagValueFilled) {
+						for (String tagk : tagks) {
+							String tagv = result.getTags().get(tagk);
+							tupleValues.add(tagv);
+						}
+						tagValueFilled = true;
+					}
 
-                    // Fill field values
-                    fieldsMap.put(result.getMetric(), result.getDps().get(timestamp));
-                }
+					// Fill field values
+					fieldsMap.put(result.getMetric(), result.getDps().get(timestamp));
+				}
 
-                // Fill field values with null if necessary
-                for (String field : fields) {
-                    fieldsMap.putIfAbsent(field, null);
-                }
+				// Fill field values with null if necessary
+				for (String field : fields) {
+					fieldsMap.putIfAbsent(field, null);
+				}
 
-                // Format field values and exclude tuples whose fields are all null
-                Boolean keepTuple = false;
-                for (Map.Entry<String, Object> fieldValue : fieldsMap.entrySet()) {
-                    if (fieldValue.getValue() != null) {
-                        keepTuple = true;
-                    }
-                    tupleValues.add(fieldValue.getValue());
-                }
-                if (keepTuple) {
-                    resultTuples.add(tupleValues);
-                }
-            }
-        }
+				// Format field values and exclude tuples whose fields are all null
+				Boolean keepTuple = false;
+				for (Map.Entry<String, Object> fieldValue : fieldsMap.entrySet()) {
+					if (fieldValue.getValue() != null) {
+						keepTuple = true;
+					}
+					tupleValues.add(fieldValue.getValue());
+				}
+				if (keepTuple) {
+					resultTuples.add(tupleValues);
+				}
+			}
+		}
 
-        /** Dps filtering based on limit and offset */
-        int dpstartIndex = 0;
-        int dpsEndIndex = resultTuples.size();
-        if (offset != null && offset >= dpsEndIndex) {
-            return null;
-        }
+		/** Dps filtering based on limit and offset */
+		int dpstartIndex = 0;
+		int dpsEndIndex = resultTuples.size();
+		if (offset != null && offset >= dpsEndIndex) {
+			return null;
+		}
 
-        if (!(offset == null || offset == 0) || !(limit == null || limit == 0)) {
-            dpstartIndex = offset == null ? 0 : offset;
-            int newDpsEndIndex = limit == null ? dpsEndIndex : dpstartIndex + limit;
-            if (newDpsEndIndex < dpsEndIndex) {
-                dpsEndIndex = newDpsEndIndex;
-            }
-        }
+		if (!(offset == null || offset == 0) || !(limit == null || limit == 0)) {
+			dpstartIndex = offset == null ? 0 : offset;
+			int newDpsEndIndex = limit == null ? dpsEndIndex : dpstartIndex + limit;
+			if (newDpsEndIndex < dpsEndIndex) {
+				dpsEndIndex = newDpsEndIndex;
+			}
+		}
 
-        values.addAll(resultTuples);
-        values = values.subList(dpstartIndex, dpsEndIndex);
+		values.addAll(resultTuples);
+		values = values.subList(dpstartIndex, dpsEndIndex);
 
-        MultiValuedQueryResult tupleFormat = new MultiValuedQueryResult();
-        tupleFormat.setName(metric);
-        tupleFormat.setColumns(finalColumns);
-        tupleFormat.setValues(values);
-        tupleFormat.setAggregateTags(aggregateTags);
-        // Set dps for easy data access.
-        for (List<Object> tupleInfo : values) {
-            Map<String, Object> dp = new HashMap<>();
-            for (int index = 0; index < finalColumns.size(); index++) {
-                dp.put(finalColumns.get(index), tupleInfo.get(index));
-            }
-            tupleFormat.getDps().add(dp);
-        }
-        LOGGER.info("Total convertQueryResultIntoTupleFormat conversion time : {}ms. | Total DPS Processed : {}",
-                System.currentTimeMillis() - startTime, dpsCounter);
-        return tupleFormat;
-    }
+		MultiValuedQueryResult tupleFormat = new MultiValuedQueryResult();
+		tupleFormat.setName(metric);
+		tupleFormat.setColumns(finalColumns);
+		tupleFormat.setValues(values);
+		tupleFormat.setAggregateTags(aggregateTags);
+		// Set dps for easy data access.
+		for (List<Object> tupleInfo : values) {
+			Map<String, Object> dp = new HashMap<>();
+			for (int index = 0; index < finalColumns.size(); index++) {
+				dp.put(finalColumns.get(index), tupleInfo.get(index));
+			}
+			tupleFormat.getDps().add(dp);
+		}
+		LOGGER.info("Total convertQueryResultIntoTupleFormat conversion time : {}ms. | Total DPS Processed : {}",
+				System.currentTimeMillis() - startTime, dpsCounter);
+		return tupleFormat;
+	}
 
 	@Override
 	public List<QueryResult> query(Query query) {
@@ -425,19 +455,19 @@ public class HiTSDBClient implements HiTSDB {
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccessNoContent:
-			return null;
-		case ServerSuccess:
-			String content = resultResponse.getContent();
-			List<QueryResult> queryResultList;
-			queryResultList = JSON.parseArray(content, QueryResult.class);
-			return queryResultList;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<QueryResult> queryResultList;
+				queryResultList = JSON.parseArray(content, QueryResult.class);
+				return queryResultList;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
@@ -462,43 +492,43 @@ public class HiTSDBClient implements HiTSDB {
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccess:
-			String content = resultResponse.getContent();
-			List<String> list = JSON.parseArray(content, String.class);
-			return list;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<String> list = JSON.parseArray(content, String.class);
+				return list;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
-    @Override
-    public List<LookupResult> lookup(String metric, List<LookupTagFilter> tags, int max) {
-	    LookupRequest lookupRequest = new LookupRequest(metric, tags, max);
-	    return lookup(lookupRequest);
-    }
+	@Override
+	public List<LookupResult> lookup(String metric, List<LookupTagFilter> tags, int max) {
+		LookupRequest lookupRequest = new LookupRequest(metric, tags, max);
+		return lookup(lookupRequest);
+	}
 
-    @Override
-    public List<LookupResult> lookup(LookupRequest lookupRequest) {
-	    HttpResponse httpResponse = httpclient.post(HttpAPI.LOOKUP, lookupRequest.toJSON());
-        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccess:
-                String content = resultResponse.getContent();
-                List<LookupResult> list = JSON.parseArray("["+content+"]", LookupResult.class);
-                return list;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
-    }
+	@Override
+	public List<LookupResult> lookup(LookupRequest lookupRequest) {
+		HttpResponse httpResponse = httpclient.post(HttpAPI.LOOKUP, lookupRequest.toJSON());
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<LookupResult> list = JSON.parseArray("["+content+"]", LookupResult.class);
+				return list;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
 
 	@Override
 	public int ttl() {
@@ -516,14 +546,14 @@ public class HiTSDBClient implements HiTSDB {
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccess:
-			return;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccess:
+				return;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
@@ -535,19 +565,19 @@ public class HiTSDBClient implements HiTSDB {
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccess:
-			return;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccess:
+				return;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
 	@SuppressWarnings("deprecation")
-    @Override
+	@Override
 	public List<QueryResult> last(Query query, int num) throws HttpUnknowStatusException {
 		List<QueryResult> queryResults = this.query(query);
 		for (QueryResult queryResult : queryResults) {
@@ -574,7 +604,7 @@ public class HiTSDBClient implements HiTSDB {
 			}
 
 			{
-                LinkedHashMap<Long, String> sdps = queryResult.getSdps();
+				LinkedHashMap<Long, String> sdps = queryResult.getSdps();
 				if (sdps != null) {
 					LinkedHashMap<Long, String> newDps = new LinkedHashMap<Long, String>(num);
 					Entry<Long, String> lastEntry = LinkedHashMapUtils.getTail(sdps);
@@ -622,17 +652,17 @@ public class HiTSDBClient implements HiTSDB {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Result> T multiValuedPutSync(Collection<MultiValuedPoint> points, Class<T> resultType) {
-	    List<Point> singleValuedPoints = new ArrayList<Point>();
-	    for (MultiValuedPoint multiValuedPoint : points) {
-	        for (Map.Entry<String, Object> field : multiValuedPoint.getFields().entrySet()) {
-	            Point singleValuedPoint = Point.metric(field.getKey())
-                        .tag(multiValuedPoint.getTags())
-                        .timestamp(multiValuedPoint.getTimestamp())
-                        .value(field.getValue())
-                        .build();
-                singleValuedPoints.add(singleValuedPoint);
-            }
-        }
+		List<Point> singleValuedPoints = new ArrayList<Point>();
+		for (MultiValuedPoint multiValuedPoint : points) {
+			for (Map.Entry<String, Object> field : multiValuedPoint.getFields().entrySet()) {
+				Point singleValuedPoint = Point.metric(field.getKey())
+						.tag(multiValuedPoint.getTags())
+						.timestamp(multiValuedPoint.getTimestamp())
+						.value(field.getValue())
+						.build();
+				singleValuedPoints.add(singleValuedPoint);
+			}
+		}
 
 		String jsonString = JSON.toJSONString(singleValuedPoints, SerializerFeature.DisableCircularReferenceDetect);
 
@@ -707,24 +737,24 @@ public class HiTSDBClient implements HiTSDB {
 
 		T result = null;
 		switch (httpStatus) {
-		case ServerSuccessNoContent:
-			result = (T) new Result();
-			return result;
-		case ServerSuccess:
-			String content = resultResponse.getContent();
-			if (resultType.equals(SummaryResult.class)) {
-				result = (T) JSON.parseObject(content, SummaryResult.class);
-			} else if (resultType.equals(DetailsResult.class)) {
-				result = (T) JSON.parseObject(content, DetailsResult.class);
-			}
+			case ServerSuccessNoContent:
+				result = (T) new Result();
+				return result;
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				if (resultType.equals(SummaryResult.class)) {
+					result = (T) JSON.parseObject(content, SummaryResult.class);
+				} else if (resultType.equals(DetailsResult.class)) {
+					result = (T) JSON.parseObject(content, DetailsResult.class);
+				}
 
-			return result;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+				return result;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
@@ -741,16 +771,16 @@ public class HiTSDBClient implements HiTSDB {
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccessNoContent:
-			return;
-		case ServerSuccess:
-			return;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccessNoContent:
+				return;
+			case ServerSuccess:
+				return;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
@@ -764,18 +794,18 @@ public class HiTSDBClient implements HiTSDB {
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
-		case ServerSuccessNoContent:
-			return null;
-		case ServerSuccess:
-			String content = resultResponse.getContent();
-			List<LastDPValue> queryResultList = JSON.parseArray(content, LastDPValue.class);
-			return queryResultList;
-		case ServerNotSupport:
-			throw new HttpServerNotSupportException(resultResponse);
-		case ServerError:
-			throw new HttpServerErrorException(resultResponse);
-		default:
-			throw new HttpUnknowStatusException(resultResponse);
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<LastDPValue> queryResultList = JSON.parseArray(content, LastDPValue.class);
+				return queryResultList;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
 		}
 	}
 
@@ -784,149 +814,149 @@ public class HiTSDBClient implements HiTSDB {
 		return lastdp(Arrays.asList(timelines));
 	}
 
-    @Override
-    public MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException {
-	    List<Timeline> timelines = new ArrayList<Timeline>();
+	@Override
+	public MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException {
+		List<Timeline> timelines = new ArrayList<Timeline>();
 
-	    // Convert multi-valued query last request to multiple single-value query last requests.
-	    for (String field : queryLastRequest.getFields()) {
-	        Timeline tl = Timeline.metric(field).tag(queryLastRequest.getTags()).build();
-            timelines.add(tl);
-        }
+		// Convert multi-valued query last request to multiple single-value query last requests.
+		for (String field : queryLastRequest.getFields()) {
+			Timeline tl = Timeline.metric(field).tag(queryLastRequest.getTags()).build();
+			timelines.add(tl);
+		}
 
-        Object timelinesJSON = JSON.toJSON(timelines);
-        JSONObject obj = new JSONObject();
-        obj.put("queries", timelinesJSON);
-        String jsonString = obj.toJSONString();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
-        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
-            case ServerSuccess:
-                String content = resultResponse.getContent();
-                List<LastDataValue> queryResultList = JSON.parseArray(content, LastDataValue.class);
-                MultiValuedQueryLastResult result = convertQueryLastResultIntoTupleFormat(queryResultList, queryLastRequest.getMetric());
-                return result;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
-    }
+		Object timelinesJSON = JSON.toJSON(timelines);
+		JSONObject obj = new JSONObject();
+		obj.put("queries", timelinesJSON);
+		String jsonString = obj.toJSONString();
+		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<LastDataValue> queryResultList = JSON.parseArray(content, LastDataValue.class);
+				MultiValuedQueryLastResult result = convertQueryLastResultIntoTupleFormat(queryResultList, queryLastRequest.getMetric());
+				return result;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
 
-    /**
-     * Convert single-valued query results to tuple format.
-     * Note: metric is the measurement, which is obtained from MultiValuedQueryLastRequest.
-     * @param queryLastResultList single-valued result list
-     * @param metric measurement metric value
-     * @return
-     */
-    public MultiValuedQueryLastResult convertQueryLastResultIntoTupleFormat(List<LastDataValue> queryLastResultList, String metric) {
-        Set<String> tagks = new TreeSet<String>();
-        Set<String> fields = new TreeSet<String>();
-        if (metric == null || metric.isEmpty()) {
-            LOGGER.error("Failed to obtain measurement metric from tags. This should never happen");
-            return null;
-        }
+	/**
+	 * Convert single-valued query results to tuple format.
+	 * Note: metric is the measurement, which is obtained from MultiValuedQueryLastRequest.
+	 * @param queryLastResultList single-valued result list
+	 * @param metric measurement metric value
+	 * @return
+	 */
+	public MultiValuedQueryLastResult convertQueryLastResultIntoTupleFormat(List<LastDataValue> queryLastResultList, String metric) {
+		Set<String> tagks = new TreeSet<String>();
+		Set<String> fields = new TreeSet<String>();
+		if (metric == null || metric.isEmpty()) {
+			LOGGER.error("Failed to obtain measurement metric from tags. This should never happen");
+			return null;
+		}
 
-        // Timestamps, Tagks and Fields alignment based all query result
-        for (LastDataValue lastDataValue : queryLastResultList) {
-            tagks.addAll(lastDataValue.getTags().keySet());
-            fields.add(lastDataValue.getMetric());
-        }
+		// Timestamps, Tagks and Fields alignment based all query result
+		for (LastDataValue lastDataValue : queryLastResultList) {
+			tagks.addAll(lastDataValue.getTags().keySet());
+			fields.add(lastDataValue.getMetric());
+		}
 
-        /**
-         * Final Result Columns: Timestamps + Ordered Tagk + Fields/Metrics
-         * Tuples will have columns' values.
-         */
-        List<String> finalColumns = new ArrayList<String>();
-        finalColumns.add("timestamp");
-        finalColumns.addAll(tagks);
-        finalColumns.addAll(fields);
+		/**
+		 * Final Result Columns: Timestamps + Ordered Tagk + Fields/Metrics
+		 * Tuples will have columns' values.
+		 */
+		List<String> finalColumns = new ArrayList<String>();
+		finalColumns.add("timestamp");
+		finalColumns.addAll(tagks);
+		finalColumns.addAll(fields);
 
-        // Group Query Result by tags.
-        Map<String, List<LastDataValue>> queryLastResultsWithSameTags = new HashMap<String, List<LastDataValue>>();
-        for (LastDataValue queryLastResult : queryLastResultList) {
-            String tags = queryLastResult.tagsToString();
-            List<LastDataValue> queryLastResultWithSameTagsList = new ArrayList<>();
-            queryLastResultWithSameTagsList.add(queryLastResult);
-            List<LastDataValue> existingList = queryLastResultsWithSameTags.putIfAbsent(tags, queryLastResultWithSameTagsList);
-            if (existingList != null) {
-                existingList.add(queryLastResult);
-            }
-        }
+		// Group Query Result by tags.
+		Map<String, List<LastDataValue>> queryLastResultsWithSameTags = new HashMap<String, List<LastDataValue>>();
+		for (LastDataValue queryLastResult : queryLastResultList) {
+			String tags = queryLastResult.tagsToString();
+			List<LastDataValue> queryLastResultWithSameTagsList = new ArrayList<>();
+			queryLastResultWithSameTagsList.add(queryLastResult);
+			List<LastDataValue> existingList = queryLastResultsWithSameTags.putIfAbsent(tags, queryLastResultWithSameTagsList);
+			if (existingList != null) {
+				existingList.add(queryLastResult);
+			}
+		}
 
-        Set<List<Object>> resultTuples = new TreeSet<List<Object>>(new MultiValuedTupleComparator());
+		Set<List<Object>> resultTuples = new TreeSet<List<Object>>(new MultiValuedTupleComparator());
 
-        List<List<Object>> values = new ArrayList<List<Object>>();
-        for (Map.Entry<String, List<LastDataValue>> sameTagsResultList : queryLastResultsWithSameTags.entrySet()) {
-            // Alignment timestamps with the same tags result list
-            Set<Long> alignedTimestamps = new TreeSet<Long>();
-            for (LastDataValue lastDataValue : sameTagsResultList.getValue()) {
-                alignedTimestamps.add(lastDataValue.getTimestamp());
-            }
+		List<List<Object>> values = new ArrayList<List<Object>>();
+		for (Map.Entry<String, List<LastDataValue>> sameTagsResultList : queryLastResultsWithSameTags.entrySet()) {
+			// Alignment timestamps with the same tags result list
+			Set<Long> alignedTimestamps = new TreeSet<Long>();
+			for (LastDataValue lastDataValue : sameTagsResultList.getValue()) {
+				alignedTimestamps.add(lastDataValue.getTimestamp());
+			}
 
-            for (long timestamp : alignedTimestamps) {
-                List<Object> tupleValues = new ArrayList<Object>();
-                tupleValues.add(timestamp);
-                Boolean tagValueFilled = false;
-                Map<String, Object> fieldsMap = new TreeMap<String, Object>();
-                for (LastDataValue lastDataValue : sameTagsResultList.getValue()) {
-                    // Fill Tagk values
-                    if (!tagValueFilled) {
-                        for (String tagk : tagks) {
-                            String tagv = lastDataValue.getTags().get(tagk);
-                            tupleValues.add(tagv);
-                        }
-                        tagValueFilled = true;
-                    }
+			for (long timestamp : alignedTimestamps) {
+				List<Object> tupleValues = new ArrayList<Object>();
+				tupleValues.add(timestamp);
+				Boolean tagValueFilled = false;
+				Map<String, Object> fieldsMap = new TreeMap<String, Object>();
+				for (LastDataValue lastDataValue : sameTagsResultList.getValue()) {
+					// Fill Tagk values
+					if (!tagValueFilled) {
+						for (String tagk : tagks) {
+							String tagv = lastDataValue.getTags().get(tagk);
+							tupleValues.add(tagv);
+						}
+						tagValueFilled = true;
+					}
 
-                    // Fill field values
-                    if (lastDataValue.getTimestamp() == timestamp) {
-                        fieldsMap.put(lastDataValue.getMetric(), lastDataValue.getValue());
-                    }
-                }
+					// Fill field values
+					if (lastDataValue.getTimestamp() == timestamp) {
+						fieldsMap.put(lastDataValue.getMetric(), lastDataValue.getValue());
+					}
+				}
 
-                // Fill field values with null if necessary
-                for (String field : fields) {
-                    fieldsMap.putIfAbsent(field, null);
-                }
+				// Fill field values with null if necessary
+				for (String field : fields) {
+					fieldsMap.putIfAbsent(field, null);
+				}
 
-                // Format field values and exclude tuples whose fields are all null
-                Boolean keepTuple = false;
-                for (Map.Entry<String, Object> fieldValue : fieldsMap.entrySet()) {
-                    if (fieldValue.getValue() != null) {
-                        keepTuple = true;
-                    }
-                    tupleValues.add(fieldValue.getValue());
-                }
-                if (keepTuple) {
-                    resultTuples.add(tupleValues);
-                }
-            }
-        }
+				// Format field values and exclude tuples whose fields are all null
+				Boolean keepTuple = false;
+				for (Map.Entry<String, Object> fieldValue : fieldsMap.entrySet()) {
+					if (fieldValue.getValue() != null) {
+						keepTuple = true;
+					}
+					tupleValues.add(fieldValue.getValue());
+				}
+				if (keepTuple) {
+					resultTuples.add(tupleValues);
+				}
+			}
+		}
 
-        values.addAll(resultTuples);
+		values.addAll(resultTuples);
 
-        MultiValuedQueryLastResult tupleFormat = new MultiValuedQueryLastResult();
-        tupleFormat.setName(metric);
-        tupleFormat.setColumns(finalColumns);
-        tupleFormat.setValues(values);
-        // Set dps for easy data access.
-        for (List<Object> tupleInfo : values) {
-            Map<String, Object> dp = new HashMap<>();
-            for (int index = 0; index < finalColumns.size(); index++) {
-                dp.put(finalColumns.get(index), tupleInfo.get(index));
-            }
-            tupleFormat.getDps().add(dp);
-        }
-        return tupleFormat;
+		MultiValuedQueryLastResult tupleFormat = new MultiValuedQueryLastResult();
+		tupleFormat.setName(metric);
+		tupleFormat.setColumns(finalColumns);
+		tupleFormat.setValues(values);
+		// Set dps for easy data access.
+		for (List<Object> tupleInfo : values) {
+			Map<String, Object> dp = new HashMap<>();
+			for (int index = 0; index < finalColumns.size(); index++) {
+				dp.put(finalColumns.get(index), tupleInfo.get(index));
+			}
+			tupleFormat.getDps().add(dp);
+		}
+		return tupleFormat;
 
-    }
+	}
 
 	@Override
 	public List<LastDataValue> queryLast(Collection<Timeline> timelines) throws HttpUnknowStatusException {
@@ -963,8 +993,8 @@ public class HiTSDBClient implements HiTSDB {
 		Object tsuidsJSONList = JSON.toJSON(tsuids); /* Convert to ["000001000001000001","000001000001000002,...] */
 		JSONObject tsuidsJSONObj = new JSONObject();
 		tsuidsJSONObj.put("tsuids", tsuidsJSONList); /* Convert to "tsuid":["000001000001000001","000001000001000002,...] */
-        List<JSONObject> tsuidsJSONObjList = new LinkedList<JSONObject>();
-        tsuidsJSONObjList.add(tsuidsJSONObj);
+		List<JSONObject> tsuidsJSONObjList = new LinkedList<JSONObject>();
+		tsuidsJSONObjList.add(tsuidsJSONObj);
 		JSONObject obj = new JSONObject();
 		obj.put("queries", tsuidsJSONObjList); /* Convert to "queries":[{"tsuid":["000001000001000001","000001000001000002,...]}] */
 		String jsonString = obj.toJSONString();
