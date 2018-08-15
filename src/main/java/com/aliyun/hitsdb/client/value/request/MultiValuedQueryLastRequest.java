@@ -1,14 +1,15 @@
 package com.aliyun.hitsdb.client.value.request;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import com.aliyun.hitsdb.client.value.JSONValue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MultiValuedQueryLastRequest extends JSONValue {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MultiValuedQueryLastRequest.class);
-
+    
     private String metric;
     private Map<String, String> tags;
     private List<String> fields;

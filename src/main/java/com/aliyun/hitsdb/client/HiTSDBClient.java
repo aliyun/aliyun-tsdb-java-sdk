@@ -343,7 +343,6 @@ public class HiTSDBClient implements HiTSDB {
         }
 
         List<List<Object>> values = new ArrayList<List<Object>>();
-        int dpsIndex = 0;
         for (long timestamp : alignedTimestamps) {
             for (Map.Entry<String, List<QueryResult>> sameTagsResultList : queryResultsWithSameTags.entrySet()) {
                 List<Object> tupleValues = new ArrayList<Object>();
@@ -547,7 +546,8 @@ public class HiTSDBClient implements HiTSDB {
 		}
 	}
 
-	@Override
+	@SuppressWarnings("deprecation")
+    @Override
 	public List<QueryResult> last(Query query, int num) throws HttpUnknowStatusException {
 		List<QueryResult> queryResults = this.query(query);
 		for (QueryResult queryResult : queryResults) {
@@ -574,7 +574,7 @@ public class HiTSDBClient implements HiTSDB {
 			}
 
 			{
-				LinkedHashMap<Long, String> sdps = queryResult.getSdps();
+                LinkedHashMap<Long, String> sdps = queryResult.getSdps();
 				if (sdps != null) {
 					LinkedHashMap<Long, String> newDps = new LinkedHashMap<Long, String>(num);
 					Entry<Long, String> lastEntry = LinkedHashMapUtils.getTail(sdps);
