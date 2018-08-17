@@ -13,7 +13,7 @@ public class Filter {
         private String tagk;
         private String filter;
         private Boolean groupBy;
-        
+
         public Builder(FilterType type, String tagk, String filter, Boolean groupBy) {
             super();
             this.type = type;
@@ -50,7 +50,10 @@ public class Filter {
     public static Builder filter(FilterType type,String tagk,String filter,Boolean groupBy) {
         return new Builder(type, tagk, filter, groupBy);
     }
-    
+
+    public static Builder filter(FilterType type,String filter) {
+        return new Builder(type, null, filter);
+    }
 
     public FilterType getType() {
         return type;
@@ -83,5 +86,4 @@ public class Filter {
     public void setGroupBy(Boolean groupBy) {
         this.groupBy = groupBy;
     }
-
 }

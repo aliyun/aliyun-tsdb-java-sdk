@@ -121,7 +121,7 @@ public class SubQuery {
 		}
 
 		/**
-		 * add a filter
+		 * add a tag value filter
 		 * @param type tupe
 		 * @param tagk tagkey
 		 * @param filter filter
@@ -133,6 +133,30 @@ public class SubQuery {
             }
 			this.filter(type, tagk, filter, null);
 			return this;
+		}
+
+		/**
+		 * Add a geo filter
+		 * @param type geo filter type
+		 * @param filter filter info
+		 * @return
+		 */
+		public Builder filter(FilterType type, String filter) {
+			// Geo filter sanity check
+			if (type != FilterType.GeoBBox && type != FilterType.GeoDistance) {
+				return this;
+			}
+
+            if (filters == null) {
+                filters = new ArrayList<Filter>();
+            }
+
+            Filter f = new Filter();
+            f.setType(type);
+            f.setFilter(filter);
+
+            filters.add(f);
+            return this;
 		}
 
 		/**

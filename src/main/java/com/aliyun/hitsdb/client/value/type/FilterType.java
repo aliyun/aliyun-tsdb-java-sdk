@@ -5,7 +5,12 @@ import java.lang.reflect.Field;
 import com.aliyun.hitsdb.client.exception.http.HttpClientException;
 
 public enum FilterType {
-	LiteralOr("literal_or"), NotLiteralOr("not_literal_or"), Wildcard("wildcard"), Regexp("regexp");
+	LiteralOr("literal_or"),
+    NotLiteralOr("not_literal_or"),
+    Wildcard("wildcard"),
+    Regexp("regexp"),
+    GeoBBox("geo_bbox"),
+    GeoDistance("geo_distance");
 
 	private String name;
 
