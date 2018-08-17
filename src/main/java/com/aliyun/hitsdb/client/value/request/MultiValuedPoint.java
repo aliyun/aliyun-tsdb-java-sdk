@@ -4,10 +4,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.HiTSDBConfig;
+import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.JSONValue;
 
 public class MultiValuedPoint extends JSONValue {

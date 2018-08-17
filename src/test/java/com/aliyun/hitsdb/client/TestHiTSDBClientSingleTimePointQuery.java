@@ -32,7 +32,7 @@ public class TestHiTSDBClientSingleTimePointQuery {
 
     private void generateDataPoints() {
         if(pointsMap == null) {
-            pointsMap = new HashMap<>();
+            pointsMap = new HashMap();
         } else {
             pointsMap.clear();
         }
@@ -60,7 +60,7 @@ public class TestHiTSDBClientSingleTimePointQuery {
 
     @Before
     public void init() throws HttpClientInitException {
-        pointsMap = new HashMap<>();
+        pointsMap = new HashMap();
         generateDataPoints();
         BatchPutCallback pcb = new BatchPutCallback(){
 

@@ -1,32 +1,13 @@
 package com.aliyun.hitsdb.client;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.Collections;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
-
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.aliyun.hitsdb.client.value.request.*;
-import com.aliyun.hitsdb.client.value.response.*;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.consumer.Consumer;
 import com.aliyun.hitsdb.client.consumer.ConsumerFactory;
-import com.aliyun.hitsdb.client.exception.http.HttpClientException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
-import com.aliyun.hitsdb.client.exception.http.HttpServerErrorException;
-import com.aliyun.hitsdb.client.exception.http.HttpServerNotSupportException;
-import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
+import com.aliyun.hitsdb.client.exception.http.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.HttpClientFactory;
@@ -37,10 +18,22 @@ import com.aliyun.hitsdb.client.queue.DataQueueFactory;
 import com.aliyun.hitsdb.client.util.LinkedHashMapUtils;
 import com.aliyun.hitsdb.client.value.JSONValue;
 import com.aliyun.hitsdb.client.value.Result;
+import com.aliyun.hitsdb.client.value.request.*;
+import com.aliyun.hitsdb.client.value.response.*;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
 import com.google.common.util.concurrent.RateLimiter;
+import org.apache.http.HttpResponse;
+import org.apache.http.concurrent.FutureCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 public class HiTSDBClient implements HiTSDB {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HiTSDBClient.class);
@@ -273,7 +266,7 @@ public class HiTSDBClient implements HiTSDB {
 			throw new HttpClientException("Sorry. SDK does not support multiple multi-valued sub queries for now.");
 		}
 
-		List<SubQuery> singleValuedSubQueries = new ArrayList<>();
+		List<SubQuery> singleValuedSubQueries = new ArrayList<SubQuery>();
 		long startTime = multiValuedQuery.getStart();
 		long endTime = multiValuedQuery.getEnd();
 		for (MultiValuedSubQuery subQuery : multiValuedQuery.getQueries()) {
@@ -364,12 +357,19 @@ public class HiTSDBClient implements HiTSDB {
 		Map<String, List<QueryResult>> queryResultsWithSameTags = new HashMap<String, List<QueryResult>>();
 		for (QueryResult queryResult : queryResults) {
 			String tags = queryResult.tagsToString();
-			List<QueryResult> queryResultWithSameTagsList = new ArrayList<>();
-			queryResultWithSameTagsList.add(queryResult);
-			List<QueryResult> existingList = queryResultsWithSameTags.putIfAbsent(tags, queryResultWithSameTagsList);
-			if (existingList != null) {
-				existingList.add(queryResult);
+//			List<QueryResult> queryResultWithSameTagsList = new ArrayList<QueryResult>();
+//			queryResultWithSameTagsList.add(queryResult);
+//			List<QueryResult> existingList = queryResultsWithSameTags.putIfAbsent(tags, queryResultWithSameTagsList);
+//			if (existingList != null) {
+//				existingList.add(queryResult);
+//			}
+
+			List<QueryResult> existingList = queryResultsWithSameTags.get(tags);
+			if (existingList == null) {
+				existingList = new ArrayList<QueryResult>();
+				queryResultsWithSameTags.put(tags,existingList);
 			}
+			existingList.add(queryResult);
 		}
 
 		List<List<Object>> values = new ArrayList<List<Object>>();
@@ -396,8 +396,12 @@ public class HiTSDBClient implements HiTSDB {
 
 				// Fill field values with null if necessary
 				for (String field : fields) {
-					fieldsMap.putIfAbsent(field, null);
+//					fieldsMap.putIfAbsent(field, null);
+					if(!fieldsMap.containsKey(field)){
+						fieldsMap.put(field,null);
+					}
 				}
+
 
 				// Format field values and exclude tuples whose fields are all null
 				Boolean keepTuple = false;
@@ -438,7 +442,7 @@ public class HiTSDBClient implements HiTSDB {
 		tupleFormat.setAggregateTags(aggregateTags);
 		// Set dps for easy data access.
 		for (List<Object> tupleInfo : values) {
-			Map<String, Object> dp = new HashMap<>();
+			Map<String, Object> dp = new HashMap();
 			for (int index = 0; index < finalColumns.size(); index++) {
 				dp.put(finalColumns.get(index), tupleInfo.get(index));
 			}
@@ -882,12 +886,21 @@ public class HiTSDBClient implements HiTSDB {
 		Map<String, List<LastDataValue>> queryLastResultsWithSameTags = new HashMap<String, List<LastDataValue>>();
 		for (LastDataValue queryLastResult : queryLastResultList) {
 			String tags = queryLastResult.tagsToString();
-			List<LastDataValue> queryLastResultWithSameTagsList = new ArrayList<>();
-			queryLastResultWithSameTagsList.add(queryLastResult);
-			List<LastDataValue> existingList = queryLastResultsWithSameTags.putIfAbsent(tags, queryLastResultWithSameTagsList);
-			if (existingList != null) {
-				existingList.add(queryLastResult);
+
+//			List<LastDataValue> queryLastResultWithSameTagsList = new ArrayList<LastDataValue>();
+//			queryLastResultWithSameTagsList.add(queryLastResult);
+//
+//			List<LastDataValue> existingList = queryLastResultsWithSameTags.putIfAbsent(tags, queryLastResultWithSameTagsList);
+//			if (existingList != null) {
+//				existingList.add(queryLastResult);
+//			}
+
+			List<LastDataValue> existingList = queryLastResultsWithSameTags.get(tags);
+			if (existingList == null) {
+				existingList = new ArrayList<LastDataValue>();
+				queryLastResultsWithSameTags.put(tags,existingList);
 			}
+			existingList.add(queryLastResult);
 		}
 
 		Set<List<Object>> resultTuples = new TreeSet<List<Object>>(new MultiValuedTupleComparator());
@@ -923,7 +936,10 @@ public class HiTSDBClient implements HiTSDB {
 
 				// Fill field values with null if necessary
 				for (String field : fields) {
-					fieldsMap.putIfAbsent(field, null);
+//					fieldsMap.putIfAbsent(field, null);
+					if(!fieldsMap.containsKey(field)){
+						fieldsMap.put(field,null);
+					}
 				}
 
 				// Format field values and exclude tuples whose fields are all null
@@ -948,7 +964,7 @@ public class HiTSDBClient implements HiTSDB {
 		tupleFormat.setValues(values);
 		// Set dps for easy data access.
 		for (List<Object> tupleInfo : values) {
-			Map<String, Object> dp = new HashMap<>();
+			Map<String, Object> dp = new HashMap();
 			for (int index = 0; index < finalColumns.size(); index++) {
 				dp.put(finalColumns.get(index), tupleInfo.get(index));
 			}

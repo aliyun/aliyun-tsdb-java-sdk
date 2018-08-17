@@ -1,9 +1,9 @@
 package com.aliyun.hitsdb.client.callback.http;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.aliyun.hitsdb.client.util.Objects;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 
