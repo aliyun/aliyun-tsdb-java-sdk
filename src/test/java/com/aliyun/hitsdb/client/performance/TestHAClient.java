@@ -37,7 +37,7 @@ public class TestHAClient {
 
         Point singlePoint = createPoint(tsid, currentSecond++, value++);
 
-        List<Point> points = new ArrayList<>();
+        List<Point> points = new ArrayList();
         Point point = createPoint(tsid, currentSecond++, value++);
         points.add(point);
         point = createPoint(tsid, currentSecond, value);

@@ -7,6 +7,7 @@ import com.aliyun.hitsdb.client.value.response.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.relation.RoleUnresolved;
 import java.util.Collection;
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class HiTSDBHAClient {
             return tsdbSlave.putSync(point);
         } catch (Exception e) {
             logger.error("Write to slave node point failed: {}", e.getMessage());
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 
@@ -57,7 +58,7 @@ public class HiTSDBHAClient {
             return tsdbSlave.putSync(points);
         } catch (Exception e) {
             logger.error("Write to slave node points failed: {}", e.getMessage());
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 
@@ -75,7 +76,7 @@ public class HiTSDBHAClient {
             return tsdbSlave.query(query);
         } catch (Exception e) {
             logger.error("Query from slave node failed: {}", e.getMessage());
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 
@@ -93,7 +94,7 @@ public class HiTSDBHAClient {
             return tsdbMaster.query(query);
         } catch (Exception e) {
             logger.error("Query from master node failed: {}", e.getMessage());
-            throw e;
+            throw new RuntimeException(e);
         }
     }
 }
