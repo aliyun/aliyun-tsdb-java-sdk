@@ -1,11 +1,11 @@
 package com.aliyun.hitsdb.client.http;
 
-import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import com.aliyun.hitsdb.client.util.Objects;
 import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
