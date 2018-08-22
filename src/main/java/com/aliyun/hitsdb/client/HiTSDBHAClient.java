@@ -7,7 +7,6 @@ import com.aliyun.hitsdb.client.value.response.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.relation.RoleUnresolved;
 import java.util.Collection;
 import java.util.List;
 
