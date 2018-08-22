@@ -50,8 +50,17 @@ public class MultiValuedTupleComparator implements Comparator<List<Object>> {
         }
 
         if (reverseOrder) {
-            comparingResult = (Math.negateExact(comparingResult));
+            comparingResult = (negateExact(comparingResult));
         }
         return comparingResult;
+    }
+
+
+    public static int negateExact(int a) {
+        if (a == Integer.MIN_VALUE) {
+            throw new ArithmeticException("integer overflow");
+        }
+
+        return -a;
     }
 }
