@@ -789,36 +789,6 @@ public class HiTSDBClient implements HiTSDB {
 	}
 
 	@Override
-	public List<LastDPValue> lastdp(Collection<Timeline> timelines) throws HttpUnknowStatusException {
-		Object timelinesJSON = JSON.toJSON(timelines);
-		JSONObject obj = new JSONObject();
-		obj.put("queries", timelinesJSON);
-		String jsonString = obj.toJSONString();
-		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LASTDP, jsonString);
-		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-		HttpStatus httpStatus = resultResponse.getHttpStatus();
-		switch (httpStatus) {
-			case ServerSuccessNoContent:
-				return null;
-			case ServerSuccess:
-				String content = resultResponse.getContent();
-				List<LastDPValue> queryResultList = JSON.parseArray(content, LastDPValue.class);
-				return queryResultList;
-			case ServerNotSupport:
-				throw new HttpServerNotSupportException(resultResponse);
-			case ServerError:
-				throw new HttpServerErrorException(resultResponse);
-			default:
-				throw new HttpUnknowStatusException(resultResponse);
-		}
-	}
-
-	@Override
-	public List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException {
-		return lastdp(Arrays.asList(timelines));
-	}
-
-	@Override
 	public MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException {
 		List<Timeline> timelines = new ArrayList<Timeline>();
 
@@ -1036,6 +1006,67 @@ public class HiTSDBClient implements HiTSDB {
 	@Override
 	public List<LastDataValue> queryLast(String... tsuids) throws HttpUnknowStatusException {
 		return queryLast(Arrays.asList(tsuids));
+	}
+
+	public static final String EMPTY_JSON_STR = new JSONObject().toJSONString();
+
+	@Override
+	public String version() throws HttpUnknowStatusException {
+		HttpResponse httpResponse = httpclient.post(HttpAPI.VERSION, EMPTY_JSON_STR);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				JSONObject result = JSONObject.parseObject(resultResponse.getContent());
+				return result.getString("version");
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+
+	public boolean getLastDataPointStatus() throws HttpUnknowStatusException {
+		HttpResponse httpResponse = httpclient.get(HttpAPI.UPDATE_LAST, EMPTY_JSON_STR);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return false;
+			case ServerSuccess:
+				return Boolean.valueOf(resultResponse.getContent());
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	public boolean updateLastDataPointStatus(boolean flag) throws HttpUnknowStatusException {
+		JSONObject object = new JSONObject();
+		object.put("value",flag);
+		HttpResponse httpResponse = httpclient.post(HttpAPI.UPDATE_LAST, object.toJSONString());
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return true;
+			case ServerSuccess:
+				return true;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
 	}
 
 	@Override
