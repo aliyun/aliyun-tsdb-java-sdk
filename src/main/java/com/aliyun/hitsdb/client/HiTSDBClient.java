@@ -267,10 +267,14 @@ public class HiTSDBClient implements HiTSDB {
 		}
 
 		List<SubQuery> singleValuedSubQueries = new ArrayList<SubQuery>();
+		Map<String, String> fieldAndDpFilter = new HashMap<String, String>();
 		long startTime = multiValuedQuery.getStart();
 		long endTime = multiValuedQuery.getEnd();
 		for (MultiValuedSubQuery subQuery : multiValuedQuery.getQueries()) {
 			for (MultiValuedQueryMetricDetails metricDetails : subQuery.getFieldsInfo()) {
+			    if(metricDetails.getDpValue() != null && !metricDetails.getDpValue().isEmpty()) {
+                    fieldAndDpFilter.put(metricDetails.getField(), metricDetails.getDpValue());
+                }
 				SubQuery singleValuedSubQuery = SubQuery.metric(metricDetails.getField()).aggregator(metricDetails.getAggregatorType())
 						.tag(subQuery.getTags())
 						.downsample(metricDetails.getDownsample())
@@ -298,7 +302,9 @@ public class HiTSDBClient implements HiTSDB {
 				}
 
 				// We need to obtain the measurement name from the sub query's metric.
-				MultiValuedQueryResult tupleFormat = convertQueryResultIntoTupleFormat(queryResultList,
+				MultiValuedQueryResult tupleFormat = convertQueryResultIntoTupleFormat(
+				        fieldAndDpFilter,
+				        queryResultList,
 						multiValuedQuery.getQueries().get(0).getMetric(),
 						multiValuedQuery.getQueries().get(0).getLimit(),
 						multiValuedQuery.getQueries().get(0).getOffset());
@@ -312,7 +318,17 @@ public class HiTSDBClient implements HiTSDB {
 		}
 	}
 
-	public MultiValuedQueryResult convertQueryResultIntoTupleFormat(List<QueryResult> queryResults, String metric, Integer limit, Integer offset) {
+    /**
+     *
+     * @param fieldAndDpValueFilter The field and the corresponding dpValue filter.
+     * @param queryResults
+     * @param metric
+     * @param limit
+     * @param offset
+     * @return
+     */
+	public MultiValuedQueryResult convertQueryResultIntoTupleFormat(Map<String, String> fieldAndDpValueFilter, List<QueryResult> queryResults, String metric,
+                                                                    Integer limit, Integer offset) {
 		long startTime = System.currentTimeMillis();
 		long dpsCounter = 0;
 		Boolean reverseOrder = false;
@@ -334,13 +350,34 @@ public class HiTSDBClient implements HiTSDB {
 		}
 
 		// Timestamps, Tagks and Fields alignment based all query result
-		for (QueryResult queryResult : queryResults) {
-			alignedTimestamps.addAll(queryResult.getDps().keySet());
-			tagks.addAll(queryResult.getTags().keySet());
-			fields.add(queryResult.getMetric());
-			aggregateTags.add(queryResult.getAggregateTags());
-			dpsCounter += queryResult.getDps().size();
-		}
+        if(fieldAndDpValueFilter != null && !fieldAndDpValueFilter.isEmpty()) {
+            // Note: If the dpValue filter is not null, the alignedTimestamps set will be intersection based on
+            // the field which has dpValue filter.
+            boolean firstFlag = true;
+            for (QueryResult queryResult : queryResults) {
+                String field = queryResult.getMetric();
+                if(fieldAndDpValueFilter.containsKey(field)) {
+                    if(firstFlag) {
+                        alignedTimestamps.addAll(queryResult.getDps().keySet());
+                        firstFlag = false;
+                    } else{
+                        alignedTimestamps.retainAll(queryResult.getDps().keySet());
+                    }
+                }
+                tagks.addAll(queryResult.getTags().keySet());
+                fields.add(field);
+                aggregateTags.add(queryResult.getAggregateTags());
+                dpsCounter += queryResult.getDps().size();
+            }
+        } else {
+            for (QueryResult queryResult : queryResults) {
+                alignedTimestamps.addAll(queryResult.getDps().keySet());
+                tagks.addAll(queryResult.getTags().keySet());
+                fields.add(queryResult.getMetric());
+                aggregateTags.add(queryResult.getAggregateTags());
+                dpsCounter += queryResult.getDps().size();
+            }
+        }
 
 		/**
 		 * Final Result Columns: Timestamps + Ordered Tagk + Fields/Metrics
