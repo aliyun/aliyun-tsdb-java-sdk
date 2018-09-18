@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONType;
+import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.type.Aggregator;
 import com.aliyun.hitsdb.client.value.type.FilterType;
 import com.aliyun.hitsdb.client.value.type.Granularity;

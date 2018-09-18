@@ -25,7 +25,7 @@ public class TestHiTSDBClientQuery {
     @Before
     public void init() throws HttpClientInitException {
     		HiTSDBConfig config = HiTSDBConfig
-    		        .address("test.host",3242)
+    		        .address("localhost",8242)
     		        .config();
         tsdb = HiTSDBClientFactory.connect(config);
     }

@@ -1,5 +1,12 @@
 package com.aliyun.hitsdb.client;
 
+import com.aliyun.hitsdb.client.callback.QueryCallback;
+import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
+import com.aliyun.hitsdb.client.value.Result;
+import com.aliyun.hitsdb.client.value.request.*;
+import com.aliyun.hitsdb.client.value.response.*;
+import com.aliyun.hitsdb.client.value.type.Suggest;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
@@ -7,13 +14,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import com.aliyun.hitsdb.client.callback.QueryCallback;
-import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
-import com.aliyun.hitsdb.client.value.Result;
-import com.aliyun.hitsdb.client.value.request.*;
-import com.aliyun.hitsdb.client.value.response.*;
-import com.aliyun.hitsdb.client.value.type.Suggest;
 
 public interface HiTSDB extends Closeable {
 	/**
@@ -46,7 +46,7 @@ public interface HiTSDB extends Closeable {
 	 * @return Result
 	 */
 	Result putSync(Collection<Point> points);
-	
+
 	/**
 	 * Synchronous put method
 	 * @param points points
@@ -62,7 +62,7 @@ public interface HiTSDB extends Closeable {
 	 * @return Result
 	 */
 	<T extends Result> T putSync(Collection<Point> points, Class<T> resultType);
-	
+
 	/**
 	 * Synchronous put method
 	 * @param resultType resultType
@@ -71,7 +71,7 @@ public interface HiTSDB extends Closeable {
 	 * @return Result
 	 */
 	<T extends Result> T putSync(Class<T> resultType,Collection<Point> points);
-	
+
 	/**
 	 * Synchronous put method
 	 * @param resultType resultType
@@ -239,11 +239,34 @@ public interface HiTSDB extends Closeable {
 	 * dumpMeta method
 	 * @param tagkey tagkey
 	 * @param tagValuePrefix the prefix of the tagvalue
-	 * @param max max 
+	 * @param max max
 	 * @return the List of the TagResult
 	 * @throws HttpUnknowStatusException exception
 	 */
 	List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;
+
+
+	/**
+	 * dumpMeta method
+	 * @param metric metric
+	 * @param tagkey tagkey
+	 * @param tagValuePrefix the prefix of the tagvalue
+	 * @param max max
+	 * @return the List of the TagResult
+	 * @throws HttpUnknowStatusException exception
+	 */
+	List<TagResult> dumpMeta(String metric,String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;
+
+
+	/**
+	 * dumpMetric method
+	 * @param tagkey tagkey
+	 * @param tagValuePrefix the prefix of the tagvalue
+	 * @param max max
+	 * @return the List of the TagResult
+	 * @throws HttpUnknowStatusException exception
+	 */
+	List<String> dumpMetric(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;
 
 	/**
 	 * close tsdb method
@@ -252,21 +275,6 @@ public interface HiTSDB extends Closeable {
 	 */
 	void close(boolean force) throws IOException;
 
-	/**
-	 * lastdp
-	 * @param timelines timelimes
-	 * @return result
-	 * @throws HttpUnknowStatusException Exception
-	 */
-	List<LastDPValue> lastdp(Collection<Timeline> timelines) throws HttpUnknowStatusException;
-
-	/**
-	 * lastdp
-	 * @param timelines timelimes
-	 * @return List 
-	 * @throws HttpUnknowStatusException Exception
-	 */
-	List<LastDPValue> lastdp(Timeline... timelines) throws HttpUnknowStatusException;
 
 	/**
 	 * /api/query/last endpoint
@@ -307,4 +315,36 @@ public interface HiTSDB extends Closeable {
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<LastDataValue> queryLast(String... tsuids) throws HttpUnknowStatusException;
+
+
+	/**
+	 * /api/version
+	 * @return
+	 * @throws HttpUnknowStatusException
+	 */
+	String version() throws HttpUnknowStatusException;
+
+	/**
+	 * /api/updatelast
+	 *
+	 * get status for /api/queryLast,
+	 * where only the status is <code>true</code>,can call <code>queryLast()</code>
+	 *
+	 * @return
+	 * @throws HttpUnknowStatusException
+	 */
+	boolean getLastDataPointStatus() throws HttpUnknowStatusException;
+
+	/**
+	 * /api/updatelast
+	 *
+	 * update status for /api/queryLast
+	 *
+	 * where only the status is <code>true</code>,
+	 * @param flag if the flag is <code>true</code>,open <code>api/queryLast</code>,
+	 *             can call <code>queryLast()</code> correctly; otherwise close <code>api/queryLast</code>.
+	 * @return
+	 * @throws HttpUnknowStatusException
+	 */
+	boolean updateLastDataPointStatus(boolean flag) throws HttpUnknowStatusException;
 }

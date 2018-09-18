@@ -11,7 +11,7 @@ public class MultiValuedQueryResult extends JSONValue {
     private List<List<String>> aggregateTags;
     private List<String> columns = new ArrayList<String>();
     private List<List<Object>> values = new ArrayList<List<Object>>();
-    private List<Map<String, Object>> dps = new ArrayList<>();
+    private List<Map<String, Object>> dps = new ArrayList();
 
     public String getName() {
         return name;

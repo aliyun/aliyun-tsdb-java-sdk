@@ -3,6 +3,7 @@ package com.aliyun.hitsdb.client.value.request;
 import java.util.*;
 
 import com.alibaba.fastjson.JSON;
+import com.aliyun.hitsdb.client.util.Objects;
 
 public class MultiValuedSubQuery {
     private String metric;

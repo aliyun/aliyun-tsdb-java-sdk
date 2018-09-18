@@ -75,7 +75,7 @@ public class TestHiTSDBClientMultiValuedFeature {
         List<MultiValuedPoint> softwarePoints = new ArrayList<MultiValuedPoint>();
         List<MultiValuedPoint> hardwarePoints = new ArrayList<MultiValuedPoint>();
         List<MultiValuedPoint> points = new ArrayList<MultiValuedPoint>();
-        List<String> expectingColumns = new ArrayList<>();
+        List<String> expectingColumns = new ArrayList();
         Set<String> tempColumns = new TreeSet<String>();
         long dpsCounter = 100;
 
@@ -206,7 +206,7 @@ public class TestHiTSDBClientMultiValuedFeature {
         }
 
         /** Multi-valued Query #1 - Measurement: software.service */
-        List<MultiValuedQueryMetricDetails> metricDetails = new ArrayList<>();
+        List<MultiValuedQueryMetricDetails> metricDetails = new ArrayList();
         // Expectiong Columns : timestamp + tags + fields
         expectingColumns.add("timestamp");
         // 6 Tag Keys
@@ -417,17 +417,24 @@ public class TestHiTSDBClientMultiValuedFeature {
         Map<String, List<MultiValuedPoint>> pointsMapWithSameTags = new HashMap<String, List<MultiValuedPoint>>();
         for (MultiValuedPoint point : points) {
             String tags = tagsToString(point.getTags());
-            List<MultiValuedPoint> pointsWithSameTagsList = new ArrayList<>();
-            pointsWithSameTagsList.add(point);
-            List<MultiValuedPoint> existingList = pointsMapWithSameTags.putIfAbsent(tags, pointsWithSameTagsList);
-            if (existingList != null) {
-                existingList.add(point);
+//            List<MultiValuedPoint> pointsWithSameTagsList = new ArrayList<>();
+//            pointsWithSameTagsList.add(point);
+//            List<MultiValuedPoint> existingList = pointsMapWithSameTags.putIfAbsent(tags, pointsWithSameTagsList);
+//            if (existingList != null) {
+//                existingList.add(point);
+//            }
+
+            List<MultiValuedPoint> existingList = pointsMapWithSameTags.get(tags);
+            if (existingList == null) {
+                existingList = new ArrayList<MultiValuedPoint>();
+                pointsMapWithSameTags.put(tags,existingList);
             }
+            existingList.add(point);
         }
 
         // Convert multiple points into tuple format
         for (Map.Entry<String, List<MultiValuedPoint>> entry : pointsMapWithSameTags.entrySet()) {
-            Map<String, Object> dataPointTuple = new HashMap<>();
+            Map<String, Object> dataPointTuple = new HashMap();
             dataPointTuple.put("timestamp", timestamp);
             List<MultiValuedPoint> pointsWithSameTags = entry.getValue();
             for (MultiValuedPoint point : pointsWithSameTags) {
@@ -444,11 +451,19 @@ public class TestHiTSDBClientMultiValuedFeature {
 
             // Fill null if necessary
             for (String field : fields) {
-                dataPointTuple.putIfAbsent(field, null);
+//                dataPointTuple.putIfAbsent(field, null);
+                if(!dataPointTuple.containsKey(field)){
+                    dataPointTuple.put(field,null);
+                }
+
             }
 
             for (String tagk : tagks) {
-                dataPointTuple.putIfAbsent(tagk, null);
+//                dataPointTuple.putIfAbsent(tagk, null);
+                if(!dataPointTuple.containsKey(tagk)){
+                    dataPointTuple.put(tagk,null);
+                }
+
             }
             expectingDps.add(dataPointTuple);
         }
