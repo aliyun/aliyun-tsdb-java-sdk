@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
@@ -78,7 +79,12 @@ public class HttpClient {
 	 */
 	private final boolean httpCompress;
 
-	HttpClient(HiTSDBConfig config, CloseableHttpAsyncClient httpclient, SemaphoreManager semaphoreManager)
+	/**
+	 * 空闲连接清理服务
+	 */
+	private ScheduledExecutorService connectionGcService;
+
+	HttpClient(HiTSDBConfig config, CloseableHttpAsyncClient httpclient, SemaphoreManager semaphoreManager, ScheduledExecutorService connectionGcService)
 			throws HttpClientInitException {
 		this.host = config.getHost();
 		this.port = config.getPort();
@@ -88,6 +94,7 @@ public class HttpClient {
 		this.httpAddressManager = HttpAddressManager.createHttpAddressManager(config);
 		this.unCompletedTaskNum = new AtomicInteger(0);
 		this.httpResponseCallbackFactory = new HttpResponseCallbackFactory(unCompletedTaskNum, this, this.httpCompress);
+		this.connectionGcService = connectionGcService;
 	}
 
 	public void close() throws IOException {
@@ -119,6 +126,8 @@ public class HttpClient {
 				}
 			}
 		}
+
+		connectionGcService.shutdownNow();
 
 		// 关闭
 		httpclient.close();

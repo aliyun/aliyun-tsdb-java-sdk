@@ -1,10 +1,11 @@
 package com.aliyun.hitsdb.client.http;
 
-import java.util.Objects;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import com.aliyun.hitsdb.client.util.Objects;
 import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
@@ -45,9 +46,12 @@ public class HttpClientFactory {
 		
 		// 创建HttpAsyncClient
 		CloseableHttpAsyncClient httpAsyncClient = createPoolingHttpClient(config,cm,semaphoreManager);
-		
+
+		// 启动定时调度
+		ScheduledExecutorService connectionGcService = initFixedCycleCloseConnection(cm);
+
 		// 组合生产HttpClientImpl
-		HttpClient httpClientImpl = new HttpClient(config,httpAsyncClient,semaphoreManager);
+		HttpClient httpClientImpl = new HttpClient(config,httpAsyncClient,semaphoreManager,connectionGcService);
 		
 		return httpClientImpl;
 	}
@@ -85,9 +89,9 @@ public class HttpClientFactory {
 		}
 	}
 	
-	private static void initFixedCycleCloseConnection(final PoolingNHttpClientConnectionManager cm) {
+	private static ScheduledExecutorService initFixedCycleCloseConnection(final PoolingNHttpClientConnectionManager cm) {
 		// 定时关闭所有空闲链接
-		Executors.newSingleThreadScheduledExecutor(
+		ScheduledExecutorService connectionGcService = Executors.newSingleThreadScheduledExecutor(
 				new ThreadFactory() {
 					
 					@Override
@@ -98,7 +102,9 @@ public class HttpClientFactory {
 					}
 				}
 				
-		).scheduleAtFixedRate(new Runnable() {
+		);
+
+		connectionGcService.scheduleAtFixedRate(new Runnable() {
 		
 			@Override
 			public void run() {
@@ -110,6 +116,8 @@ public class HttpClientFactory {
 				}
 			}
 		}, 30, 30, TimeUnit.SECONDS);
+
+		return connectionGcService;
 	}
 	
 	private static SemaphoreManager createSemaphoreManager(HiTSDBConfig config) {
@@ -163,9 +171,6 @@ public class HttpClientFactory {
 			HiTSDBHttpAsyncCallbackExecutor httpAsyncCallbackExecutor = new HiTSDBHttpAsyncCallbackExecutor(httpConnectionLiveTime);
 			httpAsyncClientBuilder.setEventHandler(httpAsyncCallbackExecutor);
 		}
-		
-		// 启动定时调度
-		initFixedCycleCloseConnection(cm);
 
 		CloseableHttpAsyncClient client = httpAsyncClientBuilder.build();
 		return client;

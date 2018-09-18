@@ -1,8 +1,8 @@
 package com.aliyun.hitsdb.client.value.request;
 
+import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.type.Aggregator;
 
-import java.util.Objects;
 
 public class MultiValuedQueryMetricDetails {
     private String field;
