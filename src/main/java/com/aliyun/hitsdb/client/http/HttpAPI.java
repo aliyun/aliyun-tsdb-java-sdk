@@ -11,4 +11,6 @@ public interface HttpAPI {
     public final static String SUGGEST = "/api/suggest";
     public final static String DUMP_META = "/api/dump_meta";
     public final static String LOOKUP = "/api/search/lookup";
+
+    public final static String VIP_HEALTH = "/api/vip_health";
 }
