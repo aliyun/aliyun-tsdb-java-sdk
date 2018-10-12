@@ -145,18 +145,25 @@ public class HiTSDBClient implements HiTSDB {
 		MetricTimeRange metricTimeRange = new MetricTimeRange(metric, startTime, endTime);
 		HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-		HttpStatus httpStatus = resultResponse.getHttpStatus();
-		switch (httpStatus) {
-			case ServerSuccess:
-				return;
-			case ServerNotSupport:
-				throw new HttpServerNotSupportException(resultResponse);
-			case ServerError:
-				throw new HttpServerErrorException(resultResponse);
-			default:
-				throw new HttpUnknowStatusException(resultResponse);
-		}
+		handleVoid(resultResponse);
 	}
+
+
+	private void handleVoid(ResultResponse resultResponse){
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                return;
+            case ServerSuccess:
+                return;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
 
 	@Override
 	public void deleteData(String metric, Date startDate, Date endDate) {
@@ -175,17 +182,7 @@ public class HiTSDBClient implements HiTSDB {
 	public void deleteMeta(Timeline timeline) {
 		HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_META, timeline.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-		HttpStatus httpStatus = resultResponse.getHttpStatus();
-		switch (httpStatus) {
-			case ServerSuccess:
-				return;
-			case ServerNotSupport:
-				throw new HttpServerNotSupportException(resultResponse);
-			case ServerError:
-				throw new HttpServerErrorException(resultResponse);
-			default:
-				throw new HttpUnknowStatusException(resultResponse);
-		}
+        handleVoid(resultResponse);
 	}
 
 	@Override
@@ -259,64 +256,66 @@ public class HiTSDBClient implements HiTSDB {
 		}
 	}
 
-	@Override
-	public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery multiValuedQuery) {
-		if (multiValuedQuery.getQueries().size() != 1) {
-			LOGGER.error("Sorry. SDK does not support multiple multi-valued sub queries for now.");
-			throw new HttpClientException("Sorry. SDK does not support multiple multi-valued sub queries for now.");
-		}
 
-		List<SubQuery> singleValuedSubQueries = new ArrayList<SubQuery>();
-		Map<String, String> fieldAndDpFilter = new HashMap<String, String>();
-		long startTime = multiValuedQuery.getStart();
-		long endTime = multiValuedQuery.getEnd();
-		for (MultiValuedSubQuery subQuery : multiValuedQuery.getQueries()) {
-			for (MultiValuedQueryMetricDetails metricDetails : subQuery.getFieldsInfo()) {
-			    if(metricDetails.getDpValue() != null && !metricDetails.getDpValue().isEmpty()) {
+    @Override
+    public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery multiValuedQuery) {
+        if (multiValuedQuery.getQueries().size() != 1) {
+            LOGGER.error("Sorry. SDK does not support multiple multi-valued sub queries for now.");
+            throw new HttpClientException("Sorry. SDK does not support multiple multi-valued sub queries for now.");
+        }
+
+        List<SubQuery> singleValuedSubQueries = new ArrayList<SubQuery>();
+        Map<String, String> fieldAndDpFilter = new HashMap<String, String>();
+        long startTime = multiValuedQuery.getStart();
+        long endTime = multiValuedQuery.getEnd();
+        for (MultiValuedSubQuery subQuery : multiValuedQuery.getQueries()) {
+            for (MultiValuedQueryMetricDetails metricDetails : subQuery.getFieldsInfo()) {
+                if(metricDetails.getDpValue() != null && !metricDetails.getDpValue().isEmpty()) {
                     fieldAndDpFilter.put(metricDetails.getField(), metricDetails.getDpValue());
                 }
-				SubQuery singleValuedSubQuery = SubQuery.metric(metricDetails.getField()).aggregator(metricDetails.getAggregatorType())
-						.tag(subQuery.getTags())
-						.downsample(metricDetails.getDownsample())
-						.rate(metricDetails.getRate())
-						.dpValue(metricDetails.getDpValue())
-						.build();
-				singleValuedSubQueries.add(singleValuedSubQuery);
-			}
-		}
-		Query query = Query.timeRange(startTime, endTime).sub(singleValuedSubQueries).build();
+                SubQuery singleValuedSubQuery = SubQuery.metric(metricDetails.getField()).aggregator(metricDetails.getAggregatorType())
+                        .tag(subQuery.getTags())
+                        .downsample(metricDetails.getDownsample())
+                        .rate(metricDetails.getRate())
+                        .dpValue(metricDetails.getDpValue())
+                        .build();
+                singleValuedSubQueries.add(singleValuedSubQuery);
+            }
+        }
+        Query query = Query.timeRange(startTime, endTime).sub(singleValuedSubQueries).build();
 
-		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
-		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-		HttpStatus httpStatus = resultResponse.getHttpStatus();
-		switch (httpStatus) {
-			case ServerSuccessNoContent:
-				return null;
-			case ServerSuccess:
-				String content = resultResponse.getContent();
-				List<QueryResult> queryResultList;
-				queryResultList = JSON.parseArray(content, QueryResult.class);
-				if (queryResultList == null || queryResultList.isEmpty()) {
-					LOGGER.error("Empty result from HiTSDB server. {} ", queryResultList.toString());
-					return null;
-				}
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                return null;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                List<QueryResult> queryResultList;
+                queryResultList = JSON.parseArray(content, QueryResult.class);
+                if (queryResultList == null || queryResultList.isEmpty()) {
+                    LOGGER.error("Empty result from HiTSDB server. {} ", queryResultList.toString());
+                    return null;
+                }
 
-				// We need to obtain the measurement name from the sub query's metric.
-				MultiValuedQueryResult tupleFormat = convertQueryResultIntoTupleFormat(
-				        fieldAndDpFilter,
-				        queryResultList,
-						multiValuedQuery.getQueries().get(0).getMetric(),
-						multiValuedQuery.getQueries().get(0).getLimit(),
-						multiValuedQuery.getQueries().get(0).getOffset());
-				return tupleFormat;
-			case ServerNotSupport:
-				throw new HttpServerNotSupportException(resultResponse);
-			case ServerError:
-				throw new HttpServerErrorException(resultResponse);
-			default:
-				throw new HttpUnknowStatusException(resultResponse);
-		}
-	}
+                // We need to obtain the measurement name from the sub query's metric.
+                MultiValuedQueryResult tupleFormat = convertQueryResultIntoTupleFormat(
+                        fieldAndDpFilter,
+                        queryResultList,
+                        multiValuedQuery.getQueries().get(0).getMetric(),
+                        multiValuedQuery.getQueries().get(0).getLimit(),
+                        multiValuedQuery.getQueries().get(0).getOffset());
+                return tupleFormat;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
 
     /**
      *
@@ -502,7 +501,7 @@ public class HiTSDBClient implements HiTSDB {
 				String content = resultResponse.getContent();
 				List<QueryResult> queryResultList;
 				queryResultList = JSON.parseArray(content, QueryResult.class);
-				return queryResultList;
+                return queryResultList;
 			case ServerNotSupport:
 				throw new HttpServerNotSupportException(resultResponse);
 			case ServerError:
@@ -515,7 +514,6 @@ public class HiTSDBClient implements HiTSDB {
 
 	@Override
 	public void query(Query query, QueryCallback callback) {
-
 		FutureCallback<HttpResponse> httpCallback = null;
 		String address = httpclient.getHttpAddressManager().getAddress();
 
@@ -585,17 +583,7 @@ public class HiTSDBClient implements HiTSDB {
 		TTLValue ttlValue = new TTLValue(lifetime);
 		HttpResponse httpResponse = httpclient.post(HttpAPI.TTL, ttlValue.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-		HttpStatus httpStatus = resultResponse.getHttpStatus();
-		switch (httpStatus) {
-			case ServerSuccess:
-				return;
-			case ServerNotSupport:
-				throw new HttpServerNotSupportException(resultResponse);
-			case ServerError:
-				throw new HttpServerErrorException(resultResponse);
-			default:
-				throw new HttpUnknowStatusException(resultResponse);
-		}
+		handleVoid(resultResponse);
 	}
 
 	@Override
@@ -604,18 +592,10 @@ public class HiTSDBClient implements HiTSDB {
 		TTLValue ttlValue = new TTLValue(seconds);
 		HttpResponse httpResponse = httpclient.post(HttpAPI.TTL, ttlValue.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-		HttpStatus httpStatus = resultResponse.getHttpStatus();
-		switch (httpStatus) {
-			case ServerSuccess:
-				return;
-			case ServerNotSupport:
-				throw new HttpServerNotSupportException(resultResponse);
-			case ServerError:
-				throw new HttpServerErrorException(resultResponse);
-			default:
-				throw new HttpUnknowStatusException(resultResponse);
-		}
+		handleVoid(resultResponse);
 	}
+
+
 
 	@SuppressWarnings("deprecation")
 	@Override
@@ -810,19 +790,7 @@ public class HiTSDBClient implements HiTSDB {
 		}
 		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-		HttpStatus httpStatus = resultResponse.getHttpStatus();
-		switch (httpStatus) {
-			case ServerSuccessNoContent:
-				return;
-			case ServerSuccess:
-				return;
-			case ServerNotSupport:
-				throw new HttpServerNotSupportException(resultResponse);
-			case ServerError:
-				throw new HttpServerErrorException(resultResponse);
-			default:
-				throw new HttpUnknowStatusException(resultResponse);
-		}
+		handleVoid(resultResponse);
 	}
 
 	@Override
@@ -1045,7 +1013,7 @@ public class HiTSDBClient implements HiTSDB {
 		return queryLast(Arrays.asList(tsuids));
 	}
 
-	public static final String EMPTY_JSON_STR = new JSONObject().toJSONString();
+	private static final String EMPTY_JSON_STR = new JSONObject().toJSONString();
 
 	@Override
 	public String version() throws HttpUnknowStatusException {
@@ -1058,6 +1026,31 @@ public class HiTSDBClient implements HiTSDB {
 			case ServerSuccess:
 				JSONObject result = JSONObject.parseObject(resultResponse.getContent());
 				return result.getString("version");
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+
+	@Override
+	public Map<String,String> getVersionInfo() throws HttpUnknowStatusException {
+		HttpResponse httpResponse = httpclient.post(HttpAPI.VERSION, EMPTY_JSON_STR);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				JSONObject result = JSONObject.parseObject(resultResponse.getContent());
+				Map<String,String> map = new HashMap<String, String>();
+				for(Map.Entry<String,Object> entry : result.entrySet()){
+					map.put(entry.getKey(),entry.getValue().toString());
+				}
+				return map;
 			case ServerNotSupport:
 				throw new HttpServerNotSupportException(resultResponse);
 			case ServerError:

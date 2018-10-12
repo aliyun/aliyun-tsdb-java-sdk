@@ -190,14 +190,36 @@ public class HiTSDBConfig {
 		return new Builder(host, port);
 	}
 
+	/**
+	 * 写入请求限制数
+	 */
 	private int putRequestLimit;
+	/**
+	 * 写入请求限制开关，true表示打开请求限制
+	 */
 	private boolean putRequestLimitSwitch;
+
 	private int batchPutBufferSize;
+
+    /**
+     * 异步批量写回调接口
+     */
 	private AbstractBatchPutCallback<?> batchPutCallback;
+	/**
+	 *
+	 */
 	private int batchPutConsumerThreadCount;
+	/**
+	 *
+	 */
 	private int batchPutRetryCount;
+
 	private int batchPutSize;
+	/**
+	 * 批量Put时从队列取数据时最长等待时间
+	 */
 	private int batchPutTimeLimit;
+
 	private int maxTPS;
 	
 	private String host;
