@@ -13,4 +13,6 @@ public interface HttpAPI {
     String VERSION = "/api/version";
 
     String UPDATE_LAST = "/api/updatelast";
+
+    String VIP_HEALTH = "/api/vip_health";
 }
