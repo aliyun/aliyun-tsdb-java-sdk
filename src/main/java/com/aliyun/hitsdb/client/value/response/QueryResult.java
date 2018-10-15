@@ -1,8 +1,8 @@
 package com.aliyun.hitsdb.client.value.response;
 
-import java.util.*;
-
 import com.aliyun.hitsdb.client.value.JSONValue;
+
+import java.util.*;
 
 public class QueryResult extends JSONValue {
     private String metric;
@@ -12,6 +12,42 @@ public class QueryResult extends JSONValue {
     
     @Deprecated
     private LinkedHashMap<Long, String> sdps = new LinkedHashMap<Long, String>();
+
+    private static final Comparator<KeyValue> ORDER_CMP = new Comparator<KeyValue>() {
+        @Override
+        public int compare(KeyValue keyValue, KeyValue t1) {
+           long diff = keyValue.getTimestamp() - t1.getTimestamp();
+           return diff == 0 ? 0 : (diff > 0 ? 1 : -1);
+        }
+    };
+
+    public static final Comparator<KeyValue> REVERSE_ORDER_CMP = new Comparator<KeyValue>() {
+        @Override
+        public int compare(KeyValue keyValue, KeyValue t1) {
+            long diff = keyValue.getTimestamp() - t1.getTimestamp();
+            return diff == 0 ? 0 : (diff > 0 ? -1 : 1);
+        }
+    };
+
+    public List<KeyValue> getOrderDps(){
+       return getOrderDps(false);
+    }
+
+    public List<KeyValue> getOrderDps(boolean reverse){
+        if(dps == null || dps.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<KeyValue> keyValues = new ArrayList<KeyValue>(dps.size());
+        for(Map.Entry<Long,Object> entry : dps.entrySet()){
+            keyValues.add(new KeyValue(entry.getKey(),entry.getValue()));
+        }
+        if(reverse){
+            Collections.sort(keyValues,REVERSE_ORDER_CMP);
+        } else {
+            Collections.sort(keyValues,ORDER_CMP);
+        }
+        return keyValues;
+    }
     
     public List<String> getAggregateTags() {
         return aggregateTags;

@@ -28,176 +28,177 @@ import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 
 public class HttpClientFactory {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientFactory.class);
-	
-	private static SemaphoreManager semaphoreManager;
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientFactory.class);
 
-	public static HttpClient createHttpClient(HiTSDBConfig config) throws HttpClientInitException {
-		Objects.requireNonNull(config);
-		
-		// 创建 ConnectingIOReactor
-		ConnectingIOReactor ioReactor = initIOReactorConfig(config);
-		
-		// 创建链接管理器
-		final PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
-		
-		// 创建令牌管理器
-		semaphoreManager = createSemaphoreManager(config);
-		
-		// 创建HttpAsyncClient
-		CloseableHttpAsyncClient httpAsyncClient = createPoolingHttpClient(config,cm,semaphoreManager);
+    private static SemaphoreManager semaphoreManager;
 
-		// 启动定时调度
-		ScheduledExecutorService connectionGcService = initFixedCycleCloseConnection(cm);
+    public static HttpClient createHttpClient(HiTSDBConfig config) throws HttpClientInitException {
+        Objects.requireNonNull(config);
 
-		// 组合生产HttpClientImpl
-		HttpClient httpClientImpl = new HttpClient(config,httpAsyncClient,semaphoreManager,connectionGcService);
-		
-		return httpClientImpl;
-	}
-	
+        // 创建 ConnectingIOReactor
+        ConnectingIOReactor ioReactor = initIOReactorConfig(config);
 
-	private static RequestConfig initRequestConfig(HiTSDBConfig config) {
-		RequestConfig requestConfig = null;
+        // 创建链接管理器
+        final PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
 
-		// 设置请求
-		int httpConnectTimeout = config.getHttpConnectTimeout();
-		// 需要设置
-		if (httpConnectTimeout >= 0) {
-			RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
-			// ConnectTimeout:连接超时.连接建立时间，三次握手完成时间.
-			requestConfigBuilder.setConnectTimeout(httpConnectTimeout * 1000);
-			// SocketTimeout:Socket请求超时.数据传输过程中数据包之间间隔的最大时间.
-			requestConfigBuilder.setSocketTimeout(httpConnectTimeout * 1000);
-			// ConnectionRequestTimeout:httpclient使用连接池来管理连接，这个时间就是从连接池获取连接的超时时间，可以想象下数据库连接池
-			requestConfigBuilder.setConnectionRequestTimeout(httpConnectTimeout * 1000);
-			requestConfig = requestConfigBuilder.build();
-		}
+        // 创建令牌管理器
+        semaphoreManager = createSemaphoreManager(config);
 
-		return requestConfig;
-	}
+        // 创建HttpAsyncClient
+        CloseableHttpAsyncClient httpAsyncClient = createPoolingHttpClient(config, cm);
 
-	private static ConnectingIOReactor initIOReactorConfig(HiTSDBConfig config) {
-		int ioThreadCount = config.getIoThreadCount();
-		IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(ioThreadCount).build();
-		ConnectingIOReactor ioReactor;
-		try {
-			ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
-			return ioReactor;
-		} catch (IOReactorException e) {
-			throw new HttpClientInitException();
-		}
-	}
-	
-	private static ScheduledExecutorService initFixedCycleCloseConnection(final PoolingNHttpClientConnectionManager cm) {
-		// 定时关闭所有空闲链接
-		ScheduledExecutorService connectionGcService = Executors.newSingleThreadScheduledExecutor(
-				new ThreadFactory() {
-					
-					@Override
-					public Thread newThread(Runnable r) {
-						Thread t = new Thread(r, "Fixed-Cycle-Close-Connection" );
-						t.setDaemon(true);
-						return t;
-					}
-				}
-				
-		);
+        // 启动定时调度
+        ScheduledExecutorService connectionGcService = initFixedCycleCloseConnection(cm);
 
-		connectionGcService.scheduleAtFixedRate(new Runnable() {
-		
-			@Override
-			public void run() {
-				try {
-					LOGGER.info("Close idle connections, fixed cycle operation");
-					cm.closeIdleConnections(3, TimeUnit.MINUTES);
-				} catch(Exception ex) {
-					LOGGER.error("",ex);
-				}
-			}
-		}, 30, 30, TimeUnit.SECONDS);
+        // 组合生产HttpClientImpl
+        HttpClient httpClientImpl = new HttpClient(config, httpAsyncClient, semaphoreManager, connectionGcService);
 
-		return connectionGcService;
-	}
-	
-	private static SemaphoreManager createSemaphoreManager(HiTSDBConfig config) {
-		int httpConnectionPool = config.getHttpConnectionPool();
-		SemaphoreManager semaphoreManager = null;
-		if (httpConnectionPool > 0) {
-			String host = config.getHost();
-			int port = config.getPort();
-			int putRequestLimit = config.getPutRequestLimit();
-			String address = String.format("%s:%d", host,port);
-			semaphoreManager = SemaphoreManager.create(address, putRequestLimit);
-		}
-		
-		return semaphoreManager;
-	}
+        return httpClientImpl;
+    }
 
-	private static CloseableHttpAsyncClient createPoolingHttpClient(HiTSDBConfig config,PoolingNHttpClientConnectionManager cm,SemaphoreManager semaphoreManager) throws HttpClientInitException {
-		int httpConnectionPool = config.getHttpConnectionPool();
-		int httpConnectionLiveTime = config.getHttpConnectionLiveTime();
-		int httpKeepaliveTime = config.getHttpKeepaliveTime();
-		
-		RequestConfig requestConfig = initRequestConfig(config);
-		
-		if (httpConnectionPool > 0) {
-			cm.setMaxTotal(httpConnectionPool);
-			cm.setDefaultMaxPerRoute(httpConnectionPool);
-			cm.closeExpiredConnections();
-		}
 
-		HttpAsyncClientBuilder httpAsyncClientBuilder = HttpAsyncClients.custom();
+    private static RequestConfig initRequestConfig(HiTSDBConfig config) {
+        RequestConfig requestConfig = null;
 
-		// 设置连接管理器
-		httpAsyncClientBuilder.setConnectionManager(cm);
+        // 设置请求
+        int httpConnectTimeout = config.getHttpConnectTimeout();
+        // 需要设置
+        if (httpConnectTimeout >= 0) {
+            RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
+            // ConnectTimeout:连接超时.连接建立时间，三次握手完成时间.
+            requestConfigBuilder.setConnectTimeout(httpConnectTimeout * 1000);
+            // SocketTimeout:Socket请求超时.数据传输过程中数据包之间间隔的最大时间.
+            requestConfigBuilder.setSocketTimeout(httpConnectTimeout * 1000);
+            // ConnectionRequestTimeout:httpclient使用连接池来管理连接，这个时间就是从连接池获取连接的超时时间，可以想象下数据库连接池
+            requestConfigBuilder.setConnectionRequestTimeout(httpConnectTimeout * 1000);
+            requestConfig = requestConfigBuilder.build();
+        }
 
-		// 设置RequestConfig
-		if (requestConfig != null) {
-			httpAsyncClientBuilder.setDefaultRequestConfig(requestConfig);
-		}
+        return requestConfig;
+    }
 
-		// 设置Keepalive
-		if (httpKeepaliveTime > 0) {
-			HiTSDBConnectionKeepAliveStrategy hiTSDBConnectionKeepAliveStrategy = new HiTSDBConnectionKeepAliveStrategy(httpConnectionLiveTime);
-			httpAsyncClientBuilder.setKeepAliveStrategy(hiTSDBConnectionKeepAliveStrategy);
-		} else if (httpKeepaliveTime == 0) {
-			HiTSDBConnectionReuseStrategy hiTSDBConnectionReuseStrategy = new HiTSDBConnectionReuseStrategy();
-			httpAsyncClientBuilder.setConnectionReuseStrategy(hiTSDBConnectionReuseStrategy);
-		}
+    private static ConnectingIOReactor initIOReactorConfig(HiTSDBConfig config) {
+        int ioThreadCount = config.getIoThreadCount();
+        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(ioThreadCount).build();
+        ConnectingIOReactor ioReactor;
+        try {
+            ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
+            return ioReactor;
+        } catch (IOReactorException e) {
+            throw new HttpClientInitException();
+        }
+    }
 
-		// 设置连接自动关闭
-		if(httpConnectionLiveTime > 0) {
-			HiTSDBHttpAsyncCallbackExecutor httpAsyncCallbackExecutor = new HiTSDBHttpAsyncCallbackExecutor(httpConnectionLiveTime);
-			httpAsyncClientBuilder.setEventHandler(httpAsyncCallbackExecutor);
-		}
+    private static ScheduledExecutorService initFixedCycleCloseConnection(final PoolingNHttpClientConnectionManager cm) {
+        // 定时关闭所有空闲链接
+        ScheduledExecutorService connectionGcService = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactory() {
 
-		CloseableHttpAsyncClient client = httpAsyncClientBuilder.build();
-		return client;
-	}
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread t = new Thread(r, "Fixed-Cycle-Close-Connection");
+                        t.setDaemon(true);
+                        return t;
+                    }
+                }
+
+        );
+
+        connectionGcService.scheduleAtFixedRate(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+                    LOGGER.info("Close idle connections, fixed cycle operation");
+                    cm.closeIdleConnections(3, TimeUnit.MINUTES);
+                } catch (Exception ex) {
+                    LOGGER.error("", ex);
+                }
+            }
+        }, 30, 30, TimeUnit.SECONDS);
+
+        return connectionGcService;
+    }
+
+    private static SemaphoreManager createSemaphoreManager(HiTSDBConfig config) {
+        int httpConnectionPool = config.getHttpConnectionPool();
+        SemaphoreManager semaphoreManager = null;
+        if (httpConnectionPool > 0) {
+            String host = config.getHost();
+            int port = config.getPort();
+            int putRequestLimit = config.getPutRequestLimit();
+            String address = String.format("%s:%d", host, port);
+            semaphoreManager = SemaphoreManager.create(address, putRequestLimit, config.isPutRequestLimitSwitch());
+        }
+
+        return semaphoreManager;
+    }
+
+    private static CloseableHttpAsyncClient createPoolingHttpClient(
+            HiTSDBConfig config, PoolingNHttpClientConnectionManager cm) throws HttpClientInitException {
+        int httpConnectionPool = config.getHttpConnectionPool();
+        int httpConnectionLiveTime = config.getHttpConnectionLiveTime();
+        int httpKeepaliveTime = config.getHttpKeepaliveTime();
+
+        RequestConfig requestConfig = initRequestConfig(config);
+
+        if (httpConnectionPool > 0) {
+            cm.setMaxTotal(httpConnectionPool);
+            cm.setDefaultMaxPerRoute(httpConnectionPool);
+            cm.closeExpiredConnections();
+        }
+
+        HttpAsyncClientBuilder httpAsyncClientBuilder = HttpAsyncClients.custom();
+
+        // 设置连接管理器
+        httpAsyncClientBuilder.setConnectionManager(cm);
+
+        // 设置RequestConfig
+        if (requestConfig != null) {
+            httpAsyncClientBuilder.setDefaultRequestConfig(requestConfig);
+        }
+
+        // 设置Keepalive
+        if (httpKeepaliveTime > 0) {
+            HiTSDBConnectionKeepAliveStrategy hiTSDBConnectionKeepAliveStrategy = new HiTSDBConnectionKeepAliveStrategy(httpConnectionLiveTime);
+            httpAsyncClientBuilder.setKeepAliveStrategy(hiTSDBConnectionKeepAliveStrategy);
+        } else if (httpKeepaliveTime == 0) {
+            HiTSDBConnectionReuseStrategy hiTSDBConnectionReuseStrategy = new HiTSDBConnectionReuseStrategy();
+            httpAsyncClientBuilder.setConnectionReuseStrategy(hiTSDBConnectionReuseStrategy);
+        }
+
+        // 设置连接自动关闭
+        if (httpConnectionLiveTime > 0) {
+            HiTSDBHttpAsyncCallbackExecutor httpAsyncCallbackExecutor = new HiTSDBHttpAsyncCallbackExecutor(httpConnectionLiveTime);
+            httpAsyncClientBuilder.setEventHandler(httpAsyncCallbackExecutor);
+        }
+
+        CloseableHttpAsyncClient client = httpAsyncClientBuilder.build();
+        return client;
+    }
 }
 
 class HiTSDBConnectionKeepAliveStrategy implements ConnectionKeepAliveStrategy {
 
-	private long time;
+    private long time;
 
-	public HiTSDBConnectionKeepAliveStrategy(long time) {
-		super();
-		this.time = time;
-	}
+    public HiTSDBConnectionKeepAliveStrategy(long time) {
+        super();
+        this.time = time;
+    }
 
-	@Override
-	public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-		return 1000 * time;
-	}
+    @Override
+    public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+        return 1000 * time;
+    }
 
 }
 
 class HiTSDBConnectionReuseStrategy implements ConnectionReuseStrategy {
 
-	@Override
-	public boolean keepAlive(HttpResponse response, HttpContext context) {
-		return false;
-	}
+    @Override
+    public boolean keepAlive(HttpResponse response, HttpContext context) {
+        return false;
+    }
 
 }

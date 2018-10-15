@@ -136,12 +136,14 @@ public interface HiTSDB extends Closeable {
 	 */
 	List<QueryResult> query(Query query) throws HttpUnknowStatusException;
 
+
 	/**
 	 * Multi-valued query method. Multi-valued query does not support callback yet.
 	 * @param query
 	 * @return result : List
 	 */
 	MultiValuedQueryResult multiValuedQuery(MultiValuedQuery query) throws HttpUnknowStatusException;
+
 
 	/**
 	 * @param query query
@@ -150,6 +152,7 @@ public interface HiTSDB extends Closeable {
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	List<QueryResult> last(Query query, int num) throws HttpUnknowStatusException;
+
 
 	/**
 	 * delete method
@@ -323,6 +326,14 @@ public interface HiTSDB extends Closeable {
 	 * @throws HttpUnknowStatusException
 	 */
 	String version() throws HttpUnknowStatusException;
+
+
+	/**
+	 * /api/version
+	 * @return
+	 * @throws HttpUnknowStatusException
+	 */
+	Map<String,String> getVersionInfo() throws HttpUnknowStatusException;
 
 	/**
 	 * /api/updatelast

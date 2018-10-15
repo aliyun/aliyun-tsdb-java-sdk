@@ -14,7 +14,7 @@ public class SemaphoreManager {
 	private int poolNum;
 	private boolean putRequestLimitSwitch = true;
 
-	private SemaphoreManager(List<String> addresses, int poolNum) {
+	private SemaphoreManager(List<String> addresses, int poolNum,boolean putRequestLimitSwitch) {
 		synchronized (this) {
 			this.poolNum = poolNum;
 			this.addressSemaphoreMap = new ConcurrentHashMap<String, Semaphore>();
@@ -22,20 +22,21 @@ public class SemaphoreManager {
 				Semaphore semaphore = new Semaphore(poolNum);
 				this.addressSemaphoreMap.put(address, semaphore);
 			}
+			this.putRequestLimitSwitch = putRequestLimitSwitch;
 		}
 	}
 
-	private SemaphoreManager(String address, int poolNum) {
-		this(Arrays.asList(address), poolNum);
+	private SemaphoreManager(String address, int poolNum, boolean putRequestLimitSwitch) {
+		this(Arrays.asList(address), poolNum,putRequestLimitSwitch);
 	}
 
-	public static SemaphoreManager create(List<String> addresses, int poolNum) {
-		SemaphoreManager semaphoreManager = new SemaphoreManager(addresses, poolNum);
+	public static SemaphoreManager create(List<String> addresses, int poolNum, boolean putRequestLimitSwitch) {
+		SemaphoreManager semaphoreManager = new SemaphoreManager(addresses, poolNum, putRequestLimitSwitch);
 		return semaphoreManager;
 	}
 
-	public static SemaphoreManager create(String address, int poolNum) {
-		SemaphoreManager semaphoreManager = new SemaphoreManager(address, poolNum);
+	public static SemaphoreManager create(String address, int poolNum, boolean putRequestLimitSwitch) {
+		SemaphoreManager semaphoreManager = new SemaphoreManager(address, poolNum, putRequestLimitSwitch);
 		return semaphoreManager;
 	}
 
@@ -65,6 +66,9 @@ public class SemaphoreManager {
 	}
 
 	public void release(String address) {
+		if(!this.putRequestLimitSwitch){
+			return;
+		}
 		Semaphore semaphore = this.addressSemaphoreMap.get(address);
 		if (semaphore != null) {
 			semaphore.release();
