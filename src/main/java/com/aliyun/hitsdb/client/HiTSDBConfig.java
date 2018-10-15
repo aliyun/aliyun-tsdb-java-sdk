@@ -38,9 +38,9 @@ public class HiTSDBConfig {
 		private boolean asyncPut = true;
 
 
-		private List<Host> addresses = new ArrayList<>();
+		private List<Host> addresses = new ArrayList();
 
-		private Set<String> uniqueHost = new HashSet<>();
+		private Set<String> uniqueHost = new HashSet();
 
 		public Builder(String host) {
 			this.host = host;
@@ -253,7 +253,7 @@ public class HiTSDBConfig {
 
 	private int port;
 
-	private List<Host> addresses = new ArrayList<>();
+	private List<Host> addresses = new ArrayList();
 
 	public int getPutRequestLimit() {
 		return putRequestLimit;

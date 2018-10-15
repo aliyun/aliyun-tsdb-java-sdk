@@ -6,11 +6,11 @@ import java.util.concurrent.*;
 
 public class WatchManager {
 
-    private ConcurrentMap<File,FileMonitor> watchers = new ConcurrentHashMap<>();
+    private ConcurrentMap<File,FileMonitor> watchers = new ConcurrentHashMap();
 
     private ScheduledExecutorService executorService;
 
-    private int intervalSeconds = 0;
+    private int intervalSeconds = 2;
 
 
     public WatchManager() {
@@ -30,7 +30,7 @@ public class WatchManager {
     }
 
     public void setIntervalSeconds(int intervalSeconds){
-        this.intervalSeconds = 0;
+        this.intervalSeconds = intervalSeconds;
     }
 
     public void watchFile(final File file,final FileWatcher watcher){

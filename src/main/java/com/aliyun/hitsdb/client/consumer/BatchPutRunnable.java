@@ -44,13 +44,13 @@ public class BatchPutRunnable implements Runnable {
      * 批量提交回调
      */
     private final AbstractBatchPutCallback<?> batchPutCallback;
-    
+
     /**
      * 消费者队列控制器。
      * 在优雅关闭中，若消费者队列尚未结束，则CountDownLatch用于阻塞close()方法。
      */
-    private final CountDownLatch countDownLatch; 
-    
+    private final CountDownLatch countDownLatch;
+
     /**
      * 每批次数据点个数
      */
@@ -67,14 +67,14 @@ public class BatchPutRunnable implements Runnable {
     private final HttpResponseCallbackFactory httpResponseCallbackFactory;
 
     private final HiTSDBConfig config;
-    
-    private final SemaphoreManager semaphoreManager;
-    		
-	private final HttpAddressManager httpAddressManager;
 
-	private RateLimiter rateLimiter;
-	
-    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, HiTSDBConfig config,CountDownLatch countDownLatch, RateLimiter rateLimiter) {
+    private final SemaphoreManager semaphoreManager;
+
+    private final HttpAddressManager httpAddressManager;
+
+    private RateLimiter rateLimiter;
+
+    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, HiTSDBConfig config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
         this.dataQueue = dataQueue;
         this.hitsdbHttpClient = httpclient;
         this.semaphoreManager = hitsdbHttpClient.getSemaphoreManager();
@@ -105,36 +105,35 @@ public class BatchPutRunnable implements Runnable {
                 paramsMap.put("details", "true");
             }
         }
-        
+
         Point waitPoint = null;
         boolean readyClose = false;
-        int waitTimeLimit = batchPutTimeLimit/3;
-        long batchPutTimeLimitNano = batchPutTimeLimit*1000l;
-        
+        int waitTimeLimit = batchPutTimeLimit / 3;
+
         while (true) {
-            if(readyClose && waitPoint == null) {
-                break ;
+            if (readyClose && waitPoint == null) {
+                break;
             }
-            
-            long t0 = System.nanoTime();  // nano
+
+            long t0 = System.currentTimeMillis();  // nano
             List<Point> pointList = new ArrayList<Point>(batchSize);
             if (waitPoint != null) {
                 pointList.add(waitPoint);
                 waitPoint = null;
             }
-            
+
             for (int i = pointList.size(); i < batchSize; i++) {
                 try {
                     Point point = dataQueue.receive(waitTimeLimit);
                     if (point != null) {
-                    		if(this.rateLimiter != null) {
-                    			this.rateLimiter.acquire();
-                    		}
-                    		pointList.add(point);
+                        if (this.rateLimiter != null) {
+                            this.rateLimiter.acquire();
+                        }
+                        pointList.add(point);
                     }
-                    
-                    long t1 = System.nanoTime();  // nano
-                    if(t1-t0 > batchPutTimeLimitNano) {
+
+                    long t1 = System.currentTimeMillis();  // nano
+                    if (t1 - t0 > batchPutTimeLimit) {
                         break;
                     }
                 		/*
@@ -154,88 +153,88 @@ public class BatchPutRunnable implements Runnable {
                     break;
                 }
             }
-            
+
             if (pointList.size() == 0 && !readyClose) {
                 try {
                     Point newPoint = dataQueue.receive();
                     waitPoint = newPoint;
-                    continue ;
+                    continue;
                 } catch (InterruptedException e) {
                     readyClose = true;
                     LOGGER.info("The thread {} is interrupted", Thread.currentThread().getName());
                 }
             }
-            
-            if(pointList.size() == 0) {
+
+            if (pointList.size() == 0) {
                 continue;
             }
 
             // 序列化
             String strJson = serialize(pointList, sb);
-            
+
             // 发送
-            sendHttpRequest(pointList,strJson,paramsMap);
+            sendHttpRequest(pointList, strJson, paramsMap);
         }
-        
+
         if (readyClose) {
             this.countDownLatch.countDown();
-            return ;
+            return;
         }
     }
-    
+
     private String getAddressAndSemaphoreAcquire() {
-    		String address;
-		while(true) {
-			address = httpAddressManager.getAddress();
-	        boolean acquire = this.semaphoreManager.acquire(address);
-	    		if(!acquire) {
-	    			continue;
-	    		} else {
-	    			break;
-	    		}
-		}
-		
-		return address;
+        String address;
+        while (true) {
+            address = httpAddressManager.getAddress();
+            boolean acquire = this.semaphoreManager.acquire(address);
+            if (!acquire) {
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        return address;
     }
-    
-    
-    private void sendHttpRequest(List<Point> pointList,String strJson,Map<String,String> paramsMap) {
-    	String address = getAddressAndSemaphoreAcquire();
-    	
-    	// 发送
+
+
+    private void sendHttpRequest(List<Point> pointList, String strJson, Map<String, String> paramsMap) {
+        String address = getAddressAndSemaphoreAcquire();
+
+        // 发送
         if (this.batchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
-                    .createBatchPutDataCallback (
-                    	address,
-						this.batchPutCallback,
-						pointList,
-						config,
-						config.getBatchPutRetryCount()
-                	);
-            
+                    .createBatchPutDataCallback(
+                            address,
+                            this.batchPutCallback,
+                            pointList,
+                            config,
+                            config.getBatchPutRetryCount()
+                    );
+
             try {
-                hitsdbHttpClient.postToAddress(address,HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
+                hitsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
             } catch (Exception ex) {
-        			this.semaphoreManager.release(address);
-        			this.batchPutCallback.failed(address, pointList, ex);
+                this.semaphoreManager.release(address);
+                this.batchPutCallback.failed(address, pointList, ex);
             }
         } else {
             FutureCallback<HttpResponse> noLogicBatchPutHttpFutureCallback = this.httpResponseCallbackFactory
                     .createNoLogicBatchPutHttpFutureCallback(
-                    		address,
-                    		pointList,
-                    		config,
-                    		config.getBatchPutRetryCount()
-                    	);
+                            address,
+                            pointList,
+                            config,
+                            config.getBatchPutRetryCount()
+                    );
             try {
-                hitsdbHttpClient.postToAddress(address,HttpAPI.PUT, strJson, noLogicBatchPutHttpFutureCallback);
+                hitsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, noLogicBatchPutHttpFutureCallback);
             } catch (Exception ex) {
-            		this.semaphoreManager.release(address);
-            		noLogicBatchPutHttpFutureCallback.failed(ex);
+                this.semaphoreManager.release(address);
+                noLogicBatchPutHttpFutureCallback.failed(ex);
             }
         }
     }
-    
+
     private String serialize(List<Point> pointList, StringBuilder sb) {
         // 复用StringBuilder
         if (HiTSDBConfig.Builder.ProducerThreadSerializeSwitch) {
