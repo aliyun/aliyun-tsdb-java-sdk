@@ -8,6 +8,12 @@ import java.io.InputStream;
 
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.http.Host;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class HiTSDBConfig {
 
@@ -49,19 +55,45 @@ public class HiTSDBConfig {
 		private String certPath = null;
 		private byte[] certContent = null;
 
+
+		private List<Host> addresses = new ArrayList();
+
+		private Set<String> uniqueHost = new HashSet();
+
 		public Builder(String host) {
 			this.host = host;
+			this.uniqueHost.add(host);
 		}
 
 		public Builder(String host, int port) {
 			this.host = host;
 			this.port = port;
+			this.uniqueHost.add(host);
+		}
+
+		public Builder() {
+
 		}
 
 		public Builder putRequestLimit(int limit) {
 			this.putRequestLimit = limit;
 			this.putRequestLimitSwitch = true;
 			return this;
+		}
+
+		public Builder addAddress(String host,int port){
+			String key = host + ":" + port;
+			if(uniqueHost.contains(key)){
+				return this;
+			}
+			this.addresses.add(new Host(host,port));
+			this.uniqueHost.add(key);
+			return this;
+		}
+
+
+		public Builder addAddress(String host) {
+			return addAddress(host,port);
 		}
 
 		public Builder batchPutBufferSize(int batchPutBufferSize) {
@@ -158,6 +190,8 @@ public class HiTSDBConfig {
 			hiTSDBConfig.httpKeepaliveTime = this.httpKeepaliveTime;
 			hiTSDBConfig.maxTPS = this.maxTPS;
 			hiTSDBConfig.asyncPut = this.asyncPut;
+
+			hiTSDBConfig.addresses = this.addresses;
 			if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
 				hiTSDBConfig.putRequestLimit = this.httpConnectionPool;
 			}
@@ -244,6 +278,7 @@ public class HiTSDBConfig {
 
 	}
 
+
 	public static Builder address(String host) {
 		return new Builder(host);
 	}
@@ -252,14 +287,40 @@ public class HiTSDBConfig {
 		return new Builder(host, port);
 	}
 
+	/**
+	 * 写入请求限制数
+	 */
+	public static Builder builder() {
+		return new Builder();
+	}
+
 	private int putRequestLimit;
+	/**
+	 * 写入请求限制开关，true表示打开请求限制
+	 */
 	private boolean putRequestLimitSwitch;
+
 	private int batchPutBufferSize;
+
+    /**
+     * 异步批量写回调接口
+     */
 	private AbstractBatchPutCallback<?> batchPutCallback;
+	/**
+	 *
+	 */
 	private int batchPutConsumerThreadCount;
+	/**
+	 *
+	 */
 	private int batchPutRetryCount;
+
 	private int batchPutSize;
+	/**
+	 * 批量Put时从队列取数据时最长等待时间
+	 */
 	private int batchPutTimeLimit;
+
 	private int maxTPS;
 	
 	private String host;
@@ -315,6 +376,8 @@ public class HiTSDBConfig {
 		return certContent;
 	}
 
+	private List<Host> addresses = new ArrayList();
+
 	public int getPutRequestLimit() {
 		return putRequestLimit;
 	}
@@ -345,6 +408,11 @@ public class HiTSDBConfig {
 
 	public String getHost() {
 		return host;
+	}
+
+
+	public List<Host> getAddresses(){
+		return this.addresses;
 	}
 
 	public int getHttpConnectionPool() {
@@ -389,6 +457,39 @@ public class HiTSDBConfig {
 
 	public int getMaxTPS() {
 		return maxTPS;
+	}
+
+	public void setBatchPutCallback(AbstractBatchPutCallback callback){
+		this.batchPutCallback = callback;
+	}
+
+
+	public HiTSDBConfig copy(String host,int port){
+		HiTSDBConfig hiTSDBConfig = new HiTSDBConfig();
+		hiTSDBConfig.host = host;
+		hiTSDBConfig.port = port;
+		hiTSDBConfig.batchPutCallback = this.batchPutCallback;
+		hiTSDBConfig.batchPutSize = this.batchPutSize;
+		hiTSDBConfig.batchPutTimeLimit = this.batchPutTimeLimit;
+		hiTSDBConfig.batchPutBufferSize = this.batchPutBufferSize;
+		hiTSDBConfig.batchPutRetryCount = this.batchPutRetryCount;
+		hiTSDBConfig.httpConnectionPool = this.httpConnectionPool;
+		hiTSDBConfig.httpConnectTimeout = this.httpConnectTimeout;
+		hiTSDBConfig.putRequestLimitSwitch = this.putRequestLimitSwitch;
+		hiTSDBConfig.putRequestLimit = this.putRequestLimit;
+		hiTSDBConfig.batchPutConsumerThreadCount = this.batchPutConsumerThreadCount;
+		hiTSDBConfig.httpCompress = this.httpCompress;
+		hiTSDBConfig.ioThreadCount = this.ioThreadCount;
+		hiTSDBConfig.backpressure = this.backpressure;
+		hiTSDBConfig.httpConnectionLiveTime = this.httpConnectionLiveTime;
+		hiTSDBConfig.httpKeepaliveTime = this.httpKeepaliveTime;
+		hiTSDBConfig.maxTPS = this.maxTPS;
+		hiTSDBConfig.asyncPut = this.asyncPut;
+		if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
+			hiTSDBConfig.putRequestLimit = this.httpConnectionPool;
+		}
+
+		return hiTSDBConfig;
 	}
 
 }

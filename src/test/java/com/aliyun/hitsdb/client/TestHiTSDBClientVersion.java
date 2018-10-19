@@ -39,5 +39,10 @@ public class TestHiTSDBClientVersion {
     public void testVersion() {
         System.out.println(tsdb.version());
     }
+
+    @Test
+    public void testVersionInfo() {
+        System.out.println(tsdb.getVersionInfo());
+    }
     
 }
