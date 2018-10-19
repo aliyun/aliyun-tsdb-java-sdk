@@ -1,14 +1,23 @@
 package com.aliyun.hitsdb.client.http;
 
+import java.security.cert.X509Certificate;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import com.aliyun.hitsdb.client.util.Objects;
 import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
@@ -16,6 +25,9 @@ import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.nio.conn.NoopIOSessionStrategy;
+import org.apache.http.nio.conn.SchemeIOSessionStrategy;
+import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.protocol.HttpContext;
@@ -39,7 +51,44 @@ public class HttpClientFactory {
 		ConnectingIOReactor ioReactor = initIOReactorConfig(config);
 		
 		// 创建链接管理器
-		final PoolingNHttpClientConnectionManager cm = new PoolingNHttpClientConnectionManager(ioReactor);
+		PoolingNHttpClientConnectionManager cm;
+		TrustManager[] trustAllCerts = new TrustManager[]{
+			new X509TrustManager() {
+				@Override
+				public X509Certificate[] getAcceptedIssuers() {
+					return null;
+				}
+				@Override
+				public void checkClientTrusted(X509Certificate[] certs, String authType) {
+					// don't check
+				}
+				@Override
+				public void checkServerTrusted(X509Certificate[] certs, String authType) {
+					// don't check
+				}
+			}
+		};
+		HostnameVerifier hostnameVerifier = new HostnameVerifier() {
+			@Override
+			public boolean verify(String hostname, SSLSession session) {
+				return true;
+			}
+		};
+		try {
+			SSLContext sslContext = SSLContext.getInstance("TLS");
+			sslContext.init(null, trustAllCerts, null);
+
+			Registry<SchemeIOSessionStrategy> sessionStrategyRegistry = 
+					RegistryBuilder.<SchemeIOSessionStrategy>create()
+							.register("http", NoopIOSessionStrategy.INSTANCE)
+							.register("https", 
+									new SSLIOSessionStrategy(sslContext, null, 
+											null, hostnameVerifier))
+					.build();
+			cm = new PoolingNHttpClientConnectionManager(ioReactor, sessionStrategyRegistry);
+		} catch (Exception e) {
+			throw new HttpClientInitException();
+		}
 		
 		// 创建令牌管理器
 		semaphoreManager = createSemaphoreManager(config);

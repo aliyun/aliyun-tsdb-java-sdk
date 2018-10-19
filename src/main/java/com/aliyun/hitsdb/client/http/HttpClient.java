@@ -14,7 +14,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -37,6 +41,7 @@ import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 public class HttpClient {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HttpClient.class);
 	public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
+	private static final String version = "0.1";
 
 	private String host;
 	private int port;
@@ -84,6 +89,20 @@ public class HttpClient {
 	 */
 	private ScheduledExecutorService connectionGcService;
 
+	/**
+	 * is https enable
+	 */
+	private boolean sslEnable;
+	private String authType;
+	private String instanceId;
+	private String tsdbUser;
+	private String basicPwd;
+	private byte[] certContent;
+
+	public void setSslEnable(boolean sslEnable) {
+		this.sslEnable = sslEnable;
+	}
+
 	HttpClient(HiTSDBConfig config, CloseableHttpAsyncClient httpclient, SemaphoreManager semaphoreManager, ScheduledExecutorService connectionGcService)
 			throws HttpClientInitException {
 		this.host = config.getHost();
@@ -95,6 +114,12 @@ public class HttpClient {
 		this.unCompletedTaskNum = new AtomicInteger(0);
 		this.httpResponseCallbackFactory = new HttpResponseCallbackFactory(unCompletedTaskNum, this, this.httpCompress);
 		this.connectionGcService = connectionGcService;
+		this.sslEnable = config.isSslEnable();
+		this.authType = config.getAuthType();
+		this.instanceId = config.getInstanceId();
+		this.tsdbUser = config.getTsdbUser();
+		this.basicPwd = config.getBasicPwd();
+		this.certContent = config.getCertContent();
 	}
 
 	public void close() throws IOException {
@@ -153,11 +178,31 @@ public class HttpClient {
 				request.setEntity(generateGZIPCompressEntity(json));
 			}
 		}
+		
+		if (sslEnable && authType != null && !authType.trim().equals("")) {
+			setAuthHeader(request);
+		}
 
 		unCompletedTaskNum.incrementAndGet();
 		Future<HttpResponse> future = httpclient.execute(request, null);
 		try {
 			HttpResponse httpResponse = future.get();
+			int retry = 0;
+			while (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_TEMPORARY_REDIRECT
+				||httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+				if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_TEMPORARY_REDIRECT) {
+					sslEnable = true;
+					httpResponse = redirectResponse(httpResponse, request, httpclient);
+				} else if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+					LOGGER.info("need authentication.....");
+					setAuthHeader(request);
+					httpResponse = authResponse(request, httpclient);
+				}
+				retry++;
+				if (retry >= 10) {
+					break;
+				}
+			}
 			return httpResponse;
 		} catch (InterruptedException e) {
 			throw new HttpClientException(e);
@@ -169,6 +214,81 @@ public class HttpClient {
 			unCompletedTaskNum.decrementAndGet();
 		}
 	}
+	
+	public static HttpResponse redirectResponse(HttpResponse httpResponse, 
+												HttpEntityEnclosingRequestBase request, 
+												CloseableHttpAsyncClient httpclient) 
+			throws ExecutionException, InterruptedException {
+		HttpResponse result = null;
+		
+		Header[] headers = httpResponse.getHeaders(HttpHeaders.LOCATION);
+		for (Header header : headers) {
+			if (header.getName().equalsIgnoreCase(HttpHeaders.LOCATION)) {
+				String newUrl = header.getValue();
+				request.setURI(URI.create(newUrl));
+				Future<HttpResponse> future = httpclient.execute(request, null);
+				result = future.get();
+				break;
+			}
+		}
+		if (result == null) {
+			return httpResponse;
+		}
+		return result;
+	}
+
+	public void checkAuthInfo() {
+		if (HiTSDBConfig.BASICTYPE.equalsIgnoreCase(authType)) {
+			if (instanceId == null || instanceId.trim().equals("")) {
+				throw new HttpClientException("sorry, basic authentication need instance id");
+			}
+			if (tsdbUser == null || tsdbUser.trim().equals("")) {
+				throw new HttpClientException("sorry, basic authentication need user name");
+			}
+			if (basicPwd == null || basicPwd.trim().equals("")) {
+				throw new HttpClientException("sorry, basic authentication need user password");
+			}
+		} else if (HiTSDBConfig.ALITYPE.equalsIgnoreCase(authType)) {
+			if (instanceId == null || instanceId.trim().equals("")) {
+				throw new HttpClientException("sorry, basic authentication need instance id");
+			}
+			if (tsdbUser == null || tsdbUser.trim().equals("")) {
+				throw new HttpClientException("sorry, ali authentication need user name");
+			}
+			if (certContent == null || certContent.length == 0) {
+				throw new HttpClientException("sorry, ali authentication need cert content");
+			}
+			String certCStr = new String(certContent);
+			if (certCStr.trim().equals("")) {
+				throw new HttpClientException("sorry, ali authentication need cert content");
+			}
+		} else {
+			throw new HttpClientException("sorry, authentication type unknown");
+		}
+	}
+	
+	public void setAuthHeader(HttpEntityEnclosingRequestBase request) {
+		checkAuthInfo();
+		if (HiTSDBConfig.BASICTYPE.equalsIgnoreCase(authType)) {
+			String auth = tsdbUser + "@" + instanceId + ":" + basicPwd;
+			byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
+			String authHeader = authType + " " + new String(encodedAuth);
+			request.removeHeaders(HttpHeaders.AUTHORIZATION);
+			request.addHeader(HttpHeaders.AUTHORIZATION, authHeader);
+		} else if (HiTSDBConfig.ALITYPE.equalsIgnoreCase(authType)) {
+			String auth = version + ":" + tsdbUser + "@" + instanceId + ":" +Base64.encodeBase64String(certContent);
+			byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
+			String authHeader = authType + " " + new String(encodedAuth);
+			request.removeHeaders(HttpHeaders.AUTHORIZATION);
+			request.addHeader(HttpHeaders.AUTHORIZATION, authHeader);
+		}
+	}
+	public static HttpResponse authResponse(HttpEntityEnclosingRequestBase request,
+											 CloseableHttpAsyncClient httpclient)
+			throws ExecutionException, InterruptedException {
+		Future<HttpResponse> future = httpclient.execute(request, null);
+		return future.get();
+	}
 
 	private void executeCallback(HttpEntityEnclosingRequestBase request, String json, FutureCallback<HttpResponse> httpCallback) {
 		if (json != null && json.length() > 0) {
@@ -179,6 +299,10 @@ public class HttpClient {
 				request.addHeader("Accept-Encoding", "gzip, deflate");
 				request.setEntity(generateGZIPCompressEntity(json));
 			}
+		}
+
+		if (sslEnable && authType != null && !authType.trim().equals("")) {
+			setAuthHeader(request);
 		}
 
 		FutureCallback<HttpResponse> responseCallback = null;
@@ -258,7 +382,11 @@ public class HttpClient {
 
 		return "http://" + host + ":" + port + apiPath;
 		*/
-		return "http://" + this.httpAddressManager.getAddress() + apiPath;
+		if (sslEnable) {
+			return "https://" + this.httpAddressManager.getAddress() + apiPath;
+		} else {
+			return "http://" + this.httpAddressManager.getAddress() + apiPath;
+		}
 	}
 
 	public HttpResponse post(String apiPath, String json) throws HttpClientException {
@@ -281,7 +409,12 @@ public class HttpClient {
 	}
 	
 	public void postToAddress(String address, String apiPath, String json, Map<String, String> params, FutureCallback<HttpResponse> httpCallback) {
-		String httpFullAPI = "http://" + address + apiPath;
+		String httpFullAPI;
+		if (sslEnable) {
+			httpFullAPI = "https://" + address + apiPath;
+		} else {
+			httpFullAPI = "http://" + address + apiPath;
+		}
 		URI uri = createURI(httpFullAPI, params);
 		final HttpPost request = new HttpPost(uri);
 		executeCallback(request, json, httpCallback);

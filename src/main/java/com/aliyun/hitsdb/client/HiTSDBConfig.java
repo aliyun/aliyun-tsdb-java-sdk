@@ -1,9 +1,19 @@
 package com.aliyun.hitsdb.client;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
+import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 
 public class HiTSDBConfig {
 
+	public static final String BASICTYPE = "basic";
+	public static final String ALITYPE = "alibaba-signature";
+	
 	public static class Builder {
 		public static volatile boolean ProducerThreadSerializeSwitch = false;
 
@@ -30,6 +40,14 @@ public class HiTSDBConfig {
 		private int ioThreadCount = 1;
 		private boolean backpressure = true;
 		private boolean asyncPut = true;
+		
+		private boolean sslEnable = false;
+		private String authType;
+		private String instanceId = null;
+		private String tsdbUser = null;
+		private String basicPwd = null;
+		private String certPath = null;
+		private byte[] certContent = null;
 
 		public Builder(String host) {
 			this.host = host;
@@ -143,8 +161,52 @@ public class HiTSDBConfig {
 			if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
 				hiTSDBConfig.putRequestLimit = this.httpConnectionPool;
 			}
-
+			hiTSDBConfig.sslEnable = this.sslEnable;
+			hiTSDBConfig.authType = this.authType;
+			hiTSDBConfig.instanceId = this.instanceId;
+			hiTSDBConfig.tsdbUser = this.tsdbUser;
+			hiTSDBConfig.basicPwd = this.basicPwd;
+			hiTSDBConfig.certContent = this.certContent;
 			return hiTSDBConfig;
+		}
+		
+		public Builder enableSSL(boolean sslEnable) {
+			this.sslEnable = sslEnable;
+			return this;
+		}
+
+		public Builder basicAuth(String instanceId, String tsdbUser, String basicPwd) {
+			this.authType = HiTSDBConfig.BASICTYPE;
+			this.instanceId = instanceId;
+			this.tsdbUser = tsdbUser;
+			this.basicPwd = basicPwd;
+			return this;
+		}
+		
+		public Builder aliAuth(String instanceId, String tsdbUser, String aliAuthPath) {
+			this.authType = HiTSDBConfig.ALITYPE;
+			this.instanceId = instanceId;
+			this.tsdbUser = tsdbUser;
+			this.certPath = aliAuthPath;
+			File file = new File(certPath);
+			if (!file.exists()) {
+				throw new HttpClientInitException();
+			}
+			try {
+				InputStream is = new FileInputStream(file);
+				certContent = new byte[is.available()];
+				int i = is.read(certContent);
+				if (certContent.length == 0) {
+					throw new HttpClientInitException();
+				}
+			} catch (FileNotFoundException e) {
+				throw new HttpClientInitException();
+			} catch (IOException e) {
+				throw new HttpClientInitException();
+			} catch (Exception e) {
+				throw new HttpClientInitException();
+			}
+			return this;
 		}
 
 		public Builder httpCompress(boolean httpCompress) {
@@ -213,6 +275,45 @@ public class HiTSDBConfig {
 	private boolean asyncPut;
 
 	private int port;
+	
+	/**
+	 * is https enable
+	 */
+	private boolean sslEnable;
+	
+	private String authType;
+	
+	private String instanceId;
+	
+	private String tsdbUser;
+	
+	private String basicPwd;
+	
+	private byte[] certContent;
+	
+	public boolean isSslEnable() {
+		return sslEnable;
+	}
+
+	public String getAuthType() {
+		return authType;
+	}
+
+	public String getInstanceId() {
+		return instanceId;
+	}
+
+	public String getTsdbUser() {
+		return tsdbUser;
+	}
+
+	public String getBasicPwd() {
+		return basicPwd;
+	}
+
+	public byte[] getCertContent() {
+		return certContent;
+	}
 
 	public int getPutRequestLimit() {
 		return putRequestLimit;

@@ -575,9 +575,21 @@ public class HiTSDBClient implements HiTSDB {
 	public int ttl() {
 		HttpResponse httpResponse = httpclient.get(HttpAPI.TTL, null);
 		ResultResponse result = ResultResponse.simplify(httpResponse, this.httpCompress);
-		String content = result.getContent();
-		TTLResult ttlResult = JSONValue.parseObject(content, TTLResult.class);
-		return ttlResult.getVal();
+		HttpStatus httpStatus = result.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return 0;
+			case ServerSuccess:
+				String content = result.getContent();
+				TTLResult ttlResult = JSONValue.parseObject(content, TTLResult.class);
+				return ttlResult.getVal();
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(result);
+			case ServerError:
+				throw new HttpServerErrorException(result);
+			default:
+				throw new HttpUnknowStatusException(result);
+		}
 	}
 
 	@Override
