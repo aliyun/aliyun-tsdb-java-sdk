@@ -15,6 +15,7 @@ import com.aliyun.hitsdb.client.callback.BatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutDetailsCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutSummaryCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientConnectionRefusedException;
+import com.aliyun.hitsdb.client.exception.http.HttpClientException;
 import com.aliyun.hitsdb.client.exception.http.HttpClientSocketTimeoutException;
 import com.aliyun.hitsdb.client.exception.http.HttpServerErrorException;
 import com.aliyun.hitsdb.client.exception.http.HttpServerNotSupportException;
@@ -54,6 +55,20 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
 	@Override
 	public void completed(HttpResponse httpResponse) {
 		// 处理响应
+		if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
+			this.hitsdbHttpClient.setSslEnable(true);
+			errorRetry();
+			return;
+		} else if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_UNAUTHORIZED) {
+			try {
+				this.hitsdbHttpClient.checkAuthInfo();//认证信息校验避免进入多余的retry
+				errorRetry();
+				return;
+			} catch (HttpClientException e) {
+				this.failedWithResponse(e);
+				return;
+			}
+		}
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.compress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
