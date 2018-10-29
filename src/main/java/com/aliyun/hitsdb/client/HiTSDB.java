@@ -292,6 +292,7 @@ public interface HiTSDB extends Closeable {
 	 * @param timelines timelimes
 	 * @return result
 	 * @throws HttpUnknowStatusException Exception
+	 * @deprecated since 0.1.0
 	 */
 	List<LastDataValue> queryLast(Collection<Timeline> timelines) throws HttpUnknowStatusException;
 
@@ -300,14 +301,25 @@ public interface HiTSDB extends Closeable {
 	 * @param timelines timelimes
 	 * @return List
 	 * @throws HttpUnknowStatusException Exception
+	 * @deprecated since 0.1.0
 	 */
 	List<LastDataValue> queryLast(Timeline... timelines) throws HttpUnknowStatusException;
+
+	/**
+	 * /api/query/last endpoint
+	 * @param query
+	 * @return
+	 * @throws HttpUnknowStatusException
+	 */
+	List<LastDataValue> queryLast(LastPointQuery query) throws HttpUnknowStatusException;
+
 
 	/**
 	 * /api/query/last endpoint with tsuids
 	 * @param tsuids tsuids
 	 * @return result
 	 * @throws HttpUnknowStatusException Exception
+	 * @deprecated since 0.1.0
 	 */
 	List<LastDataValue> queryLast(List<String> tsuids) throws HttpUnknowStatusException;
 
@@ -316,6 +328,7 @@ public interface HiTSDB extends Closeable {
 	 * @param tsuids tsuids
 	 * @return List
 	 * @throws HttpUnknowStatusException Exception
+	 * @deprecated since 0.1.0
 	 */
 	List<LastDataValue> queryLast(String... tsuids) throws HttpUnknowStatusException;
 
@@ -342,6 +355,7 @@ public interface HiTSDB extends Closeable {
 	 * where only the status is <code>true</code>,can call <code>queryLast()</code>
 	 *
 	 * @return
+	 * @deprecated since 0.1.0
 	 * @throws HttpUnknowStatusException
 	 */
 	boolean getLastDataPointStatus() throws HttpUnknowStatusException;
@@ -356,6 +370,18 @@ public interface HiTSDB extends Closeable {
 	 *             can call <code>queryLast()</code> correctly; otherwise close <code>api/queryLast</code>.
 	 * @return
 	 * @throws HttpUnknowStatusException
+	 * @deprecated since 0.1.0
 	 */
 	boolean updateLastDataPointStatus(boolean flag) throws HttpUnknowStatusException;
+
+
+	/**
+	 *
+	 */
+	boolean truncate() throws HttpUnknowStatusException;
+
+	/**
+	 *
+	 */
+	boolean deleteAllTable() throws HttpUnknowStatusException;
 }

@@ -5,6 +5,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -42,8 +43,6 @@ public class HttpClientFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientFactory.class);
 
-    private static SemaphoreManager semaphoreManager;
-
     public static HttpClient createHttpClient(HiTSDBConfig config) throws HttpClientInitException {
         Objects.requireNonNull(config);
 
@@ -53,20 +52,22 @@ public class HttpClientFactory {
         // 创建链接管理器
         PoolingNHttpClientConnectionManager cm;
         TrustManager[] trustAllCerts = new TrustManager[]{
-            new X509TrustManager() {
-                @Override
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
+                new X509TrustManager() {
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        // don't check
+                    }
+
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        // don't check
+                    }
                 }
-                @Override
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                    // don't check
-                }
-                @Override
-                public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                    // don't check
-                }
-            }
         };
         HostnameVerifier hostnameVerifier = new HostnameVerifier() {
             @Override
@@ -78,20 +79,20 @@ public class HttpClientFactory {
             SSLContext sslContext = SSLContext.getInstance("TLS");
             sslContext.init(null, trustAllCerts, null);
 
-            Registry<SchemeIOSessionStrategy> sessionStrategyRegistry = 
-                RegistryBuilder.<SchemeIOSessionStrategy>create()
-                    .register("http", NoopIOSessionStrategy.INSTANCE)
-                    .register("https", 
-                        new SSLIOSessionStrategy(sslContext, null, 
-                            null, hostnameVerifier))
-                    .build();
+            Registry<SchemeIOSessionStrategy> sessionStrategyRegistry =
+                    RegistryBuilder.<SchemeIOSessionStrategy>create()
+                            .register("http", NoopIOSessionStrategy.INSTANCE)
+                            .register("https",
+                                    new SSLIOSessionStrategy(sslContext, null,
+                                            null, hostnameVerifier))
+                            .build();
             cm = new PoolingNHttpClientConnectionManager(ioReactor, sessionStrategyRegistry);
         } catch (Exception e) {
             throw new HttpClientInitException();
         }
 
         // 创建令牌管理器
-        semaphoreManager = createSemaphoreManager(config);
+        SemaphoreManager semaphoreManager = createSemaphoreManager(config);
 
         // 创建HttpAsyncClient
         CloseableHttpAsyncClient httpAsyncClient = createPoolingHttpClient(config, cm);
@@ -138,6 +139,8 @@ public class HttpClientFactory {
         }
     }
 
+    private static final AtomicInteger NUM = new AtomicInteger();
+
     private static ScheduledExecutorService initFixedCycleCloseConnection(final PoolingNHttpClientConnectionManager cm) {
         // 定时关闭所有空闲链接
         ScheduledExecutorService connectionGcService = Executors.newSingleThreadScheduledExecutor(
@@ -145,7 +148,7 @@ public class HttpClientFactory {
 
                     @Override
                     public Thread newThread(Runnable r) {
-                        Thread t = new Thread(r, "Fixed-Cycle-Close-Connection");
+                        Thread t = new Thread(r, "Fixed-Cycle-Close-Connection-" + NUM.incrementAndGet());
                         t.setDaemon(true);
                         return t;
                     }
@@ -154,11 +157,12 @@ public class HttpClientFactory {
         );
 
         connectionGcService.scheduleAtFixedRate(new Runnable() {
-
             @Override
             public void run() {
                 try {
-                    LOGGER.info("Close idle connections, fixed cycle operation");
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Close idle connections, fixed cycle operation");
+                    }
                     cm.closeIdleConnections(3, TimeUnit.MINUTES);
                 } catch (Exception ex) {
                     LOGGER.error("", ex);

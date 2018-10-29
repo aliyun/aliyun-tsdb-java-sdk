@@ -14,5 +14,9 @@ public interface HttpAPI {
 
     String UPDATE_LAST = "/api/updatelast";
 
+    String TRUNCATE = "/api/truncate";
+
+    String DELETE_ALL_TABLE = "/api/delete_all_table";
+
     String VIP_HEALTH = "/api/vip_health";
 }

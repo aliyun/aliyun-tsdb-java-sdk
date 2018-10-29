@@ -1140,4 +1140,63 @@ public class HiTSDBClient implements HiTSDB {
 		return putSync(resultType, Arrays.asList(points));
 	}
 
+	@Override
+	public List<LastDataValue> queryLast(LastPointQuery query) throws HttpUnknowStatusException {
+		String jsonString = query.toJSON();
+		HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+				return null;
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				List<LastDataValue> result = JSON.parseArray(content, LastDataValue.class);
+				return result;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	@Override
+	public boolean truncate() throws HttpUnknowStatusException {
+		HttpResponse httpResponse = httpclient.post(HttpAPI.TRUNCATE, EMPTY_JSON_STR);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+			case ServerSuccess:
+				LOGGER.info("truncate result: {}",resultResponse.getContent());
+				return true;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	@Override
+	public boolean deleteAllTable() throws HttpUnknowStatusException {
+		HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_ALL_TABLE, EMPTY_JSON_STR);
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccessNoContent:
+			case ServerSuccess:
+				LOGGER.info("Delete all table result: {}",resultResponse.getContent());
+				return true;
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
 }
