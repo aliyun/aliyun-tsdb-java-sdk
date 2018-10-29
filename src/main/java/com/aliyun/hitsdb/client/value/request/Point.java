@@ -350,6 +350,14 @@ public class Point extends JSONValue {
 			String tagkey = entry.getKey();
 			String tagvalue = entry.getValue();
 
+			if (tagkey == null || tagkey.length() == 0) {
+				throw new IllegalArgumentException("the tag key is null or empty");
+			}
+
+			if (tagvalue == null || tagvalue.length() == 0) {
+				throw new IllegalArgumentException("the tag value is null or empty");
+			}
+
 			for (int i = 0; i < tagkey.length(); i++) {
 				final char c = tagkey.charAt(i);
 				if (!checkChar(c)) {
