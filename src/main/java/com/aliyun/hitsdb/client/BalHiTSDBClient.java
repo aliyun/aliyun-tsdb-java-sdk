@@ -365,11 +365,13 @@ public class BalHiTSDBClient implements HiTSDB {
         if (clients.isEmpty()) {
             throw new RuntimeException("The number of available clients is zero, please check it");
         }
-        if (idx >= clients.size()) {
-            idx = 0;
-        }
-        HiTSDB client = clients.get(idx);
+        int index = idx;
+
         idx = (++idx) % clients.size();
+        if (index >= clients.size()) {
+            index = 0;
+        }
+        HiTSDB client = clients.get(index);
         if (client == null) {
             throw new RuntimeException("The client is null");
         }
@@ -443,6 +445,9 @@ public class BalHiTSDBClient implements HiTSDB {
             try {
                 return client().putSync(points);
             } catch (Exception e) {
+                for(Point point : points){
+
+                }
                 exception = e;
             }
         }
