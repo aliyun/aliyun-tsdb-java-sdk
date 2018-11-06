@@ -871,11 +871,6 @@ public class BalHiTSDBClient implements HiTSDB {
     }
 
     @Override
-    public boolean deleteAllTable() throws HttpUnknowStatusException {
-       return client().deleteAllTable();
-    }
-
-    @Override
     public List<LastDataValue> queryLast(String... tsuids) throws HttpUnknowStatusException {
         Exception exception = null;
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
@@ -896,16 +891,6 @@ public class BalHiTSDBClient implements HiTSDB {
     @Override
     public Map<String, String> getVersionInfo() throws HttpUnknowStatusException {
         return client().getVersionInfo();
-    }
-
-    @Override
-    public boolean getLastDataPointStatus() throws HttpUnknowStatusException {
-        return client().getLastDataPointStatus();
-    }
-
-    @Override
-    public boolean updateLastDataPointStatus(boolean flag) throws HttpUnknowStatusException {
-        return client().updateLastDataPointStatus(flag);
     }
 
     @Override

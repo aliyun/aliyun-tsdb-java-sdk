@@ -41,10 +41,4 @@ public class TestHiTSDBClientTableOp {
     public void testTruncate() {
         System.out.println(tsdb.truncate());
     }
-
-    @Test
-    public void testDeleteTable() {
-        System.out.println(tsdb.deleteAllTable());
-    }
-    
 }

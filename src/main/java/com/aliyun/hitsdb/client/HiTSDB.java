@@ -349,39 +349,7 @@ public interface HiTSDB extends Closeable {
 	Map<String,String> getVersionInfo() throws HttpUnknowStatusException;
 
 	/**
-	 * /api/updatelast
-	 *
-	 * get status for /api/queryLast,
-	 * where only the status is <code>true</code>,can call <code>queryLast()</code>
-	 *
-	 * @return
-	 * @deprecated since 0.1.0
-	 * @throws HttpUnknowStatusException
-	 */
-	boolean getLastDataPointStatus() throws HttpUnknowStatusException;
-
-	/**
-	 * /api/updatelast
-	 *
-	 * update status for /api/queryLast
-	 *
-	 * where only the status is <code>true</code>,
-	 * @param flag if the flag is <code>true</code>,open <code>api/queryLast</code>,
-	 *             can call <code>queryLast()</code> correctly; otherwise close <code>api/queryLast</code>.
-	 * @return
-	 * @throws HttpUnknowStatusException
-	 * @deprecated since 0.1.0
-	 */
-	boolean updateLastDataPointStatus(boolean flag) throws HttpUnknowStatusException;
-
-
-	/**
 	 *
 	 */
 	boolean truncate() throws HttpUnknowStatusException;
-
-	/**
-	 *
-	 */
-	boolean deleteAllTable() throws HttpUnknowStatusException;
 }
