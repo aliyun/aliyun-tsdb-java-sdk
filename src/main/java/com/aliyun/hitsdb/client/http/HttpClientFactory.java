@@ -1,5 +1,6 @@
 package com.aliyun.hitsdb.client.http;
 
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -9,9 +10,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.security.auth.x500.X500Principal;
 
 import com.aliyun.hitsdb.client.util.Objects;
 import org.apache.http.ConnectionReuseStrategy;
@@ -43,6 +46,7 @@ public class HttpClientFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientFactory.class);
 
+    private static final String [] certDNList = {"*.tsdb.aliyuncs.com", "*.hitsdb.rds.aliyuncs.com"};
     public static HttpClient createHttpClient(HiTSDBConfig config) throws HttpClientInitException {
         Objects.requireNonNull(config);
 
@@ -52,27 +56,66 @@ public class HttpClientFactory {
         // 创建链接管理器
         PoolingNHttpClientConnectionManager cm;
         TrustManager[] trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return null;
+            new X509TrustManager() {
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+                @Override
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    // don't check
+                }
+                @Override
+                public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
+
+                    if (certs == null) {
+                        throw new IllegalArgumentException("checkServerTrusted:x509Certificate array isnull");
                     }
 
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                        // don't check
+                    if (!(certs.length > 0)) {
+                        throw new IllegalArgumentException("checkServerTrusted: X509Certificate is empty");
                     }
 
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                        // don't check
+                    if (!(null != authType && authType.contains("RSA"))) {
+                        throw new CertificateException("checkServerTrusted: AuthType is not RSA");
+                    }
+
+                    for (X509Certificate cert : certs) {
+                        cert.checkValidity();
+                        if (!cert.getSubjectDN().getName().contains(certDNList[0])
+                                && !cert.getSubjectDN().getName().contains(certDNList[1])) {
+                            throw new IllegalArgumentException("checkServerTrusted: host is invalid");
+                        }
                     }
                 }
+            }
         };
         HostnameVerifier hostnameVerifier = new HostnameVerifier() {
             @Override
             public boolean verify(String hostname, SSLSession session) {
-                return true;
+                try {
+                    String peerHost = session.getPeerHost();
+                    X509Certificate[] peerCertificates = (X509Certificate[]) session
+                            .getPeerCertificates();
+                    for (X509Certificate certificate : peerCertificates) {
+                        X500Principal subjectX500Principal = certificate
+                                .getSubjectX500Principal();
+                        String name = subjectX500Principal.getName();
+                        String[] split = name.split(",");
+                        for (String str : split) {
+                            if (str.startsWith("CN")) {//证书绑定的域名或者ip
+                                if (peerHost.equals(hostname) &&
+                                        (str.contains(certDNList[0]) ||
+                                                str.contains(certDNList[0]))) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                } catch (SSLPeerUnverifiedException e1) {
+                    throw new IllegalArgumentException("host check failed: SSLPeerUnverifiedException");
+                }
+                return false;
             }
         };
         try {
