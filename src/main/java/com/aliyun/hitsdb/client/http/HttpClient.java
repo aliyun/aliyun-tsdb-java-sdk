@@ -240,7 +240,9 @@ public class HttpClient {
 	public void checkAuthInfo() {
 		if (HiTSDBConfig.BASICTYPE.equalsIgnoreCase(authType)) {
 			if (instanceId == null || instanceId.trim().equals("")) {
-				throw new HttpClientException("sorry, basic authentication need instance id");
+				if (!host.startsWith("ts-")) {
+					throw new HttpClientException("sorry, authentication need instance id");
+				}
 			}
 			if (tsdbUser == null || tsdbUser.trim().equals("")) {
 				throw new HttpClientException("sorry, basic authentication need user name");
@@ -250,7 +252,9 @@ public class HttpClient {
 			}
 		} else if (HiTSDBConfig.ALITYPE.equalsIgnoreCase(authType)) {
 			if (instanceId == null || instanceId.trim().equals("")) {
-				throw new HttpClientException("sorry, basic authentication need instance id");
+				if (!host.startsWith("ts-")) {
+					throw new HttpClientException("sorry, authentication need instance id");
+				}
 			}
 			if (tsdbUser == null || tsdbUser.trim().equals("")) {
 				throw new HttpClientException("sorry, ali authentication need user name");
@@ -270,13 +274,17 @@ public class HttpClient {
 	public void setAuthHeader(HttpEntityEnclosingRequestBase request) {
 		checkAuthInfo();
 		if (HiTSDBConfig.BASICTYPE.equalsIgnoreCase(authType)) {
-			String auth = tsdbUser + "@" + instanceId + ":" + basicPwd;
+			String auth = (instanceId == null || instanceId.trim().equals("")) ?
+					tsdbUser + ":" + basicPwd: 
+					tsdbUser + "@" + instanceId + ":" + basicPwd;
 			byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
 			String authHeader = authType + " " + new String(encodedAuth);
 			request.removeHeaders(HttpHeaders.AUTHORIZATION);
 			request.addHeader(HttpHeaders.AUTHORIZATION, authHeader);
 		} else if (HiTSDBConfig.ALITYPE.equalsIgnoreCase(authType)) {
-			String auth = version + ":" + tsdbUser + "@" + instanceId + ":" +Base64.encodeBase64String(certContent);
+			String auth = (instanceId == null || instanceId.trim().equals("")) ?
+					version + ":" + tsdbUser + ":" +Base64.encodeBase64String(certContent) :
+					version + ":" + tsdbUser + "@" + instanceId + ":" +Base64.encodeBase64String(certContent);
 			byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("US-ASCII")));
 			String authHeader = authType + " " + new String(encodedAuth);
 			request.removeHeaders(HttpHeaders.AUTHORIZATION);
