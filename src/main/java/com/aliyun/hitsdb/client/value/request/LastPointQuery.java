@@ -13,11 +13,11 @@ public class LastPointQuery extends JSONValue {
 
 
     public static class Builder {
-        private int backScan = 0;
+        private Integer backScan;
 
-        private boolean msResolution;
+        private Boolean msResolution;
 
-        private long timestamp;
+        private Long timestamp;
 
         private List<LastPointSubQuery> queries;
 
@@ -45,10 +45,13 @@ public class LastPointQuery extends JSONValue {
         }
 
         public LastPointQuery build() {
+            if(queries == null || queries.isEmpty()){
+                throw new IllegalArgumentException("the LastPointSubQuery must be set");
+            }
             LastPointQuery query = new LastPointQuery();
-            query.setBackScan(this.backScan);
-            query.setMsResolution(msResolution);
-            query.setTimestamp(timestamp);
+            query.backScan = this.backScan;
+            query.msResolution = msResolution;
+            query.timestamp = timestamp;
             query.setQueries(queries);
             return query;
         }
@@ -59,16 +62,16 @@ public class LastPointQuery extends JSONValue {
         return new Builder();
     }
 
-    private boolean msResolution;
+    private Boolean msResolution;
 
-    private int backScan;
+    private Integer backScan;
 
-    private long timestamp;
+    private Long timestamp;
 
 
     private List<LastPointSubQuery> queries;
 
-    public boolean isMsResolution() {
+    public Boolean isMsResolution() {
         return msResolution;
     }
 
@@ -76,7 +79,7 @@ public class LastPointQuery extends JSONValue {
         this.msResolution = msResolution;
     }
 
-    public int getBackScan() {
+    public Integer getBackScan() {
         return backScan;
     }
 
@@ -84,7 +87,7 @@ public class LastPointQuery extends JSONValue {
         this.backScan = backScan;
     }
 
-    public long getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
