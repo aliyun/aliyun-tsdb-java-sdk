@@ -5,3 +5,4 @@ hitsdb-client.iml
 /.classpath
 /.project
 .idea/
+.DS_Store

@@ -9,14 +9,14 @@ import com.aliyun.hitsdb.client.value.JSONValue;
 
 public class Query extends JSONValue {
 	private long start;
-	private long end;
+	private Long end;
 	private Boolean msResolution;
 	private Boolean delete;
 	private List<SubQuery> queries;
 
 	public static class Builder {
 		private long startTime;
-		private long endTime;
+		private Long endTime;
 		private Boolean msResolution;
 		private Boolean delete;
 		private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
@@ -152,7 +152,7 @@ public class Query extends JSONValue {
 		return start;
 	}
 
-	public long getEnd() {
+	public Long getEnd() {
 		return end;
 	}
 
