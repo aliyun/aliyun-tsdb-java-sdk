@@ -2,10 +2,8 @@ package com.aliyun.hitsdb.client;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
-import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
-import com.aliyun.hitsdb.client.value.request.MultiFieldQuery;
-import com.aliyun.hitsdb.client.value.request.MultiFieldSubQuery;
-import com.aliyun.hitsdb.client.value.request.MultiFieldSubQueryDetails;
+import com.aliyun.hitsdb.client.value.request.*;
+import com.aliyun.hitsdb.client.value.response.MultiFieldQueryLastResult;
 import com.aliyun.hitsdb.client.value.response.MultiFieldQueryResult;
 import com.aliyun.hitsdb.client.value.type.Aggregator;
 import org.junit.After;
@@ -65,7 +63,7 @@ public class TestHiTSDBClientMultiFieldFeatures {
      *             ts3            46               1.9
      */
     @Test
-    public void testMultiFieldDataPointPutAndQuery_Basic() {
+    public void testMultiFieldPutAndQuery() {
         long startTimestamp = 1537170208;
         final String metric = "wind";
 
@@ -215,7 +213,20 @@ public class TestHiTSDBClientMultiFieldFeatures {
      * @since 1.0.0
      */
     @Test
-    public void testMultiFieldDataPointPut_QUERY_QUERYLAST() {
-        //
+    public void testMultiFieldQueryLast() {
+        String metric = "wind";
+        List<String> fields = new ArrayList<String>();
+        fields.add("direction");
+        Map<String, String> tags = new HashMap<String, String>();
+        tags.put("sensor", "95D8-7913");
+        LastPointQuery lastPointQuery = LastPointQuery.builder()
+                .sub(LastPointSubQuery.builder(metric, fields, tags).build()).tupleFormat(true).build();
+
+        List<MultiFieldQueryLastResult> result = tsdb.multiFieldQueryLast(lastPointQuery);
+        if (result != null) {
+            System.out.println("##### Multi-field Query Last Result : " + JSON.toJSONString(result));
+        } else {
+            System.out.println("##### Empty reply from HiTSDB server. ######");
+        }
     }
 }
