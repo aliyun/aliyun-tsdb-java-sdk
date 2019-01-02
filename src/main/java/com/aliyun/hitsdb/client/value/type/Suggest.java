@@ -1,7 +1,7 @@
 package com.aliyun.hitsdb.client.value.type;
 
 public enum Suggest {
-    Metrics("metrics"), Tagk("tagk");
+    Metrics("metrics"), Field("field"), Tagk("tagk"), Tagv("tagv");
 
     private String name;
 

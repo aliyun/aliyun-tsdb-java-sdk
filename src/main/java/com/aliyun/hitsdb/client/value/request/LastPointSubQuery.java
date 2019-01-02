@@ -18,6 +18,12 @@ public class LastPointSubQuery extends HashMap<String, Object> {
             this.query.setTags(tags);
         }
 
+        public Builder(String metric, List<String> fields, Map<String, String> tags) {
+            this.query.setMetric(metric);
+            this.query.setTags(tags);
+            this.query.setFields(fields);
+        }
+
         public Builder(List<String> tsuids) {
             this.query.setTsuids(tsuids);
         }
@@ -28,7 +34,11 @@ public class LastPointSubQuery extends HashMap<String, Object> {
     }
 
     public static Builder builder(String metric, Map<String, String> tags) {
-        return new Builder(metric,tags);
+        return new Builder(metric, tags);
+    }
+
+    public static Builder builder(String metric, List<String> fields, Map<String, String> tags) {
+        return new Builder(metric, fields, tags);
     }
 
     public static Builder builder(List<String> tsuids){
@@ -36,11 +46,13 @@ public class LastPointSubQuery extends HashMap<String, Object> {
     }
 
     private static final String METRIC = "metric";
-
+    /**
+     * Optional fields input parameter.
+     * Used for fields' latest data points under certain metric.
+     */
+    private static final String FIELDS = "fields";
     private static final String TAGS = "tags";
-
     private static final String TSUIDS = "tsuids";
-
 
     public String getMetric() {
         return (String) this.get(METRIC);
@@ -51,6 +63,14 @@ public class LastPointSubQuery extends HashMap<String, Object> {
             throw new IllegalArgumentException("metric and tsuid parameter provided at the same time is not supported.");
         }
         this.put(METRIC, metric);
+    }
+
+    public String getFields() {
+        return (String) this.get(FIELDS);
+    }
+
+    public void setFields(List<String> fields) {
+        this.put(FIELDS, fields);
     }
 
     public Map<String, String> getTags() {

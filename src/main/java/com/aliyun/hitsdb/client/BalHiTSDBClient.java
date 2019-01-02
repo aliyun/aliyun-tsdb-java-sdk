@@ -287,7 +287,6 @@ public class BalHiTSDBClient implements HiTSDB {
         return wathers;
     }
 
-
     private final HealthWatcher healthWatcher = new HealthWatcher() {
         @Override
         public void health(String host, boolean health) {
@@ -418,7 +417,6 @@ public class BalHiTSDBClient implements HiTSDB {
         }
         throw new RuntimeException(exception);
     }
-
 
     private static int MAX_RETRY_SIZE = 3;
 
@@ -637,6 +635,20 @@ public class BalHiTSDBClient implements HiTSDB {
     }
 
     @Override
+    public void deleteData(String metric, List<String> fields, long startTime, long endTime) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().deleteData(metric, fields, startTime, endTime);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
     public void deleteData(String metric, Date startDate, Date endDate) throws HttpUnknowStatusException {
         Exception exception = null;
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
@@ -651,11 +663,39 @@ public class BalHiTSDBClient implements HiTSDB {
     }
 
     @Override
+    public void deleteData(String metric, List<String> fields, Date startDate, Date endDate) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().deleteData(metric, fields, startDate, endDate);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
     public void deleteMeta(String metric, Map<String, String> tags) throws HttpUnknowStatusException {
         Exception exception = null;
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
                 client().deleteMeta(metric, tags);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public void deleteMeta(String metric, List<String> fields, Map<String, String> tags) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().deleteMeta(metric, fields, tags);
                 return;
             } catch (Exception e) {
                 exception = e;
@@ -727,6 +767,19 @@ public class BalHiTSDBClient implements HiTSDB {
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
                 return client().suggest(type, prefix, max);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public List<String> suggest(Suggest type, String metric, String prefix, int max) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().suggest(type, metric, prefix, max);
             } catch (Exception e) {
                 exception = e;
             }
@@ -876,6 +929,75 @@ public class BalHiTSDBClient implements HiTSDB {
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
                 return client().queryLast(tsuids);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    /**
+     * Following APIs, which have multiField prefix, are for TSDB's multi-field data model structure's puts and queries.
+     * Since TSDB release 2.3.7
+     */
+    @Override
+    public <T extends Result> T multiFieldPutSync(Collection<MultiFieldPoint> points, Class<T> resultType) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().multiFieldPutSync(points, resultType);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public Result multiFieldPutSync(MultiFieldPoint... points) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().multiFieldPutSync(points);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public Result multiFieldPutSync(Collection<MultiFieldPoint> points) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().multiFieldPutSync(points);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public List<MultiFieldQueryResult> multiFieldQuery(MultiFieldQuery query) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().multiFieldQuery(query);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public List<MultiFieldQueryLastResult> multiFieldQueryLast(LastPointQuery lastPointQuery) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().multiFieldQueryLast(lastPointQuery);
             } catch (Exception e) {
                 exception = e;
             }

@@ -19,4 +19,11 @@ public interface HttpAPI {
     String DELETE_ALL_TABLE = "/api/delete_all_table";
 
     String VIP_HEALTH = "/api/vip_health";
+
+    /**
+     * Multi-field data model APIs
+     */
+    String MPUT = "/api/mput";
+    String MQUERY = "/api/mquery";
+    String QUERY_MLAST = "/api/query/mlast";
 }
