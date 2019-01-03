@@ -23,6 +23,10 @@ public class MultiFieldQueryLastResult {
         return values;
     }
 
+    public void setTags(Map<String, String> tags) {
+        this.tags = tags;
+    }
+
     public void setMetric(String metric) {
         this.metric = metric;
     }
@@ -33,5 +37,9 @@ public class MultiFieldQueryLastResult {
 
     public void setValues(List<List<Object>> values) {
         this.values = values;
+    }
+
+    public Map<String, String> getTags() {
+        return tags;
     }
 }
