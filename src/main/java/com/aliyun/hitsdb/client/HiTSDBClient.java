@@ -1145,7 +1145,7 @@ public class HiTSDBClient implements HiTSDB {
 
     @Override
     public List<LastDataValue> queryLast(LastPointQuery query) throws HttpUnknowStatusException {
-        if (query.getTupleFormat()) {
+        if (query.getTupleFormat() != null && query.getTupleFormat()) {
             throw new HttpClientException("Tuple format query result is not supported. " +
                     "If you want to query fields' latest data and receive tuple format results, " +
                     "please use multiFieldQueryLast() instead.");
