@@ -206,6 +206,13 @@ public class MultiFieldPoint extends JSONValue {
     public static void checkPoint(MultiFieldPoint multiFieldPoint) {
         if (multiFieldPoint.metric == null || multiFieldPoint.metric.length() == 0) {
             throw new IllegalArgumentException("Metric can't be empty");
+        } else {
+            for (int i = 0; i < multiFieldPoint.metric.length(); i++) {
+                final char c = multiFieldPoint.metric.charAt(i);
+                if (!checkChar(c)) {
+                    throw new IllegalArgumentException("There is an invalid character in metric. The char is '" + c + "'");
+                }
+            }
         }
 
         if (multiFieldPoint.timestamp == null) {
@@ -223,6 +230,13 @@ public class MultiFieldPoint extends JSONValue {
         for (Map.Entry<String, Object> field : multiFieldPoint.fields.entrySet()) {
             if (field.getKey() == null || field.getKey().isEmpty()) {
                 throw new IllegalArgumentException("Field name can't be null or empty.");
+            } else {
+                for (int i = 0; i < field.getKey().length(); i++) {
+                    final char c = field.getKey().charAt(i);
+                    if (!checkChar(c)) {
+                        throw new IllegalArgumentException("There is an invalid character in field. The char is '" + c + "'");
+                    }
+                }
             }
 
             if (field.getValue() == null) {
@@ -243,13 +257,6 @@ public class MultiFieldPoint extends JSONValue {
 
             if (field.getValue() instanceof Number && field.getValue() == (Number) Double.NEGATIVE_INFINITY) {
                 throw new IllegalArgumentException("Number field value can't be NEGATIVE_INFINITY");
-            }
-
-            for (int i = 0; i < field.getKey().length(); i++) {
-                final char c = field.getKey().charAt(i);
-                if (!checkChar(c)) {
-                    throw new IllegalArgumentException("There is an invalid character in metric. the char is '" + c + "'");
-                }
             }
         }
 

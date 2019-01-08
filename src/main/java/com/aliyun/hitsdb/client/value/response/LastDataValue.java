@@ -6,6 +6,7 @@ import java.util.TreeSet;
 
 public class LastDataValue {
     private String metric;
+    private String field;
     private long timestamp;
     private Object value;
     private String tsuid;
@@ -17,6 +18,14 @@ public class LastDataValue {
 
     public void setMetric(String metric) {
         this.metric = metric;
+    }
+
+    public String getField() {
+        return field;
+    }
+
+    public void setField(String field) {
+        this.field = field;
     }
 
     public long getTimestamp() {
