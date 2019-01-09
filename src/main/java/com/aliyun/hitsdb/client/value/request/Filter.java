@@ -12,7 +12,7 @@ public class Filter {
         private FilterType type;
         private String tagk;
         private String filter;
-        private Boolean groupBy;
+        private boolean groupBy;
 
         public Builder(FilterType type, String tagk, String filter, Boolean groupBy) {
             super();
