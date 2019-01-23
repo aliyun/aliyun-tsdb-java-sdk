@@ -10,6 +10,7 @@ import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.JSONValue;
 
+@Deprecated
 public class MultiValuedPoint extends JSONValue {
     public static class MetricBuilder {
         private String metric;

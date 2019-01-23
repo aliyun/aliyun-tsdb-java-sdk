@@ -32,12 +32,14 @@ public interface HiTSDB extends Closeable {
 	 * Asynchronous multi-valued put point
 	 * @param point point
 	 */
+	@Deprecated
 	void multiValuedPut(MultiValuedPoint point);
 
 	/**
 	 * Asynchronous multi-valued put points
 	 * @param points points
 	 */
+	@Deprecated
 	void multiValuedPut(MultiValuedPoint... points);
 
 	/**
@@ -83,43 +85,53 @@ public interface HiTSDB extends Closeable {
 
 	/**
 	 * Synchronous multi-valued put method
+	 * @deprecated please use multiFieldPutSync
 	 * @param points points
 	 * @return Result
 	 */
+	@Deprecated
 	Result multiValuedPutSync(Collection<MultiValuedPoint> points);
 
 	/**
 	 * Synchronous multi-valued put method
+	 * @deprecated please use multiFieldPutSync
 	 * @param points points
 	 * @return Result
 	 */
+	@Deprecated
 	Result multiValuedPutSync(MultiValuedPoint... points);
 
 	/**
 	 * Synchronous multi-valued put method
+	 * @deprecated please use multiFieldPutSync
 	 * @param points points
 	 * @param resultType resultType
 	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
 	 * @return Result
 	 */
+	@Deprecated
 	<T extends Result> T multiValuedPutSync(Collection<MultiValuedPoint> points, Class<T> resultType);
 
 	/**
 	 * Synchronous multi-valued put method
+	 * @deprecated please use multiFieldPutSync
 	 * @param resultType resultType
 	 * @param points points
 	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
 	 * @return Result
 	 */
+	@Deprecated
 	<T extends Result> T multiValuedPutSync(Class<T> resultType, Collection<MultiValuedPoint> points);
 
 	/**
 	 * Synchronous multi-valued put method
+	 * @deprecated please use multiFieldPutSync
 	 * @param resultType resultType
 	 * @param points points
 	 * @param <T> Result.class, SummaryResult.class, DetailsResult.class
 	 * @return Result
 	 */
+	@Deprecated
 	<T extends Result> T multiValuedPutSync(Class<T> resultType, MultiValuedPoint... points);
 
 	/**
@@ -139,9 +151,11 @@ public interface HiTSDB extends Closeable {
 
 	/**
 	 * Multi-valued query method. Multi-valued query does not support callback yet.
+	 * @deprecated please use multiFieldQuery
 	 * @param query
 	 * @return result : List
 	 */
+	@Deprecated
 	MultiValuedQueryResult multiValuedQuery(MultiValuedQuery query) throws HttpUnknowStatusException;
 
 
@@ -320,10 +334,12 @@ public interface HiTSDB extends Closeable {
 
 	/**
 	 * /api/query/last endpoint
+	 * @deprecated please use multiFieldQueryLast
 	 * @param queryLastRequest multi-valued query last request
 	 * @return result
 	 * @throws HttpUnknowStatusException Exception
 	 */
+	@Deprecated
 	MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException;
 
 	/**
@@ -397,7 +413,8 @@ public interface HiTSDB extends Closeable {
 
 	/**
 	 * Following APIs are for TSDB's multi-field data model structure's puts and queries.
-	 * Since TSDB release 2.3.7
+	 * They replace the multiValued* APIs
+	 * Since TSDB release 2.4.0
 	 */
 	/**
      * /api/mput endpoint

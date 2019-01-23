@@ -390,6 +390,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    @Deprecated
     @Override
     public void multiValuedPut(MultiValuedPoint point) {
         Exception exception = null;
@@ -404,6 +405,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    @Deprecated
     @Override
     public void multiValuedPut(MultiValuedPoint... points) {
         Exception exception = null;
@@ -488,6 +490,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    @Deprecated
     @Override
     public Result multiValuedPutSync(Collection<MultiValuedPoint> points) {
         Exception exception = null;
@@ -501,6 +504,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    @Deprecated
     @Override
     public Result multiValuedPutSync(MultiValuedPoint... points) {
         Exception exception = null;
@@ -514,6 +518,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Collection<MultiValuedPoint> points, Class<T> resultType) {
         Exception exception = null;
@@ -527,6 +532,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Class<T> resultType, Collection<MultiValuedPoint> points) {
         Exception exception = null;
@@ -540,6 +546,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Class<T> resultType, MultiValuedPoint... points) {
         Exception exception = null;
@@ -580,6 +587,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    @Deprecated
     @Override
     public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery query) throws HttpUnknowStatusException {
         Exception exception = null;
@@ -852,7 +860,7 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
-
+    @Deprecated
     @Override
     public MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException {
         Exception exception = null;

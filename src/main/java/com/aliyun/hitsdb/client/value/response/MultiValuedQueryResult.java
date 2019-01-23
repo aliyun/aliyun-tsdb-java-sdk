@@ -5,6 +5,7 @@ import java.util.*;
 import com.alibaba.fastjson.annotation.JSONType;
 import com.aliyun.hitsdb.client.value.JSONValue;
 
+@Deprecated
 @JSONType(ignores = { "dps", "aggregateTags" })
 public class MultiValuedQueryResult extends JSONValue {
     private String name;

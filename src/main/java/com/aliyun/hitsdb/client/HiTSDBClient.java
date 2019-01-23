@@ -278,6 +278,7 @@ public class HiTSDBClient implements HiTSDB {
         queue.send(point);
     }
 
+    @Deprecated
     @Override
     public void multiValuedPut(MultiValuedPoint point) {
         for (Map.Entry<String, Object> field : point.getFields().entrySet()) {
@@ -294,7 +295,7 @@ public class HiTSDBClient implements HiTSDB {
         }
     }
 
-
+    @Deprecated
     @Override
     public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery multiValuedQuery) {
         if (multiValuedQuery.getQueries().size() != 1) {
@@ -363,6 +364,7 @@ public class HiTSDBClient implements HiTSDB {
      * @param offset
      * @return
      */
+    @Deprecated
     public MultiValuedQueryResult convertQueryResultIntoTupleFormat(Map<String, String> fieldAndDpValueFilter, List<QueryResult> queryResults, String metric,
                                                                     Integer limit, Integer offset) {
         long startTime = System.currentTimeMillis();
@@ -712,27 +714,32 @@ public class HiTSDBClient implements HiTSDB {
         return queryResults;
     }
 
+    @Deprecated
     @Override
     public Result multiValuedPutSync(MultiValuedPoint... points) {
         return multiValuedPutSync(Arrays.asList(points));
     }
 
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Class<T> resultType, Collection<MultiValuedPoint> points) {
         return multiValuedPutSync(points, resultType);
     }
 
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Class<T> resultType, MultiValuedPoint... points) {
         return multiValuedPutSync(resultType, Arrays.asList(points));
     }
 
+    @Deprecated
     @Override
     public Result multiValuedPutSync(Collection<MultiValuedPoint> points) {
         return multiValuedPutSync(points, Result.class);
     }
 
     @SuppressWarnings("unchecked")
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Collection<MultiValuedPoint> points, Class<T> resultType) {
         List<Point> singleValuedPoints = new ArrayList<Point>();
@@ -855,6 +862,7 @@ public class HiTSDBClient implements HiTSDB {
         handleVoid(resultResponse);
     }
 
+    @Deprecated
     @Override
     public MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException {
         List<Timeline> timelines = new ArrayList<Timeline>();
@@ -897,6 +905,7 @@ public class HiTSDBClient implements HiTSDB {
      * @param metric              measurement metric value
      * @return
      */
+    @Deprecated
     public MultiValuedQueryLastResult convertQueryLastResultIntoTupleFormat(List<LastDataValue> queryLastResultList, String metric) {
         Set<String> tagks = new TreeSet<String>();
         Set<String> fields = new TreeSet<String>();
@@ -1121,6 +1130,7 @@ public class HiTSDBClient implements HiTSDB {
         }
     }
 
+    @Deprecated
     @Override
     public void multiValuedPut(MultiValuedPoint... points) {
         for (MultiValuedPoint p : points) {

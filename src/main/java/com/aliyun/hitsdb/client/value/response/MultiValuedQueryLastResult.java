@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 @JSONType(ignores = { "dps" })
 public class MultiValuedQueryLastResult extends JSONValue {
     private String name;

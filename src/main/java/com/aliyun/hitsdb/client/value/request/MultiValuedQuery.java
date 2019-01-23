@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.aliyun.hitsdb.client.value.JSONValue;
 
+@Deprecated
 public class MultiValuedQuery extends JSONValue {
     private long start;
     private long end;
