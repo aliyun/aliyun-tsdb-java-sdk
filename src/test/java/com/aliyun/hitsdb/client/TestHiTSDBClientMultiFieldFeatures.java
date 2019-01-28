@@ -96,10 +96,10 @@ public class TestHiTSDBClientMultiFieldFeatures {
             String field4Value = field4ValueArrays[i];
 
             MultiFieldPoint multiFieldPoint = MultiFieldPoint.metric(metric)
-                    .fields(FIELD1, field1Value)
-                    .fields(FIELD2, field2Value)
-                    .fields(FIELD3, field3Value)
-                    .fields(FIELD4, field4Value)
+                    .field(FIELD1, field1Value)
+                    .field(FIELD2, field2Value)
+                    .field(FIELD3, field3Value)
+                    .field(FIELD4, field4Value)
                     .tag(TAGK1, TAGV1)
                     .tag(TAGK2, TAGV2)
                     .tag(TAGK3, TAGV3)

@@ -44,7 +44,7 @@ public class MultiFieldPoint extends JSONValue {
          * @param tags a map
          * @return MetricBuilder
          */
-        public MetricBuilder tag(final Map<String, String> tags) {
+        public MetricBuilder tags(final Map<String, String> tags) {
             if (tags != null) {
                 this.tags.putAll(tags);
             }
@@ -80,7 +80,7 @@ public class MultiFieldPoint extends JSONValue {
          * @param fieldValue
          * @return
          */
-        public MetricBuilder fields(final String fieldName, final Object fieldValue) {
+        public MetricBuilder field(final String fieldName, final Object fieldValue) {
             Objects.requireNonNull(fieldName, "field name");
             if (fieldValue != null) {
                 this.fields.put(fieldName, fieldValue);
