@@ -122,9 +122,8 @@ public class Query extends JSONValue {
 					throw new IllegalArgumentException("the end time (" + this.endTime +
 							") must be greater than start time (" + this.startTime + ")" );
 				}
-			} else {
-				query.end = this.endTime;
 			}
+			query.end = this.endTime;
 			query.queries = this.subQueryList;
 			query.delete = this.delete;
 			query.msResolution = this.msResolution;
