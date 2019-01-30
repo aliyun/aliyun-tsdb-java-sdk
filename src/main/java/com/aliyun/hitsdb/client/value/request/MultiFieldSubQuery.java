@@ -16,6 +16,7 @@ public class MultiFieldSubQuery {
     private List<MultiFieldSubQueryDetails> fields;
     private Integer limit;
     private Integer offset;
+    private int index;
 
     public static class Builder {
         private String metric;
@@ -170,6 +171,13 @@ public class MultiFieldSubQuery {
         return metric;
     }
 
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public int getIndex() {
+        return this.index;
+    }
 
     public Map<String, String> getTags() {
         return tags;

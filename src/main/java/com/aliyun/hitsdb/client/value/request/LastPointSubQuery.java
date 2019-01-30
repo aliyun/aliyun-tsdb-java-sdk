@@ -65,8 +65,8 @@ public class LastPointSubQuery extends HashMap<String, Object> {
         this.put(METRIC, metric);
     }
 
-    public String getFields() {
-        return (String) this.get(FIELDS);
+    public List<String> getFields() {
+        return (List<String>) this.get(FIELDS);
     }
 
     public void setFields(List<String> fields) {

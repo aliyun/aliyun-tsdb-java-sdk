@@ -187,19 +187,6 @@ public class MultiFieldPoint extends JSONValue {
     }
 
     /**
-     * If it is true, it is a legitimate character.
-     * @param c char
-     * @return
-     */
-    private static boolean checkChar(char c) {
-        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') ||
-                c == '-' || c == '_' ||
-                c == '.' || c == ' ' || c == ',' || c == '=' || c == '/' || c == ':' ||
-                c == '(' || c == ')' || c == '[' || c == ']' || c == '\'' || c == '/' || c == '#' ||
-                Character.isLetter(c);
-    }
-
-    /**
      * Checkout the point format
      * @param multiFieldPoint multi-valued data point
      */
@@ -209,7 +196,7 @@ public class MultiFieldPoint extends JSONValue {
         } else {
             for (int i = 0; i < multiFieldPoint.metric.length(); i++) {
                 final char c = multiFieldPoint.metric.charAt(i);
-                if (!checkChar(c)) {
+                if (!Point.checkChar(c)) {
                     throw new IllegalArgumentException("There is an invalid character in metric. The char is '" + c + "'");
                 }
             }
@@ -233,7 +220,7 @@ public class MultiFieldPoint extends JSONValue {
             } else {
                 for (int i = 0; i < field.getKey().length(); i++) {
                     final char c = field.getKey().charAt(i);
-                    if (!checkChar(c)) {
+                    if (!Point.checkChar(c)) {
                         throw new IllegalArgumentException("There is an invalid character in field. The char is '" + c + "'");
                     }
                 }
@@ -260,28 +247,27 @@ public class MultiFieldPoint extends JSONValue {
             }
         }
 
-        if (multiFieldPoint.tags == null || multiFieldPoint.tags.size() == 0) {
-            throw new IllegalArgumentException("At least one tag is needed");
-        }
-
+        // We allow data points do not have any tag.
         // Measurement metric is automatically inserted into tags map. No need to separately check metric.
-        for (Map.Entry<String, String> entry : multiFieldPoint.tags.entrySet()) {
-            String tagkey = entry.getKey();
-            String tagvalue = entry.getValue();
+        if (multiFieldPoint.getTags() != null && !multiFieldPoint.getTags().isEmpty()) {
+            for (Map.Entry<String, String> entry : multiFieldPoint.tags.entrySet()) {
+                String tagkey = entry.getKey();
+                String tagvalue = entry.getValue();
 
-            for (int i = 0; i < tagkey.length(); i++) {
-                final char c = tagkey.charAt(i);
-                if (!checkChar(c)) {
-                    throw new IllegalArgumentException("There is an invalid character in tagkey. the tagkey is + "
-                            + tagkey + ", the char is '" + c + "'");
+                for (int i = 0; i < tagkey.length(); i++) {
+                    final char c = tagkey.charAt(i);
+                    if (!Point.checkChar(c)) {
+                        throw new IllegalArgumentException("There is an invalid character in tagkey. the tagkey is + "
+                                + tagkey + ", the char is '" + c + "'");
+                    }
                 }
-            }
 
-            for (int i = 0; i < tagvalue.length(); i++) {
-                final char c = tagvalue.charAt(i);
-                if (!checkChar(c)) {
-                    throw new IllegalArgumentException("There is an invalid character in tagvalue. the tag is + <"
-                            + tagkey + ":" + tagvalue + "> , the char is '" + c + "'");
+                for (int i = 0; i < tagvalue.length(); i++) {
+                    final char c = tagvalue.charAt(i);
+                    if (!Point.checkChar(c)) {
+                        throw new IllegalArgumentException("There is an invalid character in tagvalue. the tag is + <"
+                                + tagkey + ":" + tagvalue + "> , the char is '" + c + "'");
+                    }
                 }
             }
         }
