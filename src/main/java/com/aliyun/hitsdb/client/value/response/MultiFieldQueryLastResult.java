@@ -1,22 +1,18 @@
 package com.aliyun.hitsdb.client.value.response;
 
-import com.alibaba.fastjson.annotation.JSONType;
-import com.aliyun.hitsdb.client.value.JSONValue;
-
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Deprecated
-@JSONType(ignores = { "dps" })
-public class MultiValuedQueryLastResult extends JSONValue {
-    private String name;
+public class MultiFieldQueryLastResult {
+    private String metric;
+    private Map<String, String> tags = new HashMap<String, String>();
     private List<String> columns = new ArrayList<String>();
     private List<List<Object>> values = new ArrayList<List<Object>>();
-    private List<Map<String, Object>> dps = new ArrayList<Map<String, Object>>();
 
-    public String getName() {
-        return name;
+    public String getMetric() {
+        return metric;
     }
 
     public List<String> getColumns() {
@@ -27,12 +23,12 @@ public class MultiValuedQueryLastResult extends JSONValue {
         return values;
     }
 
-    public List<Map<String, Object>> getDps() {
-        return dps;
+    public void setTags(Map<String, String> tags) {
+        this.tags = tags;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setMetric(String metric) {
+        this.metric = metric;
     }
 
     public void setColumns(List<String> columns) {
@@ -43,7 +39,7 @@ public class MultiValuedQueryLastResult extends JSONValue {
         this.values = values;
     }
 
-    public void setDps(List<Map<String, Object>> dps) {
-        this.dps = dps;
+    public Map<String, String> getTags() {
+        return tags;
     }
 }

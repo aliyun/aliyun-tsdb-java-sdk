@@ -8,10 +8,7 @@ import com.aliyun.hitsdb.client.value.request.*;
 import com.aliyun.hitsdb.client.value.response.MultiValuedQueryLastResult;
 import com.aliyun.hitsdb.client.value.response.MultiValuedQueryResult;
 import com.aliyun.hitsdb.client.value.type.Aggregator;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +16,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Deprecated
+@Ignore
 public class TestHiTSDBClientMultiValuedFeature {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestHiTSDBClientMultiValuedFeature.class);

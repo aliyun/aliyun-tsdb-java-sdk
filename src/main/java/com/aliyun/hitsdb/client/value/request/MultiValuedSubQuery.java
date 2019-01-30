@@ -5,6 +5,7 @@ import java.util.*;
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.util.Objects;
 
+@Deprecated
 public class MultiValuedSubQuery {
     private String metric;
     private Map<String, String> tags;

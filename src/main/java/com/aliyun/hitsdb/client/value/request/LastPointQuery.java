@@ -21,6 +21,8 @@ public class LastPointQuery extends JSONValue {
 
         private List<LastPointSubQuery> queries;
 
+        private Boolean tupleFormat;
+
         public Builder timestamp(long timestamp) {
             this.timestamp = timestamp;
             return this;
@@ -44,6 +46,11 @@ public class LastPointQuery extends JSONValue {
             return this;
         }
 
+        public Builder tupleFormat(boolean tupleFormat) {
+            this.tupleFormat = tupleFormat;
+            return this;
+        }
+
         public LastPointQuery build() {
             if(queries == null || queries.isEmpty()){
                 throw new IllegalArgumentException("the LastPointSubQuery must be set");
@@ -53,6 +60,7 @@ public class LastPointQuery extends JSONValue {
             query.msResolution = msResolution;
             query.timestamp = timestamp;
             query.setQueries(queries);
+            query.tupleFormat = tupleFormat;
             return query;
         }
     }
@@ -68,6 +76,11 @@ public class LastPointQuery extends JSONValue {
 
     private Long timestamp;
 
+    /**
+     * Optional tupleFormat parameter.
+     * Used for multi-field latest data points query and show results in tuple format.
+     */
+    private Boolean tupleFormat;
 
     private List<LastPointSubQuery> queries;
 
@@ -93,6 +106,14 @@ public class LastPointQuery extends JSONValue {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public Boolean getTupleFormat() {
+        return tupleFormat;
+    }
+
+    public void setTupleFormat(Boolean tupleFormat) {
+        this.tupleFormat = tupleFormat;
     }
 
     public List<LastPointSubQuery> getQueries() {

@@ -166,6 +166,13 @@ public class HiTSDBClient implements HiTSDB {
         handleVoid(resultResponse);
     }
 
+    @Override
+    public void deleteData(String metric, List<String> fields, long startTime, long endTime) {
+        MetricTimeRange metricTimeRange = new MetricTimeRange(metric, fields, startTime, endTime);
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        handleVoid(resultResponse);
+    }
 
     private void handleVoid(ResultResponse resultResponse) {
         HttpStatus httpStatus = resultResponse.getHttpStatus();
@@ -191,8 +198,21 @@ public class HiTSDBClient implements HiTSDB {
     }
 
     @Override
+    public void deleteData(String metric, List<String> fields, Date startDate, Date endDate) {
+        long startTime = startDate.getTime();
+        long endTime = endDate.getTime();
+        deleteData(metric, fields, startTime, endTime);
+    }
+
+    @Override
     public void deleteMeta(String metric, Map<String, String> tags) {
         Timeline timeline = Timeline.metric(metric).tag(tags).build();
+        deleteMeta(timeline);
+    }
+
+    @Override
+    public void deleteMeta(String metric, List<String> fields, Map<String, String> tags) {
+        Timeline timeline = Timeline.metric(metric).tag(tags).fields(fields).build();
         deleteMeta(timeline);
     }
 
@@ -267,6 +287,7 @@ public class HiTSDBClient implements HiTSDB {
         queue.send(point);
     }
 
+    @Deprecated
     @Override
     public void multiValuedPut(MultiValuedPoint point) {
         for (Map.Entry<String, Object> field : point.getFields().entrySet()) {
@@ -283,7 +304,7 @@ public class HiTSDBClient implements HiTSDB {
         }
     }
 
-
+    @Deprecated
     @Override
     public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery multiValuedQuery) {
         if (multiValuedQuery.getQueries().size() != 1) {
@@ -352,6 +373,7 @@ public class HiTSDBClient implements HiTSDB {
      * @param offset
      * @return
      */
+    @Deprecated
     public MultiValuedQueryResult convertQueryResultIntoTupleFormat(Map<String, String> fieldAndDpValueFilter, List<QueryResult> queryResults, String metric,
                                                                     Integer limit, Integer offset) {
         long startTime = System.currentTimeMillis();
@@ -419,12 +441,6 @@ public class HiTSDBClient implements HiTSDB {
         Map<String, List<QueryResult>> queryResultsWithSameTags = new HashMap<String, List<QueryResult>>();
         for (QueryResult queryResult : queryResults) {
             String tags = queryResult.tagsToString();
-//			List<QueryResult> queryResultWithSameTagsList = new ArrayList<QueryResult>();
-//			queryResultWithSameTagsList.add(queryResult);
-//			List<QueryResult> existingList = queryResultsWithSameTags.putIfAbsent(tags, queryResultWithSameTagsList);
-//			if (existingList != null) {
-//				existingList.add(queryResult);
-//			}
 
             List<QueryResult> existingList = queryResultsWithSameTags.get(tags);
             if (existingList == null) {
@@ -458,7 +474,6 @@ public class HiTSDBClient implements HiTSDB {
 
                 // Fill field values with null if necessary
                 for (String field : fields) {
-//					fieldsMap.putIfAbsent(field, null);
                     if (!fieldsMap.containsKey(field)) {
                         fieldsMap.put(field, null);
                     }
@@ -569,6 +584,27 @@ public class HiTSDBClient implements HiTSDB {
                 throw new HttpUnknowStatusException(resultResponse);
         }
     }
+
+    @Override
+    public List<String> suggest(Suggest type, String metric, String prefix, int max) {
+        SuggestValue suggestValue = new SuggestValue(type.getName(), metric, prefix, max);
+        HttpResponse httpResponse = httpclient.post(HttpAPI.SUGGEST, suggestValue.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                List<String> list = JSON.parseArray(content, String.class);
+                return list;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
 
     @Override
     public List<LookupResult> lookup(String metric, List<LookupTagFilter> tags, int max) {
@@ -687,27 +723,32 @@ public class HiTSDBClient implements HiTSDB {
         return queryResults;
     }
 
+    @Deprecated
     @Override
     public Result multiValuedPutSync(MultiValuedPoint... points) {
         return multiValuedPutSync(Arrays.asList(points));
     }
 
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Class<T> resultType, Collection<MultiValuedPoint> points) {
         return multiValuedPutSync(points, resultType);
     }
 
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Class<T> resultType, MultiValuedPoint... points) {
         return multiValuedPutSync(resultType, Arrays.asList(points));
     }
 
+    @Deprecated
     @Override
     public Result multiValuedPutSync(Collection<MultiValuedPoint> points) {
         return multiValuedPutSync(points, Result.class);
     }
 
     @SuppressWarnings("unchecked")
+    @Deprecated
     @Override
     public <T extends Result> T multiValuedPutSync(Collection<MultiValuedPoint> points, Class<T> resultType) {
         List<Point> singleValuedPoints = new ArrayList<Point>();
@@ -830,6 +871,7 @@ public class HiTSDBClient implements HiTSDB {
         handleVoid(resultResponse);
     }
 
+    @Deprecated
     @Override
     public MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException {
         List<Timeline> timelines = new ArrayList<Timeline>();
@@ -872,6 +914,7 @@ public class HiTSDBClient implements HiTSDB {
      * @param metric              measurement metric value
      * @return
      */
+    @Deprecated
     public MultiValuedQueryLastResult convertQueryLastResultIntoTupleFormat(List<LastDataValue> queryLastResultList, String metric) {
         Set<String> tagks = new TreeSet<String>();
         Set<String> fields = new TreeSet<String>();
@@ -899,14 +942,6 @@ public class HiTSDBClient implements HiTSDB {
         Map<String, List<LastDataValue>> queryLastResultsWithSameTags = new HashMap<String, List<LastDataValue>>();
         for (LastDataValue queryLastResult : queryLastResultList) {
             String tags = queryLastResult.tagsToString();
-
-//			List<LastDataValue> queryLastResultWithSameTagsList = new ArrayList<LastDataValue>();
-//			queryLastResultWithSameTagsList.add(queryLastResult);
-//
-//			List<LastDataValue> existingList = queryLastResultsWithSameTags.putIfAbsent(tags, queryLastResultWithSameTagsList);
-//			if (existingList != null) {
-//				existingList.add(queryLastResult);
-//			}
 
             List<LastDataValue> existingList = queryLastResultsWithSameTags.get(tags);
             if (existingList == null) {
@@ -949,7 +984,6 @@ public class HiTSDBClient implements HiTSDB {
 
                 // Fill field values with null if necessary
                 for (String field : fields) {
-//					fieldsMap.putIfAbsent(field, null);
                     if (!fieldsMap.containsKey(field)) {
                         fieldsMap.put(field, null);
                     }
@@ -1105,6 +1139,7 @@ public class HiTSDBClient implements HiTSDB {
         }
     }
 
+    @Deprecated
     @Override
     public void multiValuedPut(MultiValuedPoint... points) {
         for (MultiValuedPoint p : points) {
@@ -1129,6 +1164,11 @@ public class HiTSDBClient implements HiTSDB {
 
     @Override
     public List<LastDataValue> queryLast(LastPointQuery query) throws HttpUnknowStatusException {
+        if (query.getTupleFormat() != null && query.getTupleFormat()) {
+            throw new HttpClientException("Tuple format query result is not supported. " +
+                    "If you want to query fields' latest data and receive tuple format results, " +
+                    "please use multiFieldQueryLast() instead.");
+        }
         String jsonString = query.toJSON();
         HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
@@ -1159,6 +1199,134 @@ public class HiTSDBClient implements HiTSDB {
             case ServerSuccess:
                 LOGGER.info("truncate result: {}", resultResponse.getContent());
                 return true;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    /**
+     * Following APIs are for TSDB's multi-field data model structure's puts and queries.
+     * Since release TSDB 2.3.7
+     */
+
+    /**
+     * Synchronous /api/mput endpoint
+     * @param points points
+     * @return
+     */
+    @Override
+    public <T extends Result> T multiFieldPutSync(Collection<MultiFieldPoint> points, Class<T> resultType) {
+        String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
+
+        HttpResponse httpResponse;
+        if (resultType.equals(Result.class)) {
+            httpResponse = httpclient.post(HttpAPI.MPUT, jsonString);
+        } else if (resultType.equals(SummaryResult.class)) {
+            Map<String, String> paramsMap = new HashMap<String, String>();
+            paramsMap.put("summary", "true");
+            httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
+        } else if (resultType.equals(DetailsResult.class)) {
+            Map<String, String> paramsMap = new HashMap<String, String>();
+            paramsMap.put("details", "true");
+            httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
+        } else {
+            throw new HttpClientException("This result type is not supported");
+        }
+
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+
+        T result = null;
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                result = (T) new Result();
+                return result;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                if (resultType.equals(SummaryResult.class)) {
+                    result = (T) JSON.parseObject(content, SummaryResult.class);
+                } else if (resultType.equals(DetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, DetailsResult.class);
+                }
+
+                return result;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    @Override
+    public Result multiFieldPutSync(MultiFieldPoint... points) {
+        return multiFieldPutSync(Arrays.asList(points));
+    }
+
+    @Override
+    public Result multiFieldPutSync(Collection<MultiFieldPoint> points) {
+        return multiFieldPutSync(points, Result.class);
+    }
+
+    /**
+     * /api/mquery endpoint
+     * @param query
+     * @return
+     * @throws HttpUnknowStatusException
+     */
+    @Override
+    public List<MultiFieldQueryResult> multiFieldQuery(MultiFieldQuery query) throws HttpUnknowStatusException {
+        HttpResponse httpResponse = httpclient.post(HttpAPI.MQUERY, query.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                return null;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                List<MultiFieldQueryResult> queryResultList;
+                queryResultList = JSON.parseArray(content, MultiFieldQueryResult.class);
+                return queryResultList;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    /**
+     * /api/query/mlast endpoint
+     * LastPointQuery's tupleFormat will be automatically set to true.
+     * If customer does not want to receive tuple format query result, please use queryLast() function.
+     *
+     * @param lastPointQuery
+     * @return fields' latest data points in tuple format
+     * @throws HttpUnknowStatusException
+     */
+    @Override
+    public List<MultiFieldQueryLastResult> multiFieldQueryLast(LastPointQuery lastPointQuery) throws HttpUnknowStatusException {
+        if (!lastPointQuery.getTupleFormat()) {
+            lastPointQuery.setTupleFormat(true);
+        }
+
+        String jsonString = lastPointQuery.toJSON();
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_MLAST, jsonString);
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                return null;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                List<MultiFieldQueryLastResult> result = JSON.parseArray(content, MultiFieldQueryLastResult.class);
+                return result;
             case ServerNotSupport:
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:

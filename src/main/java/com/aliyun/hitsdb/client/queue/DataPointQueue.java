@@ -24,12 +24,13 @@ public class DataPointQueue implements DataQueue {
         this.backpressure = backpressure;
     }
 
+    @Override
     public void send(Point point) {
         if (forbiddenWrite.get()) {
             throw new IllegalStateException("client has been closed.");
         }
         
-        if(this.backpressure){
+        if (this.backpressure) {
             try {
                 pointQueue.put(point);
             } catch (InterruptedException e) {
@@ -45,12 +46,14 @@ public class DataPointQueue implements DataQueue {
         }
     }
 
+    @Override
     public Point receive() throws InterruptedException {
         Point point = null;
         point = pointQueue.take();
         return point;
     }
 
+    @Override
     public Point receive(int timeout) throws InterruptedException {
         Point point = pointQueue.poll(timeout, TimeUnit.MILLISECONDS);
         return point;
@@ -87,8 +90,6 @@ public class DataPointQueue implements DataQueue {
             throw new IllegalStateException(
                     "The queue is still allowed to write data. you must first call the forbiddenSend() method");
         }
-        
-        
     }
 
     @Override

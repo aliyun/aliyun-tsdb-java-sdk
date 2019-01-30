@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Comparator;
 import java.util.List;
 
+@Deprecated
 @JSONType(ignores = { "timestamp" })
 public class MultiValuedTupleComparator implements Comparator<List<Object>> {
 

@@ -3,21 +3,24 @@ package com.aliyun.hitsdb.client.value.request;
 import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.type.Aggregator;
 
-@Deprecated
-public class MultiValuedQueryMetricDetails {
+public class MultiFieldSubQueryDetails {
     private String field;
+    private String alias;
     private String aggregator;
     private Aggregator aggregatorType;
     private String downsample;
     private Boolean rate;
+    private Integer top;
     private String dpValue;
 
     public static class Builder {
         private String field;
+        private String alias = null;
         private Aggregator aggregatorType;
-        private String downsample;
-        private Boolean rate;
-        private String dpValue;
+        private String downsample = null;
+        private Boolean rate = false;
+        private Integer top = 0;
+        private String dpValue = null;
 
         public Builder(String field, Aggregator aggregatorType) {
             Objects.requireNonNull(field, "field name");
@@ -27,6 +30,18 @@ public class MultiValuedQueryMetricDetails {
             }
             this.field = field;
             this.aggregatorType = aggregatorType;
+        }
+
+        /**
+         * Set field alias name in result
+         * @param alias
+         * @return
+         */
+        public Builder alias(String alias) {
+            if (alias != null && !alias.isEmpty()) {
+                this.alias = alias;
+            }
+            return this;
         }
 
         /**
@@ -52,37 +67,82 @@ public class MultiValuedQueryMetricDetails {
             }
             return this;
         }
-
         public Builder rate() {
             this.rate = true;
             return this;
         }
 
-        public Builder dpValue() {
-            this.dpValue = null;
-            return this;
-        }
-
+        /**
+         * Set data point value filter
+         * @param dpValue
+         * @return
+         */
         public Builder dpValue(String dpValue) {
-            if (dpValue != null && !dpValue.isEmpty()) {
+            if (dpValue != null && !dpValue.isEmpty() && validateDpValue(dpValue)) {
                 this.dpValue = dpValue;
             }
             return this;
         }
 
-        public MultiValuedQueryMetricDetails build() {
-            MultiValuedQueryMetricDetails queryMetricDetails = new MultiValuedQueryMetricDetails();
-            queryMetricDetails.aggregatorType = this.aggregatorType;
-            queryMetricDetails.aggregator = this.aggregatorType.getName();
-            queryMetricDetails.downsample = this.downsample;
-            queryMetricDetails.field = this.field;
-            queryMetricDetails.rate = this.rate;
+        /**
+         * Set top operation
+         * @param top
+         * @return
+         */
+        public Builder top(Integer top) {
+            if (top < 0 || top > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException("Illegal top operator value.");
+            }
+            this.top = top;
+            return this;
+        }
 
-            if (this.dpValue != null) {
-                queryMetricDetails.dpValue = this.dpValue;
+        /**
+         * Validate dpValue input
+         * @param dpValue
+         * @return
+         */
+        private Boolean validateDpValue(final String dpValue) {
+            // Query value filtering field's length is minimum 2.
+            if (dpValue.length() == 1) {
+                return false;
             }
 
-            return queryMetricDetails;
+            int index = 0;
+            char[] value_array = dpValue.toCharArray();
+            for (index = 0; index < dpValue.length(); index++) {
+                // Find boundary between comparison operator and value.
+                if (value_array[index] != '<'
+                        && value_array[index] != '>'
+                        && value_array[index] != '!'
+                        && value_array[index] != '=') {
+                    break;
+                }
+            }
+
+            // field value does not contain valid comparison operator.
+            if (index == 0) {
+                return false;
+            }
+
+            return true;
+        }
+
+        public MultiFieldSubQueryDetails build() {
+            MultiFieldSubQueryDetails fieldDetails = new MultiFieldSubQueryDetails();
+            fieldDetails.field = this.field;
+            if (this.alias != null && !this.alias.isEmpty()) {
+                fieldDetails.alias = this.alias;
+            }
+            fieldDetails.aggregatorType = this.aggregatorType;
+            fieldDetails.aggregator = this.aggregatorType.getName();
+            fieldDetails.downsample = this.downsample;
+            fieldDetails.rate = this.rate;
+            if (this.dpValue != null) {
+                fieldDetails.dpValue = this.dpValue;
+            }
+            fieldDetails.top = this.top;
+            return fieldDetails;
         }
     }
 
@@ -145,5 +205,13 @@ public class MultiValuedQueryMetricDetails {
 
     public Boolean getRate() {
         return rate;
+    }
+
+    public Integer getTop() {
+        return top;
+    }
+
+    public String getAlias() {
+        return alias;
     }
 }

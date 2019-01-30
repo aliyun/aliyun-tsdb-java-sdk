@@ -289,7 +289,7 @@ public class Point extends JSONValue {
 	 * @param c char
 	 * @return
 	 */
-	private static boolean checkChar(char c) {
+	public static boolean checkChar(char c) {
 		return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9') || 
 				c == '-' || c == '_' || 
 				c == '.' || c == ' ' || c == ',' || c == '=' || c == '/' || c == ':' ||

@@ -1,24 +1,33 @@
 package com.aliyun.hitsdb.client.value.request;
 
+import com.aliyun.hitsdb.client.value.JSONValue;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import com.aliyun.hitsdb.client.value.JSONValue;
+public class MultiFieldQuery extends JSONValue {
 
-@Deprecated
-public class MultiValuedQuery extends JSONValue {
-    private long start;
-    private long end;
-    private List<MultiValuedSubQuery> queries;
+    private Long start;
+    private Long end;
+    private List<MultiFieldSubQuery> queries;
     private Boolean msResolution;
 
     public static class Builder {
-        private long startTime;
-        private long endTime;
+        private Long startTime;
+        private Long endTime;
         private Boolean msResolution;
-        private List<MultiValuedSubQuery> subQueryList = new ArrayList<MultiValuedSubQuery>();
+        private List<MultiFieldSubQuery> subQueryList = new ArrayList<MultiFieldSubQuery>();
+
+        /**
+         * 1970-02-20 00:59:28
+         */
+        private static final long MIN_START_TIME = 4284768;
+        /**
+         * 2286-11-21 01:46:39.999
+         */
+        private static final long MAX_END_TIME = 9999999999999L;
 
         public Builder(long startTime) {
             this.startTime = startTime;
@@ -53,25 +62,44 @@ public class MultiValuedQuery extends JSONValue {
             return this;
         }
 
-        public Builder sub(MultiValuedSubQuery... subQuerys) {
-            for (MultiValuedSubQuery subQuery : subQuerys) {
+        public Builder sub(MultiFieldSubQuery... subQuerys) {
+            for (MultiFieldSubQuery subQuery : subQuerys) {
                 subQueryList.add(subQuery);
             }
             return this;
         }
 
-        public Builder sub(Collection<MultiValuedSubQuery> subQuerys) {
-            for (MultiValuedSubQuery subQuery : subQuerys) {
+        public Builder sub(Collection<MultiFieldSubQuery> subQuerys) {
+            for (MultiFieldSubQuery subQuery : subQuerys) {
                 subQueryList.add(subQuery);
             }
             return this;
         }
 
-        public MultiValuedQuery build() {
-            MultiValuedQuery query = new MultiValuedQuery();
+        public MultiFieldQuery build() {
+            MultiFieldQuery query = new MultiFieldQuery();
             query.queries = this.subQueryList;
+            if (this.startTime == null) {
+                throw new IllegalArgumentException("the start time must be set");
+            }
+            if (this.startTime < MIN_START_TIME) {
+                throw new IllegalArgumentException("the start time must be greater than " + MIN_START_TIME);
+            }
             query.start = this.startTime;
+
+            if (this.endTime != null) {
+                if(this.endTime > MAX_END_TIME) {
+                    throw new IllegalArgumentException("the end time must be less than" + MAX_END_TIME);
+                }
+                if(this.endTime < this.startTime) {
+                    throw new IllegalArgumentException("the end time (" + this.endTime +
+                            ") must be greater than start time (" + this.startTime + ")" );
+                }
+            }
             query.end = this.endTime;
+            if (this.subQueryList == null || this.subQueryList.isEmpty()) {
+                throw new IllegalArgumentException("Missing sub queries.");
+            }
             query.queries = this.subQueryList;
             query.msResolution = this.msResolution;
             return query;
@@ -119,11 +147,11 @@ public class MultiValuedQuery extends JSONValue {
         return new Builder(startTime, endTime);
     }
 
-    public long getStart() {
+    public Long getStart() {
         return start;
     }
 
-    public long getEnd() {
+    public Long getEnd() {
         return end;
     }
 
@@ -131,7 +159,7 @@ public class MultiValuedQuery extends JSONValue {
         return msResolution;
     }
 
-    public List<MultiValuedSubQuery> getQueries() {
+    public List<MultiFieldSubQuery> getQueries() {
         return queries;
     }
 }

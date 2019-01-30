@@ -8,6 +8,7 @@ import java.util.Map;
 import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.JSONValue;
 
+@Deprecated
 public class MultiValuedQueryLastRequest extends JSONValue {
     
     private String metric;
