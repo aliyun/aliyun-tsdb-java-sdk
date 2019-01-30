@@ -26,6 +26,7 @@ public class LastPointSubQuery extends HashMap<String, Object> {
             this.query.setMetric(metric);
             this.query.setTags(tags);
             this.query.setFields(fields);
+        }
 
         public Builder(List<String> tsuids) {
             this.query.setTsuids(tsuids);
