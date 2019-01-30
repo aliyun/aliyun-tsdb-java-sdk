@@ -9,8 +9,8 @@ import java.util.List;
 
 public class MultiFieldQuery extends JSONValue {
 
-    private long start;
-    private long end;
+    private Long start;
+    private Long end;
     private List<MultiFieldSubQuery> queries;
     private Boolean msResolution;
 
@@ -147,11 +147,11 @@ public class MultiFieldQuery extends JSONValue {
         return new Builder(startTime, endTime);
     }
 
-    public long getStart() {
+    public Long getStart() {
         return start;
     }
 
-    public long getEnd() {
+    public Long getEnd() {
         return end;
     }
 
