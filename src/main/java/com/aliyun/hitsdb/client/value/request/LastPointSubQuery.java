@@ -13,6 +13,10 @@ public class LastPointSubQuery extends HashMap<String, Object> {
     public static class Builder {
         private LastPointSubQuery query = new LastPointSubQuery();
 
+        public Builder(String metric) {
+            this.query.setMetric(metric);
+        }
+    
         public Builder(String metric, Map<String, String> tags) {
             this.query.setMetric(metric);
             this.query.setTags(tags);
@@ -22,15 +26,18 @@ public class LastPointSubQuery extends HashMap<String, Object> {
             this.query.setMetric(metric);
             this.query.setTags(tags);
             this.query.setFields(fields);
-        }
 
         public Builder(List<String> tsuids) {
             this.query.setTsuids(tsuids);
         }
 
         public LastPointSubQuery build() {
-            return query;
+            return this.query;
         }
+    }
+
+    public static Builder builder(String metric) {
+        return new Builder(metric);
     }
 
     public static Builder builder(String metric, Map<String, String> tags) {

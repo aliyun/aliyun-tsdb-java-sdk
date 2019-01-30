@@ -834,6 +834,16 @@ public class BalHiTSDBClient implements HiTSDB {
         throw new RuntimeException(exception);
     }
 
+    /**
+     *
+     * @param metric metric
+     * @param tagkey tagkey
+     * @param tagValuePrefix the prefix of the tagvalue
+     * @param max max
+     * @return
+     * @deprecated
+     * @throws HttpUnknowStatusException
+     */
     @Override
     public List<TagResult> dumpMeta(String metric, String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException {
         Exception exception = null;

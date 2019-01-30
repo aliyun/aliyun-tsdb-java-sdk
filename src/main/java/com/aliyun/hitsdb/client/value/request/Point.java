@@ -297,7 +297,10 @@ public class Point extends JSONValue {
 				Character.isLetter(c);
 	}
 	
-	
+
+	private static final long MIN_TIME = 4284768L;
+
+	private static final long MAX_TIME = 9999999999999L;
 	/**
 	 * Checkout the point format
 	 * @param point point
@@ -310,9 +313,8 @@ public class Point extends JSONValue {
 		if (point.timestamp == null) {
 			throw new IllegalArgumentException("The timestamp can't be null");
 		}
-		
-		if (point.timestamp <= 0) {
-			throw new IllegalArgumentException("The timestamp can't be less than or equal to 0");
+		if (point.timestamp < MIN_TIME || point.timestamp > MAX_TIME) {
+			throw new IllegalArgumentException("The timestamp must be in range [4284768,9999999999999],but is " + point.timestamp);
 		}
 
 		if (point.value == null) {
@@ -335,17 +337,15 @@ public class Point extends JSONValue {
 			throw new IllegalArgumentException("The value can't be NEGATIVE_INFINITY");
 		}
 
-		if (point.tags == null || point.tags.size() == 0) {
-			throw new IllegalArgumentException("At least one tag is needed");
-		}
-
 		for (int i = 0; i < point.metric.length(); i++) {
 			final char c = point.metric.charAt(i);
 			if (!checkChar(c)) {
 				throw new IllegalArgumentException("There is an invalid character in metric. the char is '" + c + "'");
 			}
 		}
-
+		if (point.tags == null || point.tags.isEmpty()) {
+			return;
+		}
 		for (Entry<String, String> entry : point.tags.entrySet()) {
 			String tagkey = entry.getKey();
 			String tagvalue = entry.getValue();

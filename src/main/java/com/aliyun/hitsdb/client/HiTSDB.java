@@ -310,6 +310,8 @@ public interface HiTSDB extends Closeable {
 	 * @param max max
 	 * @return the List of the TagResult
 	 * @throws HttpUnknowStatusException exception
+	 * @deprecated
+	 * @since 2018/01/20
 	 */
 	List<TagResult> dumpMeta(String metric,String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException;
 

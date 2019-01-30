@@ -229,6 +229,15 @@ public class HiTSDBClient implements HiTSDB {
         return doDumpMeta(dumpMetaValue);
     }
 
+    /**
+     *
+     * @param metric metric
+     * @param tagkey tagkey
+     * @param tagValuePrefix the prefix of the tagvalue
+     * @param max max
+     * @return
+     * @deprecated
+     */
     @Override
     public List<TagResult> dumpMeta(String metric, String tagkey, String tagValuePrefix, int max) {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(metric, tagkey, tagValuePrefix, max);
@@ -334,7 +343,7 @@ public class HiTSDBClient implements HiTSDB {
                 List<QueryResult> queryResultList;
                 queryResultList = JSON.parseArray(content, QueryResult.class);
                 if (queryResultList == null || queryResultList.isEmpty()) {
-                    LOGGER.error("Empty result from HiTSDB server. {} ", queryResultList.toString());
+                    LOGGER.error("Empty result from TSDB server. {} ", queryResultList.toString());
                     return null;
                 }
 

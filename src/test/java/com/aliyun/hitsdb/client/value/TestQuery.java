@@ -17,6 +17,27 @@ import com.aliyun.hitsdb.client.value.type.FilterType;
 
 public class TestQuery {
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testEndTimeGreater() {
+        Query.start(System.currentTimeMillis())
+                .end(Long.MAX_VALUE)
+                .sub(SubQuery.metric("hah").aggregator(Aggregator.NONE).build()).build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testStartTimeLess() {
+        Query.start(0)
+                .end(Long.MAX_VALUE)
+                .sub(SubQuery.metric("hah").aggregator(Aggregator.NONE).build()).build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testEndTimeLessThanStartTime() {
+        Query.start(System.currentTimeMillis())
+                .end(System.currentTimeMillis() / 1000)
+                .sub(SubQuery.metric("hah").aggregator(Aggregator.NONE).build()).build();
+    }
+
     @Test
     public void testSubQuery() {
         SubQuery subQuery = SubQuery.metric("test1").aggregator(Aggregator.AVG).rate().downsample("hello").tag("tagk1", "tagv1")
