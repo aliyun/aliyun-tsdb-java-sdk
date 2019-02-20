@@ -167,8 +167,24 @@ public class HiTSDBClient implements HiTSDB {
     }
 
     @Override
+    public void deleteData(String metric, Map<String, String> tags, long startTime, long endTime) {
+        MetricTimeRange metricTimeRange = new MetricTimeRange(metric, tags, startTime, endTime);
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        handleVoid(resultResponse);
+    }
+
+    @Override
     public void deleteData(String metric, List<String> fields, long startTime, long endTime) {
         MetricTimeRange metricTimeRange = new MetricTimeRange(metric, fields, startTime, endTime);
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        handleVoid(resultResponse);
+    }
+
+    @Override
+    public void deleteData(String metric, Map<String, String> tags, List<String> fields, long startTime, long endTime) {
+        MetricTimeRange metricTimeRange = new MetricTimeRange(metric, tags, fields, startTime, endTime);
         HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
@@ -198,10 +214,24 @@ public class HiTSDBClient implements HiTSDB {
     }
 
     @Override
+    public void deleteData(String metric, Map<String, String> tags, Date startDate, Date endDate) {
+        long startTime = startDate.getTime();
+        long endTime = endDate.getTime();
+        deleteData(metric, tags, startTime, endTime);
+    }
+
+    @Override
     public void deleteData(String metric, List<String> fields, Date startDate, Date endDate) {
         long startTime = startDate.getTime();
         long endTime = endDate.getTime();
         deleteData(metric, fields, startTime, endTime);
+    }
+
+    @Override
+    public void deleteData(String metric, Map<String, String> tags, List<String> fields, Date startDate, Date endDate) {
+        long startTime = startDate.getTime();
+        long endTime = endDate.getTime();
+        deleteData(metric, tags, fields, startTime, endTime);
     }
 
     @Override
