@@ -183,6 +183,16 @@ public interface HiTSDB extends Closeable {
 	 */
 	void deleteData(String metric, long startTime, long endTime) throws HttpUnknowStatusException;
 
+
+	/**
+	 * @param metric metric
+	 * @param tags tags that are under above metric
+	 * @param startTime start timestamp
+	 * @param endTime end timestamp
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	void deleteData(String metric, Map<String, String> tags, long startTime, long endTime) throws HttpUnknowStatusException;
+
 	/**
 	 * @param metric metric
 	 * @param fields fields that are under above metric
@@ -191,6 +201,16 @@ public interface HiTSDB extends Closeable {
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	void deleteData(String metric, List<String> fields, long startTime, long endTime) throws HttpUnknowStatusException;
+
+	/**
+	 * @param metric metric
+	 * @param tags tags that are under above metric
+	 * @param fields fields that are under above metric
+	 * @param startTime start timestamp
+	 * @param endTime end timestamp
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	void deleteData(String metric, Map<String, String> tags, List<String> fields, long startTime, long endTime) throws HttpUnknowStatusException;
 
 	/**
 	 * for the api deleteDate
@@ -202,6 +222,15 @@ public interface HiTSDB extends Closeable {
 	void deleteData(String metric, Date startDate, Date endDate) throws HttpUnknowStatusException;
 
 	/**
+	 * @param metric metric
+	 * @param tags tags that are under above metric
+	 * @param startDate start date
+	 * @param endDate end date
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	void deleteData(String metric, Map<String, String> tags, Date startDate, Date endDate) throws HttpUnknowStatusException;
+
+	/**
 	 * for the api deleteDate
 	 * @param metric metric name
 	 * @param fields fields that are under above metric
@@ -210,6 +239,16 @@ public interface HiTSDB extends Closeable {
 	 * @throws HttpUnknowStatusException Exception
 	 */
 	void deleteData(String metric, List<String> fields, Date startDate, Date endDate) throws HttpUnknowStatusException;
+
+	/**
+	 * @param metric metric
+	 * @param tags tags that are under above metric
+	 * @param fields fields that are under above metric
+	 * @param startDate start date
+	 * @param endDate end date
+	 * @throws HttpUnknowStatusException Exception
+	 */
+	void deleteData(String metric, Map<String, String> tags, List<String> fields, Date startDate, Date endDate) throws HttpUnknowStatusException;
 
 	/**
 	 * delete meta method

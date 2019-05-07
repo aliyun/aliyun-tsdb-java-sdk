@@ -630,24 +630,25 @@ public class BalHiTSDBClient implements HiTSDB {
 
     @Override
     public void deleteData(String metric, long startTime, long endTime) throws HttpUnknowStatusException {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                client().deleteData(metric, startTime, endTime);
-                return;
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
+        deleteData(metric, null, null, startTime, endTime);
+    }
+
+    @Override
+    public void deleteData(String metric, Map<String, String> tags, long startTime, long endTime) throws HttpUnknowStatusException {
+        deleteData(metric, tags, null, startTime, endTime);
     }
 
     @Override
     public void deleteData(String metric, List<String> fields, long startTime, long endTime) throws HttpUnknowStatusException {
+        deleteData(metric, null, fields, startTime, endTime);
+    }
+
+    @Override
+    public void deleteData(String metric, Map<String, String> tags, List<String> fields, long startTime, long endTime) throws HttpUnknowStatusException {
         Exception exception = null;
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
-                client().deleteData(metric, fields, startTime, endTime);
+                client().deleteData(metric, tags, fields, startTime, endTime);
                 return;
             } catch (Exception e) {
                 exception = e;
@@ -658,24 +659,25 @@ public class BalHiTSDBClient implements HiTSDB {
 
     @Override
     public void deleteData(String metric, Date startDate, Date endDate) throws HttpUnknowStatusException {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                client().deleteData(metric, startDate, endDate);
-                return;
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
+        deleteData(metric, null, null, startDate, endDate);
+    }
+
+    @Override
+    public void deleteData(String metric, Map<String, String> tags, Date startDate, Date endDate) throws HttpUnknowStatusException {
+        deleteData(metric, tags, null, startDate, endDate);
     }
 
     @Override
     public void deleteData(String metric, List<String> fields, Date startDate, Date endDate) throws HttpUnknowStatusException {
+        deleteData(metric, null, fields, startDate, endDate);
+    }
+
+    @Override
+    public void deleteData(String metric, Map<String, String> tags, List<String> fields, Date startDate, Date endDate) throws HttpUnknowStatusException {
         Exception exception = null;
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
-                client().deleteData(metric, fields, startDate, endDate);
+                client().deleteData(metric, tags, fields, startDate, endDate);
                 return;
             } catch (Exception e) {
                 exception = e;
