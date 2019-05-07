@@ -4,8 +4,8 @@
 	<groupId>com.aliyun</groupId>
 	<artifactId>hitsdb-client</artifactId>
 	<version>0.2.0</version>
-	<name>HiTSDB Client SDK</name>
-	<description>The Alibaba HiTSDB SDK for Java used for accessing High Performance Time Series Database</description>
+	<name>Aliyun TSDB SDK for Java</name>
+	<description>The Alibaba TSDB SDK for Java used for accessing High Performance Time Series Database</description>
 	<url>https://www.aliyun.com/product/hitsdb</url>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
@@ -13,8 +13,8 @@
 		<version>7</version>
 	</parent>
 	<scm>
-		<url>https://github.com/aliyun/HiTSDB-Client</url>
-		<connection>git@github.com:aliyun/HiTSDB-Client.git</connection>
+		<url>https://github.com/aliyun/aliyun-tsdb-java-sdk</url>
+		<connection>git@github.com:aliyun/aliyun-tsdb-java-sdk.git</connection>
 		<developerConnection>https://www.aliyun.com/product/hitsdb</developerConnection>
 	</scm>
 	<dependencies>
