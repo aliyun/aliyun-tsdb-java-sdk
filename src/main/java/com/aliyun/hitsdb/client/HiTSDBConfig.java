@@ -15,7 +15,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class HiTSDBConfig {
+/**
+ * @deprecated
+ * @since 0.2.1
+ */
+public class HiTSDBConfig implements Config {
 
 	public static final String BASICTYPE = "basic";
 	public static final String ALITYPE = "alibaba-signature";
@@ -351,119 +355,145 @@ public class HiTSDBConfig {
 	private String basicPwd;
 	
 	private byte[] certContent;
-	
+
+	@Override
 	public boolean isSslEnable() {
 		return sslEnable;
 	}
 
+    @Override
 	public String getAuthType() {
 		return authType;
 	}
 
+    @Override
 	public String getInstanceId() {
 		return instanceId;
 	}
 
+    @Override
 	public String getTsdbUser() {
 		return tsdbUser;
 	}
 
+    @Override
 	public String getBasicPwd() {
 		return basicPwd;
 	}
 
+    @Override
 	public byte[] getCertContent() {
 		return certContent;
 	}
 
 	private List<Host> addresses = new ArrayList();
 
-	public int getPutRequestLimit() {
+    @Override
+    public int getPutRequestLimit() {
 		return putRequestLimit;
 	}
 
+    @Override
 	public int getBatchPutBufferSize() {
 		return batchPutBufferSize;
 	}
 
+    @Override
 	public AbstractBatchPutCallback<?> getBatchPutCallback() {
 		return batchPutCallback;
 	}
 
+    @Override
 	public int getBatchPutConsumerThreadCount() {
 		return batchPutConsumerThreadCount;
 	}
 
+    @Override
 	public int getBatchPutRetryCount() {
 		return batchPutRetryCount;
 	}
 
+    @Override
 	public int getBatchPutSize() {
 		return batchPutSize;
 	}
 
+    @Override
 	public int getBatchPutTimeLimit() {
 		return batchPutTimeLimit;
 	}
 
+    @Override
 	public String getHost() {
 		return host;
 	}
 
-
+    @Override
 	public List<Host> getAddresses(){
 		return this.addresses;
 	}
 
+    @Override
 	public int getHttpConnectionPool() {
 		return httpConnectionPool;
 	}
 
+    @Override
 	public int getHttpConnectTimeout() {
 		return httpConnectTimeout;
 	}
 
+    @Override
 	public int getIoThreadCount() {
 		return ioThreadCount;
 	}
 
+    @Override
 	public int getPort() {
 		return port;
 	}
 
+    @Override
 	public boolean isPutRequestLimitSwitch() {
 		return putRequestLimitSwitch;
 	}
 
+    @Override
 	public boolean isHttpCompress() {
 		return httpCompress;
 	}
 
+    @Override
 	public boolean isBackpressure() {
 		return backpressure;
 	}
 
+    @Override
 	public int getHttpConnectionLiveTime() {
 		return httpConnectionLiveTime;
 	}
 
+    @Override
 	public int getHttpKeepaliveTime() {
 		return httpKeepaliveTime;
 	}
 
+    @Override
 	public boolean isAsyncPut() {
 		return asyncPut;
 	}
 
+    @Override
 	public int getMaxTPS() {
 		return maxTPS;
 	}
 
+    @Override
 	public void setBatchPutCallback(AbstractBatchPutCallback callback){
 		this.batchPutCallback = callback;
 	}
 
-
+	@Override
 	public HiTSDBConfig copy(String host,int port){
 		HiTSDBConfig hiTSDBConfig = new HiTSDBConfig();
 		hiTSDBConfig.host = host;

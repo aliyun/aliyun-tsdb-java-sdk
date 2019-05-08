@@ -16,6 +16,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
+import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.util.Objects;
 import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.HttpResponse;
@@ -38,7 +39,6 @@ import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 
@@ -47,7 +47,7 @@ public class HttpClientFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientFactory.class);
 
     private static final String [] certDNList = {"*.tsdb.aliyuncs.com", "*.hitsdb.rds.aliyuncs.com"};
-    public static HttpClient createHttpClient(HiTSDBConfig config) throws HttpClientInitException {
+    public static HttpClient createHttpClient(Config config) throws HttpClientInitException {
         Objects.requireNonNull(config);
 
         // 创建 ConnectingIOReactor
@@ -150,7 +150,7 @@ public class HttpClientFactory {
     }
 
 
-    private static RequestConfig initRequestConfig(HiTSDBConfig config) {
+    private static RequestConfig initRequestConfig(Config config) {
         RequestConfig requestConfig = null;
 
         // 设置请求
@@ -170,7 +170,7 @@ public class HttpClientFactory {
         return requestConfig;
     }
 
-    private static ConnectingIOReactor initIOReactorConfig(HiTSDBConfig config) {
+    private static ConnectingIOReactor initIOReactorConfig(Config config) {
         int ioThreadCount = config.getIoThreadCount();
         IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(ioThreadCount).build();
         ConnectingIOReactor ioReactor;
@@ -216,7 +216,7 @@ public class HttpClientFactory {
         return connectionGcService;
     }
 
-    private static SemaphoreManager createSemaphoreManager(HiTSDBConfig config) {
+    private static SemaphoreManager createSemaphoreManager(Config config) {
         int httpConnectionPool = config.getHttpConnectionPool();
         SemaphoreManager semaphoreManager = null;
         if (httpConnectionPool > 0) {
@@ -231,7 +231,7 @@ public class HttpClientFactory {
     }
 
     private static CloseableHttpAsyncClient createPoolingHttpClient(
-            HiTSDBConfig config, PoolingNHttpClientConnectionManager cm) throws HttpClientInitException {
+            Config config, PoolingNHttpClientConnectionManager cm) throws HttpClientInitException {
         int httpConnectionPool = config.getHttpConnectionPool();
         int httpConnectionLiveTime = config.getHttpConnectionLiveTime();
         int httpKeepaliveTime = config.getHttpKeepaliveTime();
@@ -265,7 +265,7 @@ public class HttpClientFactory {
 
         // 设置连接自动关闭
         if (httpConnectionLiveTime > 0) {
-            HiTSDBHttpAsyncCallbackExecutor httpAsyncCallbackExecutor = new HiTSDBHttpAsyncCallbackExecutor(httpConnectionLiveTime);
+            TSDBHttpAsyncCallbackExecutor httpAsyncCallbackExecutor = new TSDBHttpAsyncCallbackExecutor(httpConnectionLiveTime);
             httpAsyncClientBuilder.setEventHandler(httpAsyncCallbackExecutor);
         }
 

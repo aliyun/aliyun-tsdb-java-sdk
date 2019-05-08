@@ -1,5 +1,13 @@
 package com.aliyun.hitsdb.client;
 
+import com.aliyun.hitsdb.client.callback.BatchPutCallback;
+import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.value.Result;
+import com.aliyun.hitsdb.client.value.request.Point;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -7,18 +15,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.aliyun.hitsdb.client.HiTSDB;
-import com.aliyun.hitsdb.client.HiTSDBClientFactory;
-import com.aliyun.hitsdb.client.HiTSDBConfig;
-import com.aliyun.hitsdb.client.callback.BatchPutCallback;
-import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
-import com.aliyun.hitsdb.client.value.Result;
-import com.aliyun.hitsdb.client.value.request.Point;
 
 public class TestHiTSDBClientBatchPutStringValue {
 

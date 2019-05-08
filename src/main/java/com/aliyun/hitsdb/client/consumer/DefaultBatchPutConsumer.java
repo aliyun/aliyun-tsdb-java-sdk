@@ -4,6 +4,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.aliyun.hitsdb.client.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,11 +19,11 @@ public class DefaultBatchPutConsumer implements Consumer {
     private ExecutorService threadPool;
     private int batchPutConsumerThreadCount;
     private HttpClient httpclient;
-    private HiTSDBConfig config;
+    private Config config;
     private RateLimiter rateLimiter;
     private CountDownLatch countDownLatch;
 
-    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, HiTSDBConfig config) {
+    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, Config config) {
         this.dataQueue = buffer;
         this.httpclient = httpclient;
         this.config = config;

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.aliyun.hitsdb.client.Config;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 import org.slf4j.Logger;
@@ -66,7 +67,7 @@ public class BatchPutRunnable implements Runnable {
      */
     private final HttpResponseCallbackFactory httpResponseCallbackFactory;
 
-    private final HiTSDBConfig config;
+    private final Config config;
 
     private final SemaphoreManager semaphoreManager;
 
@@ -74,7 +75,7 @@ public class BatchPutRunnable implements Runnable {
 
     private RateLimiter rateLimiter;
 
-    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, HiTSDBConfig config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
+    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
         this.dataQueue = dataQueue;
         this.hitsdbHttpClient = httpclient;
         this.semaphoreManager = hitsdbHttpClient.getSemaphoreManager();

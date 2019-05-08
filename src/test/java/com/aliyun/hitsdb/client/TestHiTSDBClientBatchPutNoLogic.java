@@ -57,46 +57,46 @@ public class TestHiTSDBClientBatchPutNoLogic {
     public void testLargeDateBatchPutDataCallback() {
         Random random = new Random();
         int time = getTime();
-        for(int i = 0;i<100000;i++) {
+        for (int i = 0; i < 100000; i++) {
             double nextDouble = random.nextDouble() * 100;
             Point point = Point.metric("test1")
-                                   .tag("tagk1", "tagv1")
-                                   .tag("tagk2", "tagv2")
-                                   .tag("tagk3", "tagv3")
-                                   .timestamp(time + i).value(nextDouble)
-                                   .build();
+                    .tag("tagk1", "tagv1")
+                    .tag("tagk2", "tagv2")
+                    .tag("tagk3", "tagv3")
+                    .timestamp(time + i).value(nextDouble)
+                    .build();
             tsdb.put(point);
         }
     }
-    
+
     @Test
     public void testMiddleDateBatchPutDataCallback() {
         Random random = new Random();
         int time = getTime();
-        for(int i = 0;i<5500;i++) {
+        for (int i = 0; i < 5500; i++) {
             double nextDouble = random.nextDouble() * 100;
             Point point = Point.metric("test1")
-                                   .tag("tagk1", "tagv1")
-                                   .tag("tagk2", "tagv2")
-                                   .tag("tagk3", "tagv3")
-                                   .timestamp(time + i).value(nextDouble)
-                                   .build();
+                    .tag("tagk1", "tagv1")
+                    .tag("tagk2", "tagv2")
+                    .tag("tagk3", "tagv3")
+                    .timestamp(time + i).value(nextDouble)
+                    .build();
             tsdb.put(point);
         }
     }
-    
+
     @Test
     public void testLitterDateBatchPutDataCallback() {
         Random random = new Random();
         int time = getTime();
-        for(int i = 0;i<4000;i++) {
+        for (int i = 0; i < 4000; i++) {
             double nextDouble = random.nextDouble() * 100;
             Point point = Point.metric("test1")
-                                   .tag("tagk1", "tagv1")
-                                   .tag("tagk2", "tagv2")
-                                   .tag("tagk3", "tagv3")
-                                   .timestamp(time + i).value(nextDouble)
-                                   .build();
+                    .tag("tagk1", "tagv1")
+                    .tag("tagk2", "tagv2")
+                    .tag("tagk3", "tagv3")
+                    .timestamp(time + i).value(nextDouble)
+                    .build();
             tsdb.put(point);
         }
     }
