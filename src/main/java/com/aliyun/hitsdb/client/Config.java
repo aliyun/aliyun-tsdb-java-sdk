@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client;
 
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
 
@@ -11,61 +12,68 @@ import java.util.List;
 import java.util.Set;
 
 public interface Config {
+    String BASICTYPE = "basic";
+    String ALITYPE = "alibaba-signature";
 
-	boolean isSslEnable();
+    boolean isSslEnable();
 
-	String getAuthType();
+    String getAuthType();
 
-	String getInstanceId();
+    String getInstanceId();
 
-	String getTsdbUser();
+    String getTsdbUser();
 
-	String getBasicPwd();
+    String getBasicPwd();
 
-	byte[] getCertContent();
+    byte[] getCertContent();
 
-	int getPutRequestLimit();
+    int getPutRequestLimit();
 
-	int getBatchPutBufferSize();
+    int getBatchPutBufferSize();
 
-	AbstractBatchPutCallback<?> getBatchPutCallback();
+    AbstractBatchPutCallback<?> getBatchPutCallback();
 
-	int getBatchPutConsumerThreadCount();
+    void setBatchPutCallback(AbstractBatchPutCallback callback);
 
-	int getBatchPutRetryCount();
+    AbstractMultiFieldBatchPutCallback<?> getMultiFieldBatchPutCallback();
 
-	int getBatchPutSize();
+    void setMultiFieldBatchPutCallback(AbstractMultiFieldBatchPutCallback callback);
 
-	int getBatchPutTimeLimit();
+    boolean isAsyncPut();
 
-	String getHost();
-	
-	List<Host> getAddresses();
+    int getBatchPutConsumerThreadCount();
 
-	int getHttpConnectionPool();
+    int getMultiFieldBatchPutConsumerThreadCount();
 
-	int getHttpConnectTimeout();
+    int getBatchPutRetryCount();
 
-	int getIoThreadCount();
+    int getBatchPutSize();
 
-	int getPort();
+    int getBatchPutTimeLimit();
 
-	boolean isPutRequestLimitSwitch();
+    String getHost();
 
-	boolean isHttpCompress();
+    int getPort();
 
-	boolean isBackpressure();
+    List<Host> getAddresses();
 
-	int getHttpConnectionLiveTime();
+    int getHttpConnectionPool();
 
-	int getHttpKeepaliveTime();
+    int getHttpConnectTimeout();
 
-	boolean isAsyncPut();
+    int getIoThreadCount();
 
-	int getMaxTPS();
+    boolean isPutRequestLimitSwitch();
 
-	void setBatchPutCallback(AbstractBatchPutCallback callback);
+    boolean isHttpCompress();
 
+    boolean isBackpressure();
 
-	Config copy(String host, int port);
+    int getHttpConnectionLiveTime();
+
+    int getHttpKeepaliveTime();
+
+    int getMaxTPS();
+
+    Config copy(String host, int port);
 }

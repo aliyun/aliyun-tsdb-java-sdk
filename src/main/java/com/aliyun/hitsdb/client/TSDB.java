@@ -487,7 +487,7 @@ public interface TSDB extends Closeable {
     Map<String, String> getVersionInfo() throws HttpUnknowStatusException;
 
     /**
-     *
+     * delete all data from TSDB
      */
     boolean truncate() throws HttpUnknowStatusException;
 
@@ -508,6 +508,27 @@ public interface TSDB extends Closeable {
     Result multiFieldPutSync(MultiFieldPoint... points);
 
     Result multiFieldPutSync(Collection<MultiFieldPoint> points);
+
+    /**
+     * Asynchronous multi field put point
+     *
+     * @param point point
+     */
+    void multiFieldPut(MultiFieldPoint point);
+
+    /**
+     * Asynchronous multi field put point
+     *
+     * @param points points
+     */
+    void multiFieldPut(MultiFieldPoint... points);
+
+    /**
+     * Asynchronous multi field put point
+     *
+     * @param points points
+     */
+    void multiFieldPut(Collection<MultiFieldPoint> points);
 
     /**
      * /api/mquery endpoint

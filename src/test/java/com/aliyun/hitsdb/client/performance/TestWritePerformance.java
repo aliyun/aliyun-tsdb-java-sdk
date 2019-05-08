@@ -55,9 +55,6 @@ public class TestWritePerformance {
 				System.out.println("失败处理, 地址: " + address + ",异常:" + ex + ", " + input.size() + ",已处理" + afterNum);
 			}
 		};
-
-		HiTSDBConfig.Builder.ProducerThreadSerializeSwitch = true;
-
 		// 华南1 ts-wz9cvuoer10r79eq9
 		// 华东1 ts-bp11o8932ld793es1
 		// ts-wz9cvuoer10r79eq9.hitsdb.rds.aliyuncs.com

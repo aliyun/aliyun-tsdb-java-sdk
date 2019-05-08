@@ -52,7 +52,7 @@ public class LastPointQuery extends JSONValue {
         }
 
         public LastPointQuery build() {
-            if(queries == null || queries.isEmpty()){
+            if (queries == null || queries.isEmpty()) {
                 throw new IllegalArgumentException("the LastPointSubQuery must be set");
             }
             LastPointQuery query = new LastPointQuery();
@@ -66,7 +66,7 @@ public class LastPointQuery extends JSONValue {
     }
 
 
-    public static Builder builder(){
+    public static Builder builder() {
         return new Builder();
     }
 

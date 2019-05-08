@@ -14,8 +14,7 @@ public class HttpAddressManager {
 	}
 
 	public static HttpAddressManager createHttpAddressManager(Config config) {
-		HttpAddressManager httpAddressManager = new HttpAddressManager(config);
-		return httpAddressManager;
+		return new HttpAddressManager(config);
 	}
 
 	public String getAddress() {

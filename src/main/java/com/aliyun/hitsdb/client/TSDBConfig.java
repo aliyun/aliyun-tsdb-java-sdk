@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client;
 
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
 
@@ -10,20 +11,38 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class TSDBConfig implements Config {
+public class TSDBConfig extends AbstractConfig {
 
-    public static final String BASICTYPE = "basic";
-    public static final String ALITYPE = "alibaba-signature";
+
+    public static Builder address(String host) {
+        return new Builder(host);
+    }
+
+    public static Builder address(String host, int port) {
+        return new Builder(host, port);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    @Override
+    public TSDBConfig copy(String host, int port) {
+        TSDBConfig tsdbConfig = new TSDBConfig();
+        copy(tsdbConfig, host, port);
+        return tsdbConfig;
+    }
+
 
     public static class Builder {
-        public static volatile boolean ProducerThreadSerializeSwitch = false;
-
         private int putRequestLimit = -1;
         private boolean putRequestLimitSwitch = true;
 
         private int batchPutBufferSize = 10000;
         private AbstractBatchPutCallback<?> batchPutCallback;
+        private AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
         private int batchPutConsumerThreadCount = 1;
+        private int multiFieldBatchPutConsumerThreadCount = 1;
         private int batchPutRetryCount = 0;
         private int batchPutSize = 500;
         private int batchPutTimeLimit = 300;
@@ -101,6 +120,12 @@ public class TSDBConfig implements Config {
             return this;
         }
 
+        public Builder multiFieldBatchPutConsumerThreadCount(int batchPutConsumerThreadCount) {
+            this.multiFieldBatchPutConsumerThreadCount = batchPutConsumerThreadCount;
+            return this;
+        }
+
+
         public Builder batchPutRetryCount(int batchPutRetryCount) {
             this.batchPutRetryCount = batchPutRetryCount;
             return this;
@@ -161,42 +186,6 @@ public class TSDBConfig implements Config {
         public Builder maxTPS(int maxTPS) {
             this.maxTPS = maxTPS;
             return this;
-        }
-
-        public TSDBConfig config() {
-            TSDBConfig hiTSDBConfig = new TSDBConfig();
-
-            hiTSDBConfig.host = this.host;
-            hiTSDBConfig.port = this.port;
-            hiTSDBConfig.batchPutCallback = this.batchPutCallback;
-            hiTSDBConfig.batchPutSize = this.batchPutSize;
-            hiTSDBConfig.batchPutTimeLimit = this.batchPutTimeLimit;
-            hiTSDBConfig.batchPutBufferSize = this.batchPutBufferSize;
-            hiTSDBConfig.batchPutRetryCount = this.batchPutRetryCount;
-            hiTSDBConfig.httpConnectionPool = this.httpConnectionPool;
-            hiTSDBConfig.httpConnectTimeout = this.httpConnectTimeout;
-            hiTSDBConfig.putRequestLimitSwitch = this.putRequestLimitSwitch;
-            hiTSDBConfig.putRequestLimit = this.putRequestLimit;
-            hiTSDBConfig.batchPutConsumerThreadCount = this.batchPutConsumerThreadCount;
-            hiTSDBConfig.httpCompress = this.httpCompress;
-            hiTSDBConfig.ioThreadCount = this.ioThreadCount;
-            hiTSDBConfig.backpressure = this.backpressure;
-            hiTSDBConfig.httpConnectionLiveTime = this.httpConnectionLiveTime;
-            hiTSDBConfig.httpKeepaliveTime = this.httpKeepaliveTime;
-            hiTSDBConfig.maxTPS = this.maxTPS;
-            hiTSDBConfig.asyncPut = this.asyncPut;
-
-            hiTSDBConfig.addresses = this.addresses;
-            if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
-                hiTSDBConfig.putRequestLimit = this.httpConnectionPool;
-            }
-            hiTSDBConfig.sslEnable = this.sslEnable;
-            hiTSDBConfig.authType = this.authType;
-            hiTSDBConfig.instanceId = this.instanceId;
-            hiTSDBConfig.tsdbUser = this.tsdbUser;
-            hiTSDBConfig.basicPwd = this.basicPwd;
-            hiTSDBConfig.certContent = this.certContent;
-            return hiTSDBConfig;
         }
 
         public Builder enableSSL(boolean sslEnable) {
@@ -266,252 +255,55 @@ public class TSDBConfig implements Config {
             return this;
         }
 
+        public Builder listenMultiFieldBatchPut(AbstractMultiFieldBatchPutCallback<?> cb) {
+            this.multiFieldBatchPutCallback = cb;
+            return this;
+        }
+
         public Builder openHttpCompress() {
             this.httpCompress = true;
             return this;
         }
 
-    }
+        public  TSDBConfig config() {
+            if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
+                throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
+            }
+            TSDBConfig config = new TSDBConfig();
+            config.host = this.host;
+            config.port = this.port;
+            config.batchPutCallback = this.batchPutCallback;
+            config.multiFieldBatchPutCallback = this.multiFieldBatchPutCallback;
+            config.batchPutSize = this.batchPutSize;
+            config.batchPutTimeLimit = this.batchPutTimeLimit;
+            config.batchPutBufferSize = this.batchPutBufferSize;
+            config.batchPutRetryCount = this.batchPutRetryCount;
+            config.httpConnectionPool = this.httpConnectionPool;
+            config.httpConnectTimeout = this.httpConnectTimeout;
+            config.putRequestLimitSwitch = this.putRequestLimitSwitch;
+            config.putRequestLimit = this.putRequestLimit;
+            config.batchPutConsumerThreadCount = this.batchPutConsumerThreadCount;
+            config.multiFieldBatchPutConsumerThreadCount = this.multiFieldBatchPutConsumerThreadCount;
+            config.httpCompress = this.httpCompress;
+            config.ioThreadCount = this.ioThreadCount;
+            config.backpressure = this.backpressure;
+            config.httpConnectionLiveTime = this.httpConnectionLiveTime;
+            config.httpKeepaliveTime = this.httpKeepaliveTime;
+            config.maxTPS = this.maxTPS;
+            config.asyncPut = this.asyncPut;
 
+            config.addresses = this.addresses;
+            if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
+                config.putRequestLimit = this.httpConnectionPool;
+            }
+            config.sslEnable = this.sslEnable;
+            config.authType = this.authType;
+            config.instanceId = this.instanceId;
+            config.tsdbUser = this.tsdbUser;
+            config.basicPwd = this.basicPwd;
+            config.certContent = this.certContent;
 
-    public static Builder address(String host) {
-        return new Builder(host);
-    }
-
-    public static Builder address(String host, int port) {
-        return new Builder(host, port);
-    }
-
-    /**
-     * 写入请求限制数
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    private int putRequestLimit;
-    /**
-     * 写入请求限制开关，true表示打开请求限制
-     */
-    private boolean putRequestLimitSwitch;
-
-    private int batchPutBufferSize;
-
-    /**
-     * 异步批量写回调接口
-     */
-    private AbstractBatchPutCallback<?> batchPutCallback;
-    /**
-     *
-     */
-    private int batchPutConsumerThreadCount;
-    /**
-     *
-     */
-    private int batchPutRetryCount;
-
-    private int batchPutSize;
-    /**
-     * 批量Put时从队列取数据时最长等待时间
-     */
-    private int batchPutTimeLimit;
-
-    private int maxTPS;
-
-    private String host;
-
-    private boolean httpCompress;
-    private int httpConnectionPool;
-    private int httpConnectTimeout;
-    private int httpConnectionLiveTime;
-    private int httpKeepaliveTime;
-
-    private int ioThreadCount;
-    private boolean backpressure;
-    private boolean asyncPut;
-
-    private int port;
-
-    /**
-     * is https enable
-     */
-    private boolean sslEnable;
-
-    private String authType;
-
-    private String instanceId;
-
-    private String tsdbUser;
-
-    private String basicPwd;
-
-    private byte[] certContent;
-
-    @Override
-    public boolean isSslEnable() {
-        return sslEnable;
-    }
-
-    @Override
-    public String getAuthType() {
-        return authType;
-    }
-
-    @Override
-    public String getInstanceId() {
-        return instanceId;
-    }
-
-    @Override
-    public String getTsdbUser() {
-        return tsdbUser;
-    }
-
-    @Override
-    public String getBasicPwd() {
-        return basicPwd;
-    }
-
-    @Override
-    public byte[] getCertContent() {
-        return certContent;
-    }
-
-    private List<Host> addresses = new ArrayList();
-
-    @Override
-    public int getPutRequestLimit() {
-        return putRequestLimit;
-    }
-
-    @Override
-    public int getBatchPutBufferSize() {
-        return batchPutBufferSize;
-    }
-
-    @Override
-    public AbstractBatchPutCallback<?> getBatchPutCallback() {
-        return batchPutCallback;
-    }
-
-    @Override
-    public int getBatchPutConsumerThreadCount() {
-        return batchPutConsumerThreadCount;
-    }
-
-    @Override
-    public int getBatchPutRetryCount() {
-        return batchPutRetryCount;
-    }
-
-    @Override
-    public int getBatchPutSize() {
-        return batchPutSize;
-    }
-
-    @Override
-    public int getBatchPutTimeLimit() {
-        return batchPutTimeLimit;
-    }
-
-    @Override
-    public String getHost() {
-        return host;
-    }
-
-    @Override
-    public List<Host> getAddresses() {
-        return this.addresses;
-    }
-
-    @Override
-    public int getHttpConnectionPool() {
-        return httpConnectionPool;
-    }
-
-    @Override
-    public int getHttpConnectTimeout() {
-        return httpConnectTimeout;
-    }
-
-    @Override
-    public int getIoThreadCount() {
-        return ioThreadCount;
-    }
-
-    @Override
-    public int getPort() {
-        return port;
-    }
-
-    @Override
-    public boolean isPutRequestLimitSwitch() {
-        return putRequestLimitSwitch;
-    }
-
-    @Override
-    public boolean isHttpCompress() {
-        return httpCompress;
-    }
-
-    @Override
-    public boolean isBackpressure() {
-        return backpressure;
-    }
-
-    @Override
-    public int getHttpConnectionLiveTime() {
-        return httpConnectionLiveTime;
-    }
-
-    @Override
-    public int getHttpKeepaliveTime() {
-        return httpKeepaliveTime;
-    }
-
-    @Override
-    public boolean isAsyncPut() {
-        return asyncPut;
-    }
-
-    @Override
-    public int getMaxTPS() {
-        return maxTPS;
-    }
-
-    @Override
-    public void setBatchPutCallback(AbstractBatchPutCallback callback) {
-        this.batchPutCallback = callback;
-    }
-
-
-    @Override
-    public TSDBConfig copy(String host, int port) {
-        TSDBConfig tsdbConfig = new TSDBConfig();
-        tsdbConfig.host = host;
-        tsdbConfig.port = port;
-        tsdbConfig.batchPutCallback = this.batchPutCallback;
-        tsdbConfig.batchPutSize = this.batchPutSize;
-        tsdbConfig.batchPutTimeLimit = this.batchPutTimeLimit;
-        tsdbConfig.batchPutBufferSize = this.batchPutBufferSize;
-        tsdbConfig.batchPutRetryCount = this.batchPutRetryCount;
-        tsdbConfig.httpConnectionPool = this.httpConnectionPool;
-        tsdbConfig.httpConnectTimeout = this.httpConnectTimeout;
-        tsdbConfig.putRequestLimitSwitch = this.putRequestLimitSwitch;
-        tsdbConfig.putRequestLimit = this.putRequestLimit;
-        tsdbConfig.batchPutConsumerThreadCount = this.batchPutConsumerThreadCount;
-        tsdbConfig.httpCompress = this.httpCompress;
-        tsdbConfig.ioThreadCount = this.ioThreadCount;
-        tsdbConfig.backpressure = this.backpressure;
-        tsdbConfig.httpConnectionLiveTime = this.httpConnectionLiveTime;
-        tsdbConfig.httpKeepaliveTime = this.httpKeepaliveTime;
-        tsdbConfig.maxTPS = this.maxTPS;
-        tsdbConfig.asyncPut = this.asyncPut;
-        if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
-            tsdbConfig.putRequestLimit = this.httpConnectionPool;
+            return config;
         }
-
-        return tsdbConfig;
     }
-
 }

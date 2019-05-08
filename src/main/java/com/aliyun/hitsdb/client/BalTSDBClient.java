@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  */
-public class BalTSDBClient implements HiTSDB {
+public class BalTSDBClient implements TSDB {
 
     private static final Logger LOG = LoggerFactory.getLogger(BalTSDBClient.class);
 
@@ -58,7 +58,7 @@ public class BalTSDBClient implements HiTSDB {
     public BalTSDBClient(File configFile, AbstractBatchPutCallback<?> callback) throws IOException {
         this.initFileWatchManager(configFile);
         //
-        HiTSDBConfig config = loadConfig(configFile);
+        TSDBConfig config = loadConfig(configFile);
         if (callback != null) {
             config.setBatchPutCallback(callback);
         }
@@ -66,13 +66,13 @@ public class BalTSDBClient implements HiTSDB {
     }
 
 
-    private HiTSDBConfig loadConfig(File configFile) throws IOException {
+    private TSDBConfig loadConfig(File configFile) throws IOException {
         // 读取配置文件的配置项
         Properties properties = new Properties();
         properties.load(new FileReader(configFile));
         PropKit propKit = new PropKit(properties);
 
-        HiTSDBConfig.Builder builder = HiTSDBConfig.builder();
+        TSDBConfig.Builder builder = TSDBConfig.builder();
         if (propKit.containsKey("host")) {
             if (propKit.containsKey("port")) {
                 builder.addAddress(propKit.get("host").trim(), propKit.getInt("port"));
@@ -167,7 +167,7 @@ public class BalTSDBClient implements HiTSDB {
 
     private void doHandle(File file){
         LOG.info("the config file {} has been modified, so reload it", file.getName());
-        HiTSDBConfig newConfig = null;
+        TSDBConfig newConfig = null;
         try {
             // 新的配置项
             newConfig = loadConfig(file);
@@ -992,6 +992,48 @@ public class BalTSDBClient implements HiTSDB {
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
                 return client().multiFieldPutSync(points);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public void multiFieldPut(MultiFieldPoint point) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().multiFieldPut(point);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public void multiFieldPut(MultiFieldPoint... points) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().multiFieldPut(points);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public void multiFieldPut(Collection<MultiFieldPoint> points) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().multiFieldPut(points);
+                return;
             } catch (Exception e) {
                 exception = e;
             }

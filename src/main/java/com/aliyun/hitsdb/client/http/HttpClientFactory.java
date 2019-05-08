@@ -46,7 +46,8 @@ public class HttpClientFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientFactory.class);
 
-    private static final String [] certDNList = {"*.tsdb.aliyuncs.com", "*.hitsdb.rds.aliyuncs.com"};
+    private static final String[] certDNList = {"*.tsdb.aliyuncs.com", "*.hitsdb.rds.aliyuncs.com"};
+
     public static HttpClient createHttpClient(Config config) throws HttpClientInitException {
         Objects.requireNonNull(config);
 
@@ -56,39 +57,41 @@ public class HttpClientFactory {
         // 创建链接管理器
         PoolingNHttpClientConnectionManager cm;
         TrustManager[] trustAllCerts = new TrustManager[]{
-            new X509TrustManager() {
-                @Override
-                public X509Certificate[] getAcceptedIssuers() {
-                    return null;
-                }
-                @Override
-                public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                    // don't check
-                }
-                @Override
-                public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
-
-                    if (certs == null) {
-                        throw new IllegalArgumentException("checkServerTrusted:x509Certificate array isnull");
+                new X509TrustManager() {
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
                     }
 
-                    if (!(certs.length > 0)) {
-                        throw new IllegalArgumentException("checkServerTrusted: X509Certificate is empty");
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        // don't check
                     }
 
-                    if (!(null != authType && authType.contains("RSA"))) {
-                        throw new CertificateException("checkServerTrusted: AuthType is not RSA");
-                    }
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
 
-                    for (X509Certificate cert : certs) {
-                        cert.checkValidity();
-                        if (!cert.getSubjectDN().getName().contains(certDNList[0])
-                                && !cert.getSubjectDN().getName().contains(certDNList[1])) {
-                            throw new IllegalArgumentException("checkServerTrusted: host is invalid");
+                        if (certs == null) {
+                            throw new IllegalArgumentException("checkServerTrusted:x509Certificate array isnull");
+                        }
+
+                        if (!(certs.length > 0)) {
+                            throw new IllegalArgumentException("checkServerTrusted: X509Certificate is empty");
+                        }
+
+                        if (!(null != authType && authType.contains("RSA"))) {
+                            throw new CertificateException("checkServerTrusted: AuthType is not RSA");
+                        }
+
+                        for (X509Certificate cert : certs) {
+                            cert.checkValidity();
+                            if (!cert.getSubjectDN().getName().contains(certDNList[0])
+                                    && !cert.getSubjectDN().getName().contains(certDNList[1])) {
+                                throw new IllegalArgumentException("checkServerTrusted: host is invalid");
+                            }
                         }
                     }
                 }
-            }
         };
         HostnameVerifier hostnameVerifier = new HostnameVerifier() {
             @Override

@@ -42,7 +42,7 @@ public class TSDBClient implements TSDB {
     private final HttpResponseCallbackFactory httpResponseCallbackFactory;
     private final boolean httpCompress;
     private final HttpClient httpclient;
-    private RateLimiter rateLimter;
+    private RateLimiter rateLimiter;
     private final Config config;
     private static Field queryDeleteField;
 
@@ -64,7 +64,7 @@ public class TSDBClient implements TSDB {
         boolean asyncPut = config.isAsyncPut();
         int maxTPS = config.getMaxTPS();
         if (maxTPS > 0) {
-            this.rateLimter = RateLimiter.create(maxTPS);
+            this.rateLimiter = RateLimiter.create(maxTPS);
         }
 
         if (asyncPut) {
@@ -73,7 +73,7 @@ public class TSDBClient implements TSDB {
             int batchPutTimeLimit = config.getBatchPutTimeLimit();
             boolean backpressure = config.isBackpressure();
             this.queue = DataQueueFactory.createDataPointQueue(batchPutBufferSize, batchPutTimeLimit, backpressure);
-            this.consumer = ConsumerFactory.createConsumer(queue, httpclient, rateLimter, config);
+            this.consumer = ConsumerFactory.createConsumer(queue, httpclient, rateLimiter, config);
             this.consumer.start();
         } else {
             this.httpResponseCallbackFactory = null;
@@ -82,14 +82,14 @@ public class TSDBClient implements TSDB {
         }
 
         this.httpclient.start();
-        LOGGER.info("The hitsdb-client has started.");
+        LOGGER.info("The tsdb client has started.");
 
         try {
             this.checkConnection();
         } catch (Exception e) {
             try {
                 this.httpclient.close(true);
-                LOGGER.info("when connected to tsdb server failure, so the tsdb-client has closed");
+                LOGGER.info("when connected to tsdb server failure, so the tsdb client has closed");
             } catch (IOException ex) {
             }
             throw new RuntimeException(e);
@@ -132,18 +132,14 @@ public class TSDBClient implements TSDB {
      */
     private void gracefulClose() throws IOException {
         boolean async = config.isAsyncPut();
-
         if (async) {
             // 停止写入
             this.queue.forbiddenSend();
-
             // 等待队列消费为空
             this.queue.waitEmpty();
-
             // 消费者关闭
             this.consumer.stop();
         }
-
         // 客户端关闭
         this.httpclient.close();
     }
@@ -155,7 +151,7 @@ public class TSDBClient implements TSDB {
         } else {
             gracefulClose();
         }
-        LOGGER.info("The hitsdb-client has closed.");
+        LOGGER.info("The tsdb client has closed.");
     }
 
     @Override
@@ -1301,6 +1297,25 @@ public class TSDBClient implements TSDB {
     @Override
     public Result multiFieldPutSync(Collection<MultiFieldPoint> points) {
         return multiFieldPutSync(points, Result.class);
+    }
+
+    @Override
+    public void multiFieldPut(MultiFieldPoint point) {
+        this.queue.sendMultiFieldPoint(point);
+    }
+
+    @Override
+    public void multiFieldPut(MultiFieldPoint... points) {
+        for (MultiFieldPoint p : points) {
+            this.queue.sendMultiFieldPoint(p);
+        }
+    }
+
+    @Override
+    public void multiFieldPut(Collection<MultiFieldPoint> points) {
+        for (MultiFieldPoint p : points) {
+            this.queue.sendMultiFieldPoint(p);
+        }
     }
 
     /**

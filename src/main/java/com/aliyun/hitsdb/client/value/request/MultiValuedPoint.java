@@ -34,8 +34,9 @@ public class MultiValuedPoint extends JSONValue {
 
         /**
          * add a TagKey and TagValue
+         *
          * @param tagName tagName
-         * @param value value
+         * @param value   value
          * @return MetricBuilder
          */
         public MetricBuilder tag(final String tagName, final String value) {
@@ -49,6 +50,7 @@ public class MultiValuedPoint extends JSONValue {
 
         /**
          * add the tags
+         *
          * @param tags a map
          * @return MetricBuilder
          */
@@ -61,6 +63,7 @@ public class MultiValuedPoint extends JSONValue {
 
         /**
          * set timestamp
+         *
          * @param timestamp time
          * @return MetricBuilder
          */
@@ -72,6 +75,7 @@ public class MultiValuedPoint extends JSONValue {
 
         /**
          * set timestamp
+         *
          * @param date java.util.Date
          * @return MetricBuilder
          */
@@ -84,6 +88,7 @@ public class MultiValuedPoint extends JSONValue {
         /**
          * Set fields (Multi valued structure)
          * For null value, we do not throw exception and we tolerate it by not adding to fields map.
+         *
          * @param fieldName
          * @param fieldValue
          * @return
@@ -105,6 +110,7 @@ public class MultiValuedPoint extends JSONValue {
 
         /**
          * build a multi-valued data point
+         *
          * @return Point
          */
         public MultiValuedPoint build() {
@@ -117,9 +123,6 @@ public class MultiValuedPoint extends JSONValue {
             multiValuedPoint.tags = this.tags;
             multiValuedPoint.fields = this.fields;
             multiValuedPoint.timestamp = this.timestamp;
-            if (HiTSDBConfig.Builder.ProducerThreadSerializeSwitch) {
-                multiValuedPoint.json = buildJSON(multiValuedPoint);
-            }
 
             if (checkPoint) {
                 MultiValuedPoint.checkPoint(multiValuedPoint);
@@ -130,6 +133,7 @@ public class MultiValuedPoint extends JSONValue {
 
         /**
          * convert to json
+         *
          * @param point
          * @return String
          */
@@ -140,7 +144,8 @@ public class MultiValuedPoint extends JSONValue {
 
     /**
      * set the metric
-     * @param name metric tag key
+     *
+     * @param name  metric tag key
      * @param value metric tag value
      * @return MetricBuilder get a builder
      */
@@ -188,15 +193,12 @@ public class MultiValuedPoint extends JSONValue {
 
     @Override
     public String toJSON() {
-        if (HiTSDBConfig.Builder.ProducerThreadSerializeSwitch) {
-            return this.json;
-        } else {
-            return super.toJSON();
-        }
+        return super.toJSON();
     }
 
     /**
      * If it is true, it is a legitimate character.
+     *
      * @param c char
      * @return
      */
@@ -210,6 +212,7 @@ public class MultiValuedPoint extends JSONValue {
 
     /**
      * Checkout the point format
+     *
      * @param multiValuedPoint multi-valued data point
      */
     public static void checkPoint(MultiValuedPoint multiValuedPoint) {

@@ -7,7 +7,7 @@ public class Filter {
     private String tagk;
     private String filter;
     private Boolean groupBy;
-    
+
     public static class Builder {
         private FilterType type;
         private String tagk;
@@ -28,30 +28,30 @@ public class Filter {
             this.tagk = tagk;
             this.filter = filter;
         }
-        
+
         public Filter build() {
             Filter f = new Filter();
             f.type = this.type;
             f.tagk = this.tagk;
             f.filter = this.filter;
-            if(this.groupBy==true) {
+            if (this.groupBy == true) {
                 f.groupBy = this.groupBy;
             }
-            
+
             return f;
         }
-        
+
     }
-    
-    public static Builder filter(FilterType type,String tagk,String filter) {
-        return new Builder(type,tagk,filter);
+
+    public static Builder filter(FilterType type, String tagk, String filter) {
+        return new Builder(type, tagk, filter);
     }
-    
-    public static Builder filter(FilterType type,String tagk,String filter,Boolean groupBy) {
+
+    public static Builder filter(FilterType type, String tagk, String filter, Boolean groupBy) {
         return new Builder(type, tagk, filter, groupBy);
     }
 
-    public static Builder filter(FilterType type,String filter) {
+    public static Builder filter(FilterType type, String filter) {
         return new Builder(type, null, filter);
     }
 
