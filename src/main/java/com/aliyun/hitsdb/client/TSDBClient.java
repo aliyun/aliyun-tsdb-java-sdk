@@ -70,9 +70,10 @@ public class TSDBClient implements TSDB {
         if (asyncPut) {
             this.httpResponseCallbackFactory = httpclient.getHttpResponseCallbackFactory();
             int batchPutBufferSize = config.getBatchPutBufferSize();
+            int multiFieldBatchPutBufferSize = config.getMultiFieldBatchPutBufferSize();
             int batchPutTimeLimit = config.getBatchPutTimeLimit();
             boolean backpressure = config.isBackpressure();
-            this.queue = DataQueueFactory.createDataPointQueue(batchPutBufferSize, batchPutTimeLimit, backpressure);
+            this.queue = DataQueueFactory.createDataPointQueue(batchPutBufferSize, multiFieldBatchPutBufferSize, batchPutTimeLimit, backpressure);
             this.consumer = ConsumerFactory.createConsumer(queue, httpclient, rateLimiter, config);
             this.consumer.start();
         } else {

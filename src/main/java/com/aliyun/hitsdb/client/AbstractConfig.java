@@ -21,9 +21,14 @@ public abstract class AbstractConfig implements Config {
     protected boolean putRequestLimitSwitch;
 
     /**
-     * 消费者队列长度
+     * 单值消费者队列长度
      */
     protected int batchPutBufferSize;
+
+    /**
+     * 多值消费者队列长度
+     */
+    protected int multiFieldBatchPutBufferSize;
 
     /**
      * 异步批量写回调接口
@@ -276,19 +281,27 @@ public abstract class AbstractConfig implements Config {
         return maxTPS;
     }
 
+    @Override
+    public int getMultiFieldBatchPutBufferSize() {
+        return this.multiFieldBatchPutBufferSize;
+    }
+
     protected void copy(AbstractConfig config, String host, int port) {
         config.host = host;
         config.port = port;
         config.batchPutCallback = this.batchPutCallback;
+        config.multiFieldBatchPutCallback = this.multiFieldBatchPutCallback;
         config.batchPutSize = this.batchPutSize;
         config.batchPutTimeLimit = this.batchPutTimeLimit;
         config.batchPutBufferSize = this.batchPutBufferSize;
+        config.multiFieldBatchPutBufferSize = this.multiFieldBatchPutBufferSize;
         config.batchPutRetryCount = this.batchPutRetryCount;
         config.httpConnectionPool = this.httpConnectionPool;
         config.httpConnectTimeout = this.httpConnectTimeout;
         config.putRequestLimitSwitch = this.putRequestLimitSwitch;
         config.putRequestLimit = this.putRequestLimit;
         config.batchPutConsumerThreadCount = this.batchPutConsumerThreadCount;
+        config.multiFieldBatchPutConsumerThreadCount = this.multiFieldBatchPutConsumerThreadCount;
         config.httpCompress = this.httpCompress;
         config.ioThreadCount = this.ioThreadCount;
         config.backpressure = this.backpressure;

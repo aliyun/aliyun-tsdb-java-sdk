@@ -39,6 +39,7 @@ public class TSDBConfig extends AbstractConfig {
         private boolean putRequestLimitSwitch = true;
 
         private int batchPutBufferSize = 10000;
+        private int multiFieldBatchPutBufferSize = 10000;
         private AbstractBatchPutCallback<?> batchPutCallback;
         private AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
         private int batchPutConsumerThreadCount = 1;
@@ -112,6 +113,11 @@ public class TSDBConfig extends AbstractConfig {
 
         public Builder batchPutBufferSize(int batchPutBufferSize) {
             this.batchPutBufferSize = batchPutBufferSize;
+            return this;
+        }
+
+        public Builder multiFieldBatchPutBufferSize(int multiFieldBatchPutBufferSize) {
+            this.multiFieldBatchPutBufferSize = multiFieldBatchPutBufferSize;
             return this;
         }
 
@@ -277,6 +283,7 @@ public class TSDBConfig extends AbstractConfig {
             config.batchPutSize = this.batchPutSize;
             config.batchPutTimeLimit = this.batchPutTimeLimit;
             config.batchPutBufferSize = this.batchPutBufferSize;
+            config.multiFieldBatchPutBufferSize = this.multiFieldBatchPutBufferSize;
             config.batchPutRetryCount = this.batchPutRetryCount;
             config.httpConnectionPool = this.httpConnectionPool;
             config.httpConnectTimeout = this.httpConnectTimeout;

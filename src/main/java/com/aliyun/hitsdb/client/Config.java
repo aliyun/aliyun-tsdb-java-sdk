@@ -31,6 +31,8 @@ public interface Config {
 
     int getBatchPutBufferSize();
 
+    int getMultiFieldBatchPutBufferSize();
+
     AbstractBatchPutCallback<?> getBatchPutCallback();
 
     void setBatchPutCallback(AbstractBatchPutCallback callback);
