@@ -18,8 +18,9 @@ import java.util.Set;
 
 /**
  * @since 0.2.1
- * @deprecated
+ * @deprecated use {@link TSDBConfig} instead.
  */
+@Deprecated
 public class HiTSDBConfig extends AbstractConfig {
 
     public static Builder address(String host) {
@@ -47,6 +48,7 @@ public class HiTSDBConfig extends AbstractConfig {
         private boolean putRequestLimitSwitch = true;
 
         private int batchPutBufferSize = 10000;
+        private int multiFieldBatchPutBufferSize = 10000;
         private AbstractBatchPutCallback<?> batchPutCallback;
         private AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
         private int batchPutConsumerThreadCount = 1;
@@ -120,6 +122,11 @@ public class HiTSDBConfig extends AbstractConfig {
 
         public Builder batchPutBufferSize(int batchPutBufferSize) {
             this.batchPutBufferSize = batchPutBufferSize;
+            return this;
+        }
+
+        public Builder multiFieldBatchPutBufferSize(int multiFieldBatchPutBufferSize) {
+            this.multiFieldBatchPutBufferSize = multiFieldBatchPutBufferSize;
             return this;
         }
 
@@ -274,6 +281,23 @@ public class HiTSDBConfig extends AbstractConfig {
         }
 
         public  HiTSDBConfig config() {
+            if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
+                throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
+            }
+
+            if (multiFieldBatchPutBufferSize <= 0 && batchPutBufferSize <= 0) {
+                throw new IllegalArgumentException("At least one of multiFieldBatchPutBufferSize and batchPutBufferSize is greater than 0");
+            }
+
+            if ((multiFieldBatchPutConsumerThreadCount > 0 && multiFieldBatchPutBufferSize <= 0)
+                    ||(multiFieldBatchPutConsumerThreadCount <= 0 && multiFieldBatchPutBufferSize > 0)) {
+                throw new IllegalArgumentException("Both multiFieldBatchPutConsumerThreadCount and multiFieldBatchPutBufferSize should greater than 0");
+            }
+
+            if ((batchPutConsumerThreadCount > 0 && batchPutBufferSize <= 0)
+                    ||(batchPutConsumerThreadCount <= 0 && batchPutBufferSize > 0)) {
+                throw new IllegalArgumentException("Both batchPutConsumerThreadCount and batchPutBufferSize should greater than 0");
+            }
             HiTSDBConfig config = new HiTSDBConfig();
             config.host = this.host;
             config.port = this.port;
@@ -282,6 +306,7 @@ public class HiTSDBConfig extends AbstractConfig {
             config.batchPutSize = this.batchPutSize;
             config.batchPutTimeLimit = this.batchPutTimeLimit;
             config.batchPutBufferSize = this.batchPutBufferSize;
+            config.multiFieldBatchPutBufferSize = this.multiFieldBatchPutBufferSize;
             config.batchPutRetryCount = this.batchPutRetryCount;
             config.httpConnectionPool = this.httpConnectionPool;
             config.httpConnectTimeout = this.httpConnectTimeout;

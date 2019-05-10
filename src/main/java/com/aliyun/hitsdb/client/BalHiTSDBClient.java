@@ -22,9 +22,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
- * @deprecated
  * @since 0.2.1
+ * @deprecated use {@link BalTSDBClient} instead.
  */
+@Deprecated
 public class BalHiTSDBClient extends BalTSDBClient implements HiTSDB {
 
     public BalHiTSDBClient(File configFile) throws IOException {

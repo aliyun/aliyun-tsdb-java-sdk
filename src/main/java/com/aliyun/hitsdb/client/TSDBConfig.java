@@ -275,6 +275,20 @@ public class TSDBConfig extends AbstractConfig {
             if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
                 throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
             }
+
+            if (multiFieldBatchPutBufferSize <= 0 && batchPutBufferSize <= 0) {
+                throw new IllegalArgumentException("At least one of multiFieldBatchPutBufferSize and batchPutBufferSize is greater than 0");
+            }
+
+            if ((multiFieldBatchPutConsumerThreadCount > 0 && multiFieldBatchPutBufferSize <= 0)
+                    ||(multiFieldBatchPutConsumerThreadCount <= 0 && multiFieldBatchPutBufferSize > 0)) {
+                throw new IllegalArgumentException("Both multiFieldBatchPutConsumerThreadCount and multiFieldBatchPutBufferSize should greater than 0");
+            }
+
+            if ((batchPutConsumerThreadCount > 0 && batchPutBufferSize <= 0)
+                    ||(batchPutConsumerThreadCount <= 0 && batchPutBufferSize > 0)) {
+                throw new IllegalArgumentException("Both batchPutConsumerThreadCount and batchPutBufferSize should greater than 0");
+            }
             TSDBConfig config = new TSDBConfig();
             config.host = this.host;
             config.port = this.port;

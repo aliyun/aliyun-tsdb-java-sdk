@@ -4,8 +4,9 @@ import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 
 /**
  * @since 0.2.1
- * @deprecated
+ * @deprecated use {@link TSDBClient} instead.
  */
+@Deprecated
 public class HiTSDBClient extends TSDBClient implements HiTSDB {
 
     public HiTSDBClient(Config config) throws HttpClientInitException {

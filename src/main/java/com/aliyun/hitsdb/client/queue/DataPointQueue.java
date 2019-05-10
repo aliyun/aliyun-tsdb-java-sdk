@@ -22,6 +22,12 @@ public class DataPointQueue implements DataQueue {
     private final boolean backpressure;
 
     public DataPointQueue(int batchPutBufferSize, int multiFieldBatchPutBufferSize, int waitCloseTimeLimit, boolean backpressure) {
+        if (batchPutBufferSize <= 0) {
+            batchPutBufferSize = 1;
+        }
+        if (multiFieldBatchPutBufferSize <= 0) {
+            multiFieldBatchPutBufferSize = 1;
+        }
         this.pointQueue = new ArrayBlockingQueue<Point>(batchPutBufferSize);
         this.multiFieldPointQueue = new ArrayBlockingQueue<MultiFieldPoint>(multiFieldBatchPutBufferSize);
         this.waitCloseTimeLimit = waitCloseTimeLimit;

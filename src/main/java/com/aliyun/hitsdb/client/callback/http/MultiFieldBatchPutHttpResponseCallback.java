@@ -2,7 +2,10 @@ package com.aliyun.hitsdb.client.callback.http;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.Config;
-import com.aliyun.hitsdb.client.callback.*;
+import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutDetailsCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutSummaryCallback;
 import com.aliyun.hitsdb.client.exception.http.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpAddressManager;
@@ -11,7 +14,6 @@ import com.aliyun.hitsdb.client.http.response.HttpStatus;
 import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
-import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import org.apache.http.HttpResponse;
@@ -172,7 +174,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         }
 
         String jsonString = JSON.toJSONString(pointList);
-        this.hitsdbHttpClient.post(HttpAPI.PUT, jsonString, retryCallback);
+        this.hitsdbHttpClient.post(HttpAPI.MPUT, jsonString, retryCallback);
     }
 
     @Override
