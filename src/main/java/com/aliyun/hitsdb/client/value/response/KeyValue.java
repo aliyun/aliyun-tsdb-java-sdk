@@ -44,7 +44,7 @@ public class KeyValue {
         throw new RuntimeException("the value is " + value + " can't as double value");
     }
 
-    public float floadValue(){
+    public float floatValue(){
         if(value == null){
             throw new NullPointerException("the value is null");
         }
