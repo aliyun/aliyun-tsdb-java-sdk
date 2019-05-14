@@ -11,7 +11,7 @@ public class HttpUnknowStatusException extends RuntimeException {
         this.status = status;
         this.message = message;
     }
-    
+
     public HttpUnknowStatusException(ResultResponse result) {
         super();
         this.status = result.getStatusCode();
@@ -29,5 +29,5 @@ public class HttpUnknowStatusException extends RuntimeException {
     public String getMessage() {
         return message;
     }
-    
+
 }

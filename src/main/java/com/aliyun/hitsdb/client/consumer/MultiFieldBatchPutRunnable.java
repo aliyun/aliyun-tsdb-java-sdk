@@ -1,34 +1,33 @@
 package com.aliyun.hitsdb.client.consumer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson.JSON;
-import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
-import com.aliyun.hitsdb.client.callback.BatchPutCallback;
-import com.aliyun.hitsdb.client.callback.BatchPutDetailsCallback;
-import com.aliyun.hitsdb.client.callback.BatchPutSummaryCallback;
+import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutDetailsCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutSummaryCallback;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpAddressManager;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
-import com.aliyun.hitsdb.client.value.request.Point;
+import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
 import com.google.common.util.concurrent.RateLimiter;
+import org.apache.http.HttpResponse;
+import org.apache.http.concurrent.FutureCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class BatchPutRunnable implements Runnable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutRunnable.class);
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+
+public class MultiFieldBatchPutRunnable implements Runnable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MultiFieldBatchPutRunnable.class);
 
     /**
      * 缓冲队列
@@ -43,7 +42,7 @@ public class BatchPutRunnable implements Runnable {
     /**
      * 批量提交回调
      */
-    private final AbstractBatchPutCallback<?> batchPutCallback;
+    private final AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
 
     /**
      * 消费者队列控制器。
@@ -74,12 +73,12 @@ public class BatchPutRunnable implements Runnable {
 
     private RateLimiter rateLimiter;
 
-    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
+    public MultiFieldBatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
         this.dataQueue = dataQueue;
         this.tsdbHttpClient = httpclient;
         this.semaphoreManager = tsdbHttpClient.getSemaphoreManager();
         this.httpAddressManager = tsdbHttpClient.getHttpAddressManager();
-        this.batchPutCallback = config.getBatchPutCallback();
+        this.multiFieldBatchPutCallback = config.getMultiFieldBatchPutCallback();
         this.batchSize = config.getBatchPutSize();
         this.batchPutTimeLimit = config.getBatchPutTimeLimit();
         this.config = config;
@@ -91,16 +90,16 @@ public class BatchPutRunnable implements Runnable {
     @Override
     public void run() {
         Map<String, String> paramsMap = new HashMap<String, String>();
-        if (this.batchPutCallback != null) {
-            if (batchPutCallback instanceof BatchPutCallback) {
-            } else if (batchPutCallback instanceof BatchPutSummaryCallback) {
+        if (this.multiFieldBatchPutCallback != null) {
+            if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
+            } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
                 paramsMap.put("summary", "true");
-            } else if (batchPutCallback instanceof BatchPutDetailsCallback) {
+            } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
                 paramsMap.put("details", "true");
             }
         }
 
-        Point waitPoint = null;
+        MultiFieldPoint waitPoint = null;
         boolean readyClose = false;
         int waitTimeLimit = batchPutTimeLimit / 3;
 
@@ -110,7 +109,7 @@ public class BatchPutRunnable implements Runnable {
             }
 
             long t0 = System.currentTimeMillis();
-            List<Point> pointList = new ArrayList<Point>(batchSize);
+            List<MultiFieldPoint> pointList = new ArrayList<MultiFieldPoint>(batchSize);
             if (waitPoint != null) {
                 pointList.add(waitPoint);
                 waitPoint = null;
@@ -118,7 +117,7 @@ public class BatchPutRunnable implements Runnable {
 
             for (int i = pointList.size(); i < batchSize; i++) {
                 try {
-                    Point point = dataQueue.receive(waitTimeLimit);
+                    MultiFieldPoint point = dataQueue.receiveMultiFieldPoint(waitTimeLimit);
                     if (point != null) {
                         if (this.rateLimiter != null) {
                             this.rateLimiter.acquire();
@@ -138,7 +137,7 @@ public class BatchPutRunnable implements Runnable {
 
             if (pointList.size() == 0 && !readyClose) {
                 try {
-                    Point newPoint = dataQueue.receive();
+                    MultiFieldPoint newPoint = dataQueue.receiveMultiFieldPoint();
                     waitPoint = newPoint;
                     continue;
                 } catch (InterruptedException e) {
@@ -179,33 +178,33 @@ public class BatchPutRunnable implements Runnable {
     }
 
 
-    private void sendHttpRequest(List<Point> pointList, String strJson, Map<String, String> paramsMap) {
+    private void sendHttpRequest(List<MultiFieldPoint> pointList, String strJson, Map<String, String> paramsMap) {
         String address = getAddressAndSemaphoreAcquire();
-        if (this.batchPutCallback != null) {
+        if (this.multiFieldBatchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
-                    .createBatchPutDataCallback(
+                    .createMultiFieldBatchPutDataCallback(
                             address,
-                            this.batchPutCallback,
+                            this.multiFieldBatchPutCallback,
                             pointList,
                             config
                     );
 
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
+                tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, paramsMap, postHttpCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
-                this.batchPutCallback.failed(address, pointList, ex);
+                this.multiFieldBatchPutCallback.failed(address, pointList, ex);
             }
         } else {
             FutureCallback<HttpResponse> noLogicBatchPutHttpFutureCallback = this.httpResponseCallbackFactory
-                    .createNoLogicBatchPutHttpFutureCallback(
+                    .createMultiFieldNoLogicBatchPutHttpFutureCallback(
                             address,
                             pointList,
                             config,
                             config.getBatchPutRetryCount()
                     );
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, noLogicBatchPutHttpFutureCallback);
+                tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, noLogicBatchPutHttpFutureCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
                 noLogicBatchPutHttpFutureCallback.failed(ex);
@@ -213,7 +212,7 @@ public class BatchPutRunnable implements Runnable {
         }
     }
 
-    private String serialize(List<Point> pointList) {
+    private String serialize(List<MultiFieldPoint> pointList) {
         return JSON.toJSONString(pointList, SerializerFeature.DisableCircularReferenceDetect);
     }
 

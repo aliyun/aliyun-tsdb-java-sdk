@@ -53,9 +53,13 @@ public class MetricTimeRange extends JSONValue {
         this.metric = metric;
     }
 
-    public Map<String, String> getTags() { return tags; }
+    public Map<String, String> getTags() {
+        return tags;
+    }
 
-    public void setTags(Map<String, String> tags) { this.tags = tags; }
+    public void setTags(Map<String, String> tags) {
+        this.tags = tags;
+    }
 
     public List<String> getFields() {
         return fields;

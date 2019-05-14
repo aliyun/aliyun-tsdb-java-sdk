@@ -8,12 +8,12 @@ class BatchPutThreadFactory implements ThreadFactory {
     private ThreadGroup group;
     private String namePrefix;
     private AtomicInteger threadNumber;
-    
-    public BatchPutThreadFactory() {
+
+    public BatchPutThreadFactory(String nameSuffix) {
         threadNumber = new AtomicInteger(1);
         SecurityManager s = System.getSecurityManager();
         group = (s != null) ? s.getThreadGroup() : Thread.currentThread().getThreadGroup();
-        namePrefix = "pool-" + poolNumber.getAndIncrement() + "-batch-put-thread-";
+        namePrefix = "pool-" + poolNumber.getAndIncrement() + "-" + nameSuffix + "-";
     }
 
     @Override
@@ -23,11 +23,11 @@ class BatchPutThreadFactory implements ThreadFactory {
             // 作为守护线程存在
             thread.setDaemon(true);
         }
-        
+
         if (thread.getPriority() != Thread.NORM_PRIORITY) {
             thread.setPriority(Thread.NORM_PRIORITY);
         }
-        
+
         return thread;
     }
 

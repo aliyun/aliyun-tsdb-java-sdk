@@ -4,6 +4,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.aliyun.hitsdb.client.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,25 +17,37 @@ public class DefaultBatchPutConsumer implements Consumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultBatchPutConsumer.class);
     private DataQueue dataQueue;
     private ExecutorService threadPool;
+    private ExecutorService multiFieldThreadPool;
     private int batchPutConsumerThreadCount;
+    private int multiFieldBatchPutConsumerThreadCount;
     private HttpClient httpclient;
-    private HiTSDBConfig config;
+    private Config config;
     private RateLimiter rateLimiter;
     private CountDownLatch countDownLatch;
 
-    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, HiTSDBConfig config) {
+    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, Config config) {
         this.dataQueue = buffer;
         this.httpclient = httpclient;
         this.config = config;
-        this.countDownLatch = new CountDownLatch(config.getBatchPutConsumerThreadCount());
         this.batchPutConsumerThreadCount = config.getBatchPutConsumerThreadCount();
+        this.multiFieldBatchPutConsumerThreadCount = config.getMultiFieldBatchPutConsumerThreadCount();
         this.rateLimiter = rateLimiter;
-        threadPool = Executors.newFixedThreadPool(batchPutConsumerThreadCount, new BatchPutThreadFactory());
+        if (batchPutConsumerThreadCount > 0) {
+            this.threadPool = Executors.newFixedThreadPool(batchPutConsumerThreadCount, new BatchPutThreadFactory("batch-put-thread"));
+        }
+        if (multiFieldBatchPutConsumerThreadCount > 0) {
+            this.multiFieldThreadPool = Executors.newFixedThreadPool(multiFieldBatchPutConsumerThreadCount, new BatchPutThreadFactory("multi-field-batch-put-thread"));
+        }
+        this.countDownLatch = new CountDownLatch(config.getBatchPutConsumerThreadCount() + config.getMultiFieldBatchPutConsumerThreadCount());
     }
 
     public void start() {
         for (int i = 0; i < batchPutConsumerThreadCount; i++) {
-            threadPool.submit(new BatchPutRunnable(this.dataQueue, this.httpclient, this.config,this.countDownLatch,this.rateLimiter));
+            threadPool.submit(new BatchPutRunnable(this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
+        }
+
+        for (int i = 0; i < multiFieldBatchPutConsumerThreadCount; i++) {
+            multiFieldThreadPool.submit(new MultiFieldBatchPutRunnable(this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
         }
     }
 
@@ -45,28 +58,40 @@ public class DefaultBatchPutConsumer implements Consumer {
 
     @Override
     public void stop(boolean force) {
-        if (threadPool != null) {
-            if (force) {
-                // 强制退出不等待，截断消费者线程。
+        if (force) {
+            // 强制退出不等待，截断消费者线程。
+            if (threadPool != null) {
                 threadPool.shutdownNow();
-            } else {
+            }
+
+            if (multiFieldThreadPool != null) {
+                multiFieldThreadPool.shutdownNow();
+            }
+
+        } else {
+            if (threadPool != null) {
                 // 截断消费者线程。
-                while(!threadPool.isShutdown() || !threadPool.isTerminated()){
+                while (!threadPool.isShutdown() || !threadPool.isTerminated()) {
                     threadPool.shutdownNow();
                 }
-                
-                // 等待所有消费者线程结束。
-                try {
-                    countDownLatch.await();
-                } catch (InterruptedException e) {
-                    LOGGER.error("An error occurred waiting for the consumer thread to close", e);
+            }
+
+            if (multiFieldThreadPool != null) {
+                // 截断消费者线程。
+                while (!multiFieldThreadPool.isShutdown() || !multiFieldThreadPool.isTerminated()) {
+                    multiFieldThreadPool.shutdownNow();
                 }
             }
-        }
 
+            // 等待所有消费者线程结束。
+            try {
+                countDownLatch.await();
+            } catch (InterruptedException e) {
+                LOGGER.error("An error occurred waiting for the consumer thread to close", e);
+            }
+        }
         if (dataQueue != null) {
             dataQueue = null;
         }
     }
-
 }

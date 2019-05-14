@@ -44,6 +44,22 @@ public class KeyValue {
         throw new RuntimeException("the value is " + value + " can't as double value");
     }
 
+    public float floatValue(){
+        if(value == null){
+            throw new NullPointerException("the value is null");
+        }
+        if(value instanceof Number){
+            return ((Number)value).floatValue();
+        }
+        throw new RuntimeException("the value is " + value + " can't as float value");
+    }
+
+    /**
+     * @deprecated use {@link #floatValue()} instead.
+     * @since 0.2.1
+     * @return
+     */
+    @Deprecated
     public float floadValue(){
         if(value == null){
             throw new NullPointerException("the value is null");

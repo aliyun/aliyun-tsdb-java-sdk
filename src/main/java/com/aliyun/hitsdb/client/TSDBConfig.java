@@ -1,27 +1,18 @@
 package com.aliyun.hitsdb.client;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @since 0.2.1
- * @deprecated use {@link TSDBConfig} instead.
- */
-@Deprecated
-public class HiTSDBConfig extends AbstractConfig {
+public class TSDBConfig extends AbstractConfig {
+
 
     public static Builder address(String host) {
         return new Builder(host);
@@ -36,8 +27,8 @@ public class HiTSDBConfig extends AbstractConfig {
     }
 
     @Override
-    public HiTSDBConfig copy(String host, int port) {
-        HiTSDBConfig tsdbConfig = new HiTSDBConfig();
+    public TSDBConfig copy(String host, int port) {
+        TSDBConfig tsdbConfig = new TSDBConfig();
         copy(tsdbConfig, host, port);
         return tsdbConfig;
     }
@@ -280,7 +271,7 @@ public class HiTSDBConfig extends AbstractConfig {
             return this;
         }
 
-        public  HiTSDBConfig config() {
+        public  TSDBConfig config() {
             if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
                 throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
             }
@@ -298,7 +289,7 @@ public class HiTSDBConfig extends AbstractConfig {
                     ||(batchPutConsumerThreadCount <= 0 && batchPutBufferSize > 0)) {
                 throw new IllegalArgumentException("Both batchPutConsumerThreadCount and batchPutBufferSize should greater than 0");
             }
-            HiTSDBConfig config = new HiTSDBConfig();
+            TSDBConfig config = new TSDBConfig();
             config.host = this.host;
             config.port = this.port;
             config.batchPutCallback = this.batchPutCallback;
@@ -336,6 +327,4 @@ public class HiTSDBConfig extends AbstractConfig {
             return config;
         }
     }
-
-
 }

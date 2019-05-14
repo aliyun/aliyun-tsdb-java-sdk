@@ -11,11 +11,11 @@ import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HiTSDBHttpAsyncCallbackExecutor extends HttpAsyncRequestExecutor {
-	private static final Logger LOGGER = LoggerFactory.getLogger(HiTSDBHttpAsyncCallbackExecutor.class);
+public class TSDBHttpAsyncCallbackExecutor extends HttpAsyncRequestExecutor {
+	private static final Logger LOGGER = LoggerFactory.getLogger(TSDBHttpAsyncCallbackExecutor.class);
 	private final int liveTime;
 
-	public HiTSDBHttpAsyncCallbackExecutor(int liveTime) {
+	public TSDBHttpAsyncCallbackExecutor(int liveTime) {
 		super();
 		this.liveTime = liveTime;
 	}

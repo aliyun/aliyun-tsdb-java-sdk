@@ -58,7 +58,7 @@ public class TestHiTSDBClientBatchPut {
             
         };
         
-        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 3242)
+        HiTSDBConfig config = HiTSDBConfig.address("127.0.0.1", 8242)
                 .listenBatchPut(pcb)
                 .httpConnectTimeout(90)
                 .config();

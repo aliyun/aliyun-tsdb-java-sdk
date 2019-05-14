@@ -1,53 +1,46 @@
 package com.aliyun.hitsdb.client.callback.http;
 
-import java.net.SocketTimeoutException;
-import java.util.List;
-
-import com.aliyun.hitsdb.client.Config;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.alibaba.fastjson.JSON;
-import com.aliyun.hitsdb.client.HiTSDBConfig;
-import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
-import com.aliyun.hitsdb.client.callback.BatchPutCallback;
-import com.aliyun.hitsdb.client.callback.BatchPutDetailsCallback;
-import com.aliyun.hitsdb.client.callback.BatchPutSummaryCallback;
-import com.aliyun.hitsdb.client.exception.http.HttpClientConnectionRefusedException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientSocketTimeoutException;
-import com.aliyun.hitsdb.client.exception.http.HttpServerErrorException;
-import com.aliyun.hitsdb.client.exception.http.HttpServerNotSupportException;
-import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
+import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutDetailsCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutSummaryCallback;
+import com.aliyun.hitsdb.client.exception.http.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpAddressManager;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.response.HttpStatus;
 import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.value.Result;
-import com.aliyun.hitsdb.client.value.request.Point;
+import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
+import org.apache.http.HttpResponse;
+import org.apache.http.concurrent.FutureCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutHttpResponseCallback.class);
+import java.net.SocketTimeoutException;
+import java.util.List;
 
-    private final AbstractBatchPutCallback<?> batchPutCallback;
-    private final List<Point> pointList;
+public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<HttpResponse> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MultiFieldBatchPutHttpResponseCallback.class);
+
+    private final AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
+    private final List<MultiFieldPoint> pointList;
     private final int batchPutRetryTimes;
     private final boolean compress;
     private final HttpClient hitsdbHttpClient;
     private final Config config;
     private final String address;
 
-    public BatchPutHttpResponseCallback(String address, HttpClient httpclient, AbstractBatchPutCallback<?> batchPutCallback,
-                                        List<Point> pointList, Config config, int batchPutRetryTimes) {
+    public MultiFieldBatchPutHttpResponseCallback(String address, HttpClient httpclient, AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback,
+                                                  List<MultiFieldPoint> pointList, Config config, int batchPutRetryTimes) {
         super();
         this.address = address;
         this.hitsdbHttpClient = httpclient;
-        this.batchPutCallback = batchPutCallback;
+        this.multiFieldBatchPutCallback = multiFieldBatchPutCallback;
         this.pointList = pointList;
         this.batchPutRetryTimes = batchPutRetryTimes;
         this.compress = config.isHttpCompress();
@@ -79,29 +72,28 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
                 // 正常释放Semaphor
                 this.hitsdbHttpClient.getSemaphoreManager().release(address);
 
-                if (batchPutCallback == null) {
+                if (multiFieldBatchPutCallback == null) {
                     return;
                 }
 
-                if (batchPutCallback instanceof BatchPutCallback) {
-                    ((BatchPutCallback) batchPutCallback).response(this.address, pointList, new Result());
+                if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
+                    ((MultiFieldBatchPutCallback) multiFieldBatchPutCallback).response(this.address, pointList, new Result());
                     return;
-                } else if (batchPutCallback instanceof BatchPutSummaryCallback) {
+                } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
                     SummaryResult summaryResult = null;
                     if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
                         String content = resultResponse.getContent();
                         summaryResult = JSON.parseObject(content, SummaryResult.class);
                     }
-                    ((BatchPutSummaryCallback) batchPutCallback).response(this.address, pointList, summaryResult);
+                    ((MultiFieldBatchPutSummaryCallback) multiFieldBatchPutCallback).response(this.address, pointList, summaryResult);
                     return;
-                } else if (batchPutCallback instanceof BatchPutDetailsCallback) {
+                } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
                     DetailsResult detailsResult = null;
                     if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
                         String content = resultResponse.getContent();
                         detailsResult = JSON.parseObject(content, DetailsResult.class);
                     }
-
-                    ((BatchPutDetailsCallback) batchPutCallback).response(this.address, pointList, detailsResult);
+                    ((MultiFieldBatchPutDetailsCallback) multiFieldBatchPutCallback).response(this.address, pointList, detailsResult);
                     return;
                 }
             case ServerNotSupport: {
@@ -139,10 +131,10 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
      * @param ex
      */
     private void failedWithResponse(Exception ex) {
-        if (batchPutCallback == null) { // 无回调逻辑，则失败打印日志。
-            LOGGER.error("No callback logic exception. address:" + this.address, ex);
+        if (multiFieldBatchPutCallback == null) { // 无回调逻辑，则失败打印日志。
+            LOGGER.error("multi field no callback logic exception. address:" + this.address, ex);
         } else {
-            batchPutCallback.failed(this.address, pointList, ex);
+            multiFieldBatchPutCallback.failed(this.address, pointList, ex);
         }
     }
 
@@ -175,14 +167,14 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         HttpResponseCallbackFactory httpResponseCallbackFactory = this.hitsdbHttpClient.getHttpResponseCallbackFactory();
 
         FutureCallback<HttpResponse> retryCallback;
-        if (batchPutCallback != null) {
-            retryCallback = httpResponseCallbackFactory.createBatchPutDataCallback(newAddress, this.batchPutCallback, this.pointList, this.config);
+        if (multiFieldBatchPutCallback != null) {
+            retryCallback = httpResponseCallbackFactory.createMultiFieldBatchPutDataCallback(newAddress, this.multiFieldBatchPutCallback, this.pointList, this.config);
         } else {
-            retryCallback = httpResponseCallbackFactory.createNoLogicBatchPutHttpFutureCallback(newAddress, this.pointList, this.config, retryTimes);
+            retryCallback = httpResponseCallbackFactory.createMultiFieldNoLogicBatchPutHttpFutureCallback(newAddress, this.pointList, this.config, retryTimes);
         }
 
         String jsonString = JSON.toJSONString(pointList);
-        this.hitsdbHttpClient.post(HttpAPI.PUT, jsonString, retryCallback);
+        this.hitsdbHttpClient.post(HttpAPI.MPUT, jsonString, retryCallback);
     }
 
     @Override
@@ -208,11 +200,11 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         this.hitsdbHttpClient.getSemaphoreManager().release(address);
 
         // 处理完毕，向逻辑层传递异常并处理。
-        if (batchPutCallback == null) {
-            LOGGER.error("No callback logic exception.", ex);
+        if (multiFieldBatchPutCallback == null) {
+            LOGGER.error("multi field no callback logic exception.", ex);
             return;
         } else {
-            batchPutCallback.failed(this.address, pointList, ex);
+            multiFieldBatchPutCallback.failed(this.address, pointList, ex);
         }
 
     }

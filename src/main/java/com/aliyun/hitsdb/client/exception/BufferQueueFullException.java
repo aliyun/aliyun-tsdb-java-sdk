@@ -6,5 +6,5 @@ public class BufferQueueFullException extends RuntimeException {
     public BufferQueueFullException(String message, Throwable cause) {
         super(message, cause);
     }
-    
+
 }

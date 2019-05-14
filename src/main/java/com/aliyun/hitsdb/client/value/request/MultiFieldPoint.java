@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client.value.request;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.HiTSDBConfig;
+import com.aliyun.hitsdb.client.TSDBConfig;
 import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.JSONValue;
 
@@ -9,7 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MultiFieldPoint extends JSONValue {
+public class MultiFieldPoint extends AbstractPoint {
     public static class MetricBuilder {
         private String metric;
         private Map<String, String> tags = new HashMap<String, String>();
@@ -26,8 +27,9 @@ public class MultiFieldPoint extends JSONValue {
 
         /**
          * add a TagKey and TagValue
+         *
          * @param tagName tagName
-         * @param value value
+         * @param value   value
          * @return MetricBuilder
          */
         public MetricBuilder tag(final String tagName, final String value) {
@@ -41,6 +43,7 @@ public class MultiFieldPoint extends JSONValue {
 
         /**
          * add the tags
+         *
          * @param tags a map
          * @return MetricBuilder
          */
@@ -53,6 +56,7 @@ public class MultiFieldPoint extends JSONValue {
 
         /**
          * set timestamp
+         *
          * @param timestamp time
          * @return MetricBuilder
          */
@@ -64,6 +68,19 @@ public class MultiFieldPoint extends JSONValue {
 
         /**
          * set timestamp
+         *
+         * @param timestamp time
+         * @return MetricBuilder
+         */
+        public MetricBuilder timestamp(long timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+
+        /**
+         * set timestamp
+         *
          * @param date java.util.Date
          * @return MetricBuilder
          */
@@ -76,6 +93,7 @@ public class MultiFieldPoint extends JSONValue {
         /**
          * Set fields (Multi valued structure)
          * For null value, we do not throw exception and we tolerate it by not adding to fields map.
+         *
          * @param fieldName
          * @param fieldValue
          * @return
@@ -97,6 +115,7 @@ public class MultiFieldPoint extends JSONValue {
 
         /**
          * build a multi-valued data point
+         *
          * @return Point
          */
         public MultiFieldPoint build() {
@@ -109,9 +128,6 @@ public class MultiFieldPoint extends JSONValue {
             multiFieldPoint.tags = this.tags;
             multiFieldPoint.fields = this.fields;
             multiFieldPoint.timestamp = this.timestamp;
-            if (HiTSDBConfig.Builder.ProducerThreadSerializeSwitch) {
-                multiFieldPoint.json = buildJSON(multiFieldPoint);
-            }
 
             if (checkPoint) {
                 MultiFieldPoint.checkPoint(multiFieldPoint);
@@ -122,6 +138,7 @@ public class MultiFieldPoint extends JSONValue {
 
         /**
          * convert to json
+         *
          * @param point
          * @return String
          */
@@ -132,6 +149,7 @@ public class MultiFieldPoint extends JSONValue {
 
     /**
      * set the metric
+     *
      * @param name metric tag key
      * @return MetricBuilder get a builder
      */
@@ -139,55 +157,27 @@ public class MultiFieldPoint extends JSONValue {
         return new MetricBuilder(name);
     }
 
-    private String metric;
-    private Map<String, String> tags;
+
+
+    @Override
+    public PointType getPointType() {
+        return PointType.MULTI_FIELD;
+    }
+
     private Map<String, Object> fields;
-    private Long timestamp;
-    private String json;
-
-    public String getMetric() {
-        return metric;
-    }
-
-    public Map<String, String> getTags() {
-        return tags;
-    }
-
-    public Long getTimestamp() {
-        return timestamp;
-    }
 
     public Map<String, Object> getFields() {
         return this.fields;
-    }
-
-    public void setMetric(String metric) {
-        this.metric = metric;
-    }
-
-    public void setTags(Map<String, String> tags) {
-        this.tags = tags;
-    }
-
-    public void setTimestamp(Long timestamp) {
-        this.timestamp = timestamp;
     }
 
     public void setFields(Map<String, Object> fields) {
         this.fields = fields;
     }
 
-    @Override
-    public String toJSON() {
-        if (HiTSDBConfig.Builder.ProducerThreadSerializeSwitch) {
-            return this.json;
-        } else {
-            return super.toJSON();
-        }
-    }
 
     /**
      * Checkout the point format
+     *
      * @param multiFieldPoint multi-valued data point
      */
     public static void checkPoint(MultiFieldPoint multiFieldPoint) {
@@ -196,7 +186,7 @@ public class MultiFieldPoint extends JSONValue {
         } else {
             for (int i = 0; i < multiFieldPoint.metric.length(); i++) {
                 final char c = multiFieldPoint.metric.charAt(i);
-                if (!Point.checkChar(c)) {
+                if (!checkChar(c)) {
                     throw new IllegalArgumentException("There is an invalid character in metric. The char is '" + c + "'");
                 }
             }
@@ -206,9 +196,7 @@ public class MultiFieldPoint extends JSONValue {
             throw new IllegalArgumentException("Timestamp can't be null");
         }
 
-        if (multiFieldPoint.timestamp <= 0) {
-            throw new IllegalArgumentException("Timestamp can't be less than or equal to 0");
-        }
+        checkTimestamp(multiFieldPoint.timestamp);
 
         if (multiFieldPoint.fields == null || multiFieldPoint.fields.isEmpty()) {
             throw new IllegalArgumentException("Fields can't be null or empty");
@@ -220,7 +208,7 @@ public class MultiFieldPoint extends JSONValue {
             } else {
                 for (int i = 0; i < field.getKey().length(); i++) {
                     final char c = field.getKey().charAt(i);
-                    if (!Point.checkChar(c)) {
+                    if (!checkChar(c)) {
                         throw new IllegalArgumentException("There is an invalid character in field. The char is '" + c + "'");
                     }
                 }
@@ -256,7 +244,7 @@ public class MultiFieldPoint extends JSONValue {
 
                 for (int i = 0; i < tagkey.length(); i++) {
                     final char c = tagkey.charAt(i);
-                    if (!Point.checkChar(c)) {
+                    if (!checkChar(c)) {
                         throw new IllegalArgumentException("There is an invalid character in tagkey. the tagkey is + "
                                 + tagkey + ", the char is '" + c + "'");
                     }
@@ -264,7 +252,7 @@ public class MultiFieldPoint extends JSONValue {
 
                 for (int i = 0; i < tagvalue.length(); i++) {
                     final char c = tagvalue.charAt(i);
-                    if (!Point.checkChar(c)) {
+                    if (!checkChar(c)) {
                         throw new IllegalArgumentException("There is an invalid character in tagvalue. the tag is + <"
                                 + tagkey + ":" + tagvalue + "> , the char is '" + c + "'");
                     }

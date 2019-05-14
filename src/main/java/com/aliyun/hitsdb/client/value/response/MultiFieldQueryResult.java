@@ -50,4 +50,15 @@ public class MultiFieldQueryResult {
     public Map<String, String> getTags() {
         return tags;
     }
+
+    @Override
+    public String toString() {
+        return "MultiFieldQueryResult{" +
+                "metric='" + metric + '\'' +
+                ", aggregatedTags=" + aggregatedTags +
+                ", tags=" + tags +
+                ", columns=" + columns +
+                ", values=" + values +
+                '}';
+    }
 }
