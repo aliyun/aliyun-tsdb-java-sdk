@@ -42,10 +42,10 @@ public class Point extends AbstractPoint {
         public MetricBuilder tag(final String tagName, final String value) {
             Objects.requireNonNull(tagName, "tagName");
             Objects.requireNonNull(value, "value");
-            if (!tagName.isEmpty() && !value.isEmpty()) {
+            if (!tagName.isEmpty()) {
                 tags.put(tagName, value);
             } else {
-                LOGGER.warn("Warning. Tagk/tagv is empty. We will ignore them as we cannot process the empty tagkv.");
+                LOGGER.warn("Warning. Tag name is empty. We will ignore them as we cannot process the empty tag name.");
             }
             return this;
         }
@@ -309,8 +309,8 @@ public class Point extends AbstractPoint {
                 throw new IllegalArgumentException("the tag key is null or empty");
             }
 
-            if (tagvalue == null || tagvalue.length() == 0) {
-                throw new IllegalArgumentException("the tag value is null or empty");
+            if (tagvalue == null) {
+                throw new IllegalArgumentException("the tag value is null");
             }
 
             for (int i = 0; i < tagkey.length(); i++) {

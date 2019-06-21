@@ -35,7 +35,7 @@ public class MultiFieldPoint extends AbstractPoint {
         public MetricBuilder tag(final String tagName, final String value) {
             Objects.requireNonNull(tagName, "tag key");
             Objects.requireNonNull(value, "tag value");
-            if (!tagName.isEmpty() && !value.isEmpty()) {
+            if (!tagName.isEmpty()) {
                 tags.put(tagName, value);
             }
             return this;
