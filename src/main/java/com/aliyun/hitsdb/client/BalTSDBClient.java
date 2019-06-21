@@ -587,6 +587,19 @@ public class BalTSDBClient implements TSDB {
         throw new RuntimeException(exception);
     }
 
+    @Override
+    public SQLResult queryBySQL(String sql) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().queryBySQL(sql);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
     @Deprecated
     @Override
     public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery query) throws HttpUnknowStatusException {

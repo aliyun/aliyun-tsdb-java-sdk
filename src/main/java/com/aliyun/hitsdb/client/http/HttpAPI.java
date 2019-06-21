@@ -26,4 +26,6 @@ public interface HttpAPI {
     String MPUT = "/api/mput";
     String MQUERY = "/api/mquery";
     String QUERY_MLAST = "/api/query/mlast";
+
+    String SQL = "/api/sqlquery";
 }

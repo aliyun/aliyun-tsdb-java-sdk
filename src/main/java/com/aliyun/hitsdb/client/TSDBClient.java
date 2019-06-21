@@ -578,6 +578,24 @@ public class TSDBClient implements TSDB {
         }
     }
 
+	@Override
+	public SQLResult queryBySQL(String sql) throws HttpUnknowStatusException {
+		SQLValue sqlValue = new SQLValue(sql);
+		HttpResponse httpResponse = httpclient.post(HttpAPI.SQL, sqlValue.toJSON());
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+			case ServerSuccess:
+				String content = resultResponse.getContent();
+				return JSON.parseObject(content, SQLResult.class);
+			case ServerNotSupport:
+				throw new HttpServerNotSupportException(resultResponse);
+			case ServerError:
+				throw new HttpServerErrorException(resultResponse);
+			default:
+				throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
 
     @Override
     public void query(Query query, QueryCallback callback) {
@@ -594,42 +612,32 @@ public class TSDBClient implements TSDB {
     @Override
     public List<String> suggest(Suggest type, String prefix, int max) {
         SuggestValue suggestValue = new SuggestValue(type.getName(), prefix, max);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.SUGGEST, suggestValue.toJSON());
-        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccess:
-                String content = resultResponse.getContent();
-                List<String> list = JSON.parseArray(content, String.class);
-                return list;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
+	    return suggest(suggestValue);
     }
 
-    @Override
+	private List<String> suggest(SuggestValue suggestValue) {
+		HttpResponse httpResponse = httpclient.post(HttpAPI.SUGGEST, suggestValue.toJSON());
+		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+		HttpStatus httpStatus = resultResponse.getHttpStatus();
+		switch (httpStatus) {
+		    case ServerSuccess:
+		        String content = resultResponse.getContent();
+		        List<String> list = JSON.parseArray(content, String.class);
+		        return list;
+		    case ServerNotSupport:
+		        throw new HttpServerNotSupportException(resultResponse);
+		    case ServerError:
+		        throw new HttpServerErrorException(resultResponse);
+		    default:
+		        throw new HttpUnknowStatusException(resultResponse);
+		}
+	}
+
+	@Override
     public List<String> suggest(Suggest type, String metric, String prefix, int max) {
         SuggestValue suggestValue = new SuggestValue(type.getName(), metric, prefix, max);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.SUGGEST, suggestValue.toJSON());
-        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccess:
-                String content = resultResponse.getContent();
-                List<String> list = JSON.parseArray(content, String.class);
-                return list;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
-    }
+		return suggest(suggestValue);
+	}
 
 
     @Override

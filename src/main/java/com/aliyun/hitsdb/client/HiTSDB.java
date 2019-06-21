@@ -7,4 +7,5 @@ package com.aliyun.hitsdb.client;
 @Deprecated
 public interface HiTSDB extends TSDB {
 
+
 }
