@@ -469,6 +469,13 @@ public interface TSDB extends Closeable {
     List<LastDataValue> queryLast(String... tsuids) throws HttpUnknowStatusException;
 
 
+	/**
+	 * @param sql
+	 * @return
+	 * @throws HttpUnknowStatusException
+	 */
+	SQLResult queryBySQL(String sql) throws HttpUnknowStatusException;
+
     /**
      * /api/version
      *
