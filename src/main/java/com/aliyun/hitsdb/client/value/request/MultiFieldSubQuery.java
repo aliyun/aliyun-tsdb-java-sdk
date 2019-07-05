@@ -122,7 +122,7 @@ public class MultiFieldSubQuery {
             if (tags != null && !tags.isEmpty()) {
                 throw new IllegalArgumentException("filters and tags cannot co-exist in the query.");
             }
-            filters.addAll(filters);
+            this.filters.addAll(filters);
             return this;
         }
 
