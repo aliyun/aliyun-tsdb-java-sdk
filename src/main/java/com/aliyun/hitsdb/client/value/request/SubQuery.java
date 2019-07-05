@@ -27,6 +27,7 @@ public class SubQuery {
     private Integer limit;
     private Integer offset;
     private String dpValue;
+    private String preDpValue;
     private List<Filter> filters;
 
     public static class Builder {
@@ -38,6 +39,7 @@ public class SubQuery {
         private Integer limit;
         private Integer offset;
         private String dpValue;
+        private String preDpValue;
         private Map<String, String> tags = new HashMap<String, String>();
         private Granularity granularityType;
         private Boolean explicitTags;
@@ -74,6 +76,11 @@ public class SubQuery {
 
         public Builder dpValue() {
             this.dpValue = null;
+            return this;
+        }
+
+        public Builder preDpValue() {
+            this.preDpValue = null;
             return this;
         }
 
@@ -206,6 +213,13 @@ public class SubQuery {
             return this;
         }
 
+        public Builder preDpValue(String preDpValue) {
+            if (preDpValue != null && !preDpValue.isEmpty()) {
+                this.preDpValue = preDpValue;
+            }
+            return this;
+        }
+
         /**
          * set the downsample
          *
@@ -298,6 +312,10 @@ public class SubQuery {
 
             if (this.dpValue != null) {
                 subQuery.dpValue = this.dpValue;
+            }
+
+            if (this.preDpValue != null) {
+                subQuery.preDpValue = this.preDpValue;
             }
 
             if (this.granularityType != null) {
@@ -419,5 +437,9 @@ public class SubQuery {
 
     public String getDpValue() {
         return dpValue;
+    }
+
+    public String getPreDpValue() {
+        return preDpValue;
     }
 }

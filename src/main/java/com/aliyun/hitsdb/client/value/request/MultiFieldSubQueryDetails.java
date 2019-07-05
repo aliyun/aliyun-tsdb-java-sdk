@@ -12,6 +12,7 @@ public class MultiFieldSubQueryDetails {
     private Boolean rate;
     private Integer top;
     private String dpValue;
+    private String preDpValue;
 
     public static class Builder {
         private String field;
@@ -21,6 +22,7 @@ public class MultiFieldSubQueryDetails {
         private Boolean rate = false;
         private Integer top = 0;
         private String dpValue = null;
+        private String preDpValue = null;
 
         public Builder(String field, Aggregator aggregatorType) {
             Objects.requireNonNull(field, "field name");
@@ -85,6 +87,18 @@ public class MultiFieldSubQueryDetails {
         }
 
         /**
+         * Set data point pre-value filter
+         * @param preDpValue
+         * @return
+         */
+        public Builder preDpValue(String preDpValue) {
+            if (preDpValue != null && !preDpValue.isEmpty() && validateDpValue(preDpValue)) {
+                this.preDpValue = preDpValue;
+            }
+            return this;
+        }
+
+        /**
          * Set top operation
          * @param top
          * @return
@@ -140,6 +154,9 @@ public class MultiFieldSubQueryDetails {
             fieldDetails.rate = this.rate;
             if (this.dpValue != null) {
                 fieldDetails.dpValue = this.dpValue;
+            }
+            if (this.preDpValue != null) {
+                fieldDetails.preDpValue = this.preDpValue;
             }
             fieldDetails.top = this.top;
             return fieldDetails;
@@ -197,6 +214,10 @@ public class MultiFieldSubQueryDetails {
 
     public String getDpValue() {
         return dpValue;
+    }
+
+    public String getPreDpValue() {
+        return preDpValue;
     }
 
     public String getDownsample() {
