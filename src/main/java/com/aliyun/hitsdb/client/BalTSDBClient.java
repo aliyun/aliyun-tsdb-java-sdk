@@ -742,6 +742,48 @@ public class BalTSDBClient implements TSDB {
     }
 
     @Override
+    public void deleteMeta(String metric, Map<String, String> tags, boolean deleteData, boolean recursive) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().deleteMeta(metric, tags, deleteData, recursive);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public void deleteMeta(String metric, List<String> fields, Map<String, String> tags, boolean deleteData, boolean recursive) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().deleteMeta(metric, fields, tags, deleteData, recursive);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
+    public void deleteMeta(DeleteMetaRequest request) throws HttpUnknowStatusException {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().deleteMeta(request);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override
     public void ttl(int lifetime) throws HttpUnknowStatusException {
 
         Exception exception = null;

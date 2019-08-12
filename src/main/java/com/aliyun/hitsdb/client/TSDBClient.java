@@ -250,6 +250,38 @@ public class TSDBClient implements TSDB {
         handleVoid(resultResponse);
     }
 
+    /**
+     * The following api are added in the 0.2.5 of the SDK.
+     *
+     * Ideally, we should implement the void deleteMeta(Timeline timeline, boolean deleteData, boolean recursive)
+     * as the prototype implementation and use it for the rest of the 5 api
+     *
+     * However, if the newly added 3 api issued against the earlier version of the TSDB server,
+     * the requests would not be recognised and a error would be returned.
+     * For the backward-compatibility, the implementations of the above 3 api would not change.
+     */
+    @Override
+    public void deleteMeta(String metric, Map<String, String> tags, boolean deleteData, boolean recursive) {
+        DeleteMetaRequest request = DeleteMetaRequest.metric(metric).tag(tags)
+                .deleteData(deleteData).recursive(recursive).build();
+        deleteMeta(request);
+    }
+
+    @Override
+    public void deleteMeta(String metric, List<String> fields, Map<String, String> tags, boolean deleteData, boolean recursive) {
+        DeleteMetaRequest request =
+                DeleteMetaRequest.metric(metric).tag(tags).fields(fields)
+                        .deleteData(deleteData).recursive(recursive).build();
+        deleteMeta(request);
+    }
+
+    @Override
+    public void deleteMeta(DeleteMetaRequest request) {
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_META, request.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        handleVoid(resultResponse);
+    }
+
     @Override
     public List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(tagkey, tagValuePrefix, max);
