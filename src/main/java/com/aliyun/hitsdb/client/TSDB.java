@@ -298,6 +298,40 @@ public interface TSDB extends Closeable {
     void deleteMeta(Timeline timeline) throws HttpUnknowStatusException;
 
     /**
+     * delete meta method
+     *
+     * @param metric metric
+     * @param tags   a map
+     * @param deleteData boolean flag to indicate whether to delete the data at the same time
+     * @param recursive boolean flag to indicate whether to delete the timelines recursively
+     * @throws HttpUnknowStatusException Exception
+     * @since 0.2.5
+     */
+    void deleteMeta(String metric, Map<String, String> tags, boolean deleteData, boolean recursive) throws HttpUnknowStatusException;
+
+    /**
+     * delete meta method
+     *
+     * @param metric metric
+     * @param fields fields that are under above metric
+     * @param tags   a map
+     * @param deleteData boolean flag to indicate whether to delete the data at the same time
+     * @param recursive boolean flag to indicate whether to delete the timelines recursively
+     * @throws HttpUnknowStatusException Exception
+     * @since 0.2.5
+     */
+    void deleteMeta(String metric, List<String> fields, Map<String, String> tags, boolean deleteData, boolean recursive) throws HttpUnknowStatusException;
+
+    /**
+     * delete meta method
+     *
+     * @param request the deleteMeta request object
+     * @throws HttpUnknowStatusException Exception
+     * @since 0.2.5
+     */
+    void deleteMeta(DeleteMetaRequest request) throws HttpUnknowStatusException;
+
+    /**
      * ttl method
      *
      * @param lifetime unit:seconds

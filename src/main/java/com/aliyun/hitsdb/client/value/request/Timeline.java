@@ -72,11 +72,23 @@ public class Timeline extends JSONValue {
         return fields;
     }
 
+    public void setFields(List<String> fields) {
+        this.fields = fields;
+    }
+
     public String getMetric() {
         return metric;
     }
 
+    public void setMetric(String metric) {
+        this.metric = metric;
+    }
+
     public Map<String, String> getTags() {
         return tags;
+    }
+
+    public void setTags(Map<String, String> tags) {
+        this.tags = tags;
     }
 }
