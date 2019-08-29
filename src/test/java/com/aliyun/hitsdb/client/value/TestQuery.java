@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.aliyun.hitsdb.client.value.request.DeltaOptions;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -254,5 +255,41 @@ public class TestQuery {
         String json = query.toJSON();
         Assert.assertEquals(json,
                 "{\"end\":1501564455,\"msResolution\":true,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
+    }
+
+    @Test
+    public void testQueryDelta() throws ParseException {
+        String strDate = "2017-08-01 13:14:15";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = sdf.parse(strDate);
+
+        int endTime = (int) (date.getTime() / 1000);
+        int startTime = endTime - 60 * 60;
+
+        SubQuery subQuery1 = SubQuery.metric("test1").aggregator(Aggregator.NONE).delta().tag("tagk1", "tagv1")
+                .tag("tagk2", "tagv2").build();
+        SubQuery subQuery2 = SubQuery.metric("test1").aggregator(Aggregator.NONE)
+                .delta(DeltaOptions.newBuilder().counter(true).counterMax(100).dropResets(true).build())
+                .tag("tagk1", "tagv1").tag("tagk2", "tagv2").build();
+
+        Query query = Query.timeRange(startTime, endTime)
+                .sub(subQuery1).sub(subQuery2).build();
+        String json = query.toJSON();
+        Assert.assertEquals("{\"end\":1501564455,\"queries\":[{\"aggregator\":\"none\",\"delta\":true,\"index\":0,\"metric\":\"test1\",\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"none\",\"delta\":true,\"deltaOptions\":{\"counter\":true,\"counterMax\":100,\"dropResets\":true},\"index\":1,\"metric\":\"test1\",\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}",
+                json);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testQueryDeltaAndRate() throws ParseException {
+        String strDate = "2017-08-01 13:14:15";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = sdf.parse(strDate);
+
+        int endTime = (int) (date.getTime() / 1000);
+        int startTime = endTime - 60 * 60;
+
+        SubQuery subQuery1 = SubQuery.metric("test1").aggregator(Aggregator.NONE).delta().rate().tag("tagk1", "tagv1")
+                .tag("tagk2", "tagv2").build();
+
     }
 }

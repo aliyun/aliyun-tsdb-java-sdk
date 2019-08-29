@@ -19,6 +19,13 @@ public class SubQuery {
     private String downsample;
     private Boolean rate;
     private RateOptions rateOptions;
+    /**
+     * the delta field of SubQuery is supported at the Server side from v.2.5.9
+     * @since v0.2.5
+     */
+    private Boolean delta;
+    private DeltaOptions deltaOptions;
+    
     private Map<String, String> tags;
     private Granularity granularityType;
     private String granularity;
@@ -36,6 +43,8 @@ public class SubQuery {
         private String downsample;
         private Boolean rate;
         private RateOptions rateOptions;
+        private Boolean delta;
+        private DeltaOptions deltaOptions;
         private Integer limit;
         private Integer offset;
         private String dpValue;
@@ -61,6 +70,17 @@ public class SubQuery {
         public Builder rate(RateOptions rateOptions) {
             this.rate = true;
             this.rateOptions = rateOptions;
+            return this;
+        }
+
+        public Builder delta() {
+            this.delta = true;
+            return this;
+        }
+
+        public Builder delta(DeltaOptions deltaOptions) {
+            this.delta = true;
+            this.deltaOptions = deltaOptions;
             return this;
         }
 
@@ -192,6 +212,13 @@ public class SubQuery {
             return this;
         }
 
+        public Builder delta(Boolean delta) {
+            if (delta != null) {
+                this.delta = delta;
+            }
+            return this;
+        }
+
         public Builder limit(Integer limit) {
             if (limit != null) {
                 this.limit = limit;
@@ -294,9 +321,17 @@ public class SubQuery {
             subQuery.downsample = this.downsample;
             subQuery.metric = this.metric;
             subQuery.tags = this.tags;
+
+            if ((this.delta != null) && (this.delta == true) && (this.rate != null) && (this.rate == true)) {
+                throw new IllegalArgumentException("\"delta\" and \"rate\" cannot be specified at the same time");
+            }
             subQuery.rate = this.rate;
             if (this.rateOptions != null) {
 				subQuery.rateOptions = this.rateOptions;
+            }
+            subQuery.delta = this.delta;
+            if (this.deltaOptions != null) {
+                subQuery.deltaOptions = this.deltaOptions;
             }
             subQuery.granularityType = this.granularityType;
             subQuery.realTimeSeconds = this.realTimeSeconds;
@@ -441,5 +476,13 @@ public class SubQuery {
 
     public String getPreDpValue() {
         return preDpValue;
+    }
+
+    public Boolean getDelta() {
+        return delta;
+    }
+
+    public DeltaOptions getDeltaOptions() {
+        return deltaOptions;
     }
 }
