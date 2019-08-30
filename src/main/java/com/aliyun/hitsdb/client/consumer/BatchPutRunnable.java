@@ -25,7 +25,7 @@ import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.value.request.Point;
-import com.google.common.util.concurrent.RateLimiter;
+import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 
 public class BatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutRunnable.class);
