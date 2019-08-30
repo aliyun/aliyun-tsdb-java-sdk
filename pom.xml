@@ -18,12 +18,6 @@
 		<developerConnection>https://www.aliyun.com/product/hitsdb</developerConnection>
 	</scm>
 	<dependencies>
-	    <!-- Guava -->
-		<dependency>
-		    <groupId>com.google.guava</groupId>
-		    <artifactId>guava</artifactId>
-		    <version>16.0</version>
-		</dependency>
 	
 		<!-- HTTP -->
 		<dependency>
