@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.queue.DataQueue;
-import com.google.common.util.concurrent.RateLimiter;
+import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 
 public class DefaultBatchPutConsumer implements Consumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultBatchPutConsumer.class);

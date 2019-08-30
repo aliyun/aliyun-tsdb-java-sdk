@@ -23,7 +23,7 @@ import com.aliyun.hitsdb.client.value.response.*;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
-import com.google.common.util.concurrent.RateLimiter;
+import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 import org.slf4j.Logger;
