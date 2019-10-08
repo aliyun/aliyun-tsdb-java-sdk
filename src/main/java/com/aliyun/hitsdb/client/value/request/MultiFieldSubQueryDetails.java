@@ -10,6 +10,7 @@ public class MultiFieldSubQueryDetails {
     private Aggregator aggregatorType;
     private String downsample;
     private Boolean rate;
+    private Boolean delta;
     private Integer top;
     private String dpValue;
     private String preDpValue;
@@ -20,6 +21,7 @@ public class MultiFieldSubQueryDetails {
         private Aggregator aggregatorType;
         private String downsample = null;
         private Boolean rate = false;
+        private Boolean delta = false;
         private Integer top = 0;
         private String dpValue = null;
         private String preDpValue = null;
@@ -71,6 +73,22 @@ public class MultiFieldSubQueryDetails {
         }
         public Builder rate() {
             this.rate = true;
+            return this;
+        }
+
+        /**
+         * set the delta
+         * @param delta delta
+         * @return Builder
+         */
+        public Builder delta(Boolean delta) {
+            if (delta != null) {
+                this.delta = delta;
+            }
+            return this;
+        }
+        public Builder delta() {
+            this.delta = true;
             return this;
         }
 
@@ -152,6 +170,7 @@ public class MultiFieldSubQueryDetails {
             fieldDetails.aggregator = this.aggregatorType.getName();
             fieldDetails.downsample = this.downsample;
             fieldDetails.rate = this.rate;
+            fieldDetails.delta = this.delta;
             if (this.dpValue != null) {
                 fieldDetails.dpValue = this.dpValue;
             }
@@ -226,6 +245,10 @@ public class MultiFieldSubQueryDetails {
 
     public Boolean getRate() {
         return rate;
+    }
+
+    public Boolean getDelta() {
+        return delta;
     }
 
     public Integer getTop() {
