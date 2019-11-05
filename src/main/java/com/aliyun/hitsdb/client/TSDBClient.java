@@ -1399,7 +1399,8 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public List<MultiFieldQueryLastResult> multiFieldQueryLast(LastPointQuery lastPointQuery) throws HttpUnknowStatusException {
-        if (!lastPointQuery.getTupleFormat()) {
+        // set the tupleFormat to true automatically
+        if ((lastPointQuery.getTupleFormat()== null) || (!lastPointQuery.getTupleFormat())) {
             lastPointQuery.setTupleFormat(true);
         }
 
