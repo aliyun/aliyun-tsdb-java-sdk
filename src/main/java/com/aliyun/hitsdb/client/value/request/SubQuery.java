@@ -126,7 +126,7 @@ public class SubQuery {
          * @param groupBy grouyBy
          * @return Builder
          */
-        public Builder filter(FilterType type, String tagk, String filter, Boolean groupBy) {
+        public Builder filter(FilterType type, String tagk, String filter, boolean groupBy) {
             if (filters == null) {
                 filters = new ArrayList<Filter>();
             }
@@ -135,8 +135,8 @@ public class SubQuery {
             f.setType(type);
             f.setFilter(filter);
             f.setTagk(tagk);
-            if (true == groupBy) {
-                f.setGroupBy(groupBy);
+            if (groupBy) {
+                f.setGroupBy(true);
             }
 
             filters.add(f);
@@ -170,7 +170,7 @@ public class SubQuery {
             if (type == null || tagk == null || tagk.isEmpty() || filter == null || filter.isEmpty()) {
                 return this;
             }
-            this.filter(type, tagk, filter, null);
+            this.filter(type, tagk, filter, false);
             return this;
         }
 

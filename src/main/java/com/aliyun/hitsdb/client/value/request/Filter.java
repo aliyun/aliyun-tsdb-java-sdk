@@ -14,7 +14,7 @@ public class Filter {
         private String filter;
         private boolean groupBy;
 
-        public Builder(FilterType type, String tagk, String filter, Boolean groupBy) {
+        public Builder(FilterType type, String tagk, String filter, boolean groupBy) {
             super();
             this.type = type;
             this.tagk = tagk;
@@ -34,8 +34,8 @@ public class Filter {
             f.type = this.type;
             f.tagk = this.tagk;
             f.filter = this.filter;
-            if (this.groupBy == true) {
-                f.groupBy = this.groupBy;
+            if (this.groupBy) {
+                f.groupBy = true;
             }
 
             return f;
@@ -47,7 +47,7 @@ public class Filter {
         return new Builder(type, tagk, filter);
     }
 
-    public static Builder filter(FilterType type, String tagk, String filter, Boolean groupBy) {
+    public static Builder filter(FilterType type, String tagk, String filter, boolean groupBy) {
         return new Builder(type, tagk, filter, groupBy);
     }
 
