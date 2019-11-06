@@ -76,7 +76,7 @@ public class TestHiTSDBClientBatchPutStringValue {
                 .metric("hello").tag("tagk1", "tagv1")
 //                .timestamp(getTime())
                 .timestamp(new Date())
-//                .value(123.4)
+                .value(123.4)
                 .build();
         tsdb.put(point);
     }
