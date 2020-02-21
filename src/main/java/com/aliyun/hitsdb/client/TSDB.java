@@ -6,6 +6,7 @@ import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.*;
 import com.aliyun.hitsdb.client.value.response.*;
 import com.aliyun.hitsdb.client.value.type.Suggest;
+import com.aliyun.hitsdb.client.value.type.UserPrivilege;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -590,4 +591,30 @@ public interface TSDB extends Closeable {
      * @throws HttpUnknowStatusException
      */
     List<MultiFieldQueryLastResult> multiFieldQueryLast(LastPointQuery lastPointQuery) throws HttpUnknowStatusException;
+
+
+    /**
+     * method POST for the /api/users endpoint to create a new user,
+     * which is enabled since TSDB's engine v2.5.13
+     * @param username the name of the user to create
+     * @param password the plain password for the user to create
+     * @param privilege the privilege for the user to create
+     * @since 0.2.7
+     */
+    void createUser(String username, String password, UserPrivilege privilege);
+
+    /**
+     * method DELETE for the /api/users endpoint to drop an existing user,
+     * which is enabled since TSDB's engine v2.5.13
+     * @param username the name of the user to create
+     * @note if a non-exist username specified, this method would also end normally
+     */
+    void dropUser(String username);
+
+    /**
+     * method GET for the /api/users endpoint to drop an existing user,
+     * which is enabled since TSDB's engine v2.5.13
+     * @return a list of the existing users
+     */
+    List<UserResult> listUsers();
 }

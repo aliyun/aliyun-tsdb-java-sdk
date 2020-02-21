@@ -24,6 +24,8 @@ import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
+import com.aliyun.hitsdb.client.value.type.UserPrivilege;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 import org.slf4j.Logger;
@@ -198,6 +200,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -316,6 +320,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -335,6 +341,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -417,6 +425,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -605,6 +615,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -624,6 +636,8 @@ public class TSDBClient implements TSDB {
 				throw new HttpServerNotSupportException(resultResponse);
 			case ServerError:
 				throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
 			default:
 				throw new HttpUnknowStatusException(resultResponse);
 		}
@@ -660,6 +674,8 @@ public class TSDBClient implements TSDB {
 		        throw new HttpServerNotSupportException(resultResponse);
 		    case ServerError:
 		        throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
 		    default:
 		        throw new HttpUnknowStatusException(resultResponse);
 		}
@@ -692,6 +708,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -713,6 +731,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(result);
             case ServerError:
                 throw new HttpServerErrorException(result);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(result);
             default:
                 throw new HttpUnknowStatusException(result);
         }
@@ -867,6 +887,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -918,6 +940,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -967,6 +991,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1107,6 +1133,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1141,6 +1169,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1168,6 +1198,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1193,6 +1225,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1250,6 +1284,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1269,6 +1305,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1325,6 +1363,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1383,6 +1423,8 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -1419,6 +1461,103 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:
                 throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    /**
+     * method POST for the /api/users endpoint to create a new user,
+     * which is enabled since TSDB's engine v2.5.13
+     *
+     * @param username  the name of the user to create
+     * @param password  the plain password for the user to create
+     * @param privilege the privilege for the user to create
+     * @since 0.2.7
+     */
+    @Override
+    public void createUser(String username, String password, UserPrivilege privilege) {
+        if ((username == null) || (username.isEmpty()) ||
+                (password == null) || (password.isEmpty())) {
+            throw new IllegalArgumentException("username or password cannot be empty");
+        }
+
+        // UserResult is also the data structure of createUser
+        String base64Password = Base64.encodeBase64String(password.getBytes());
+
+        UserResult createRequest = new UserResult(username, base64Password, privilege.id());
+        String jsonRequest = createRequest.toJSON();
+        HttpResponse httpResponse = httpclient.post(HttpAPI.USER_AUTH, jsonRequest);
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                return;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    /**
+     * method DELETE for the /api/users endpoint to drop an existing user,
+     * which is enabled since TSDB's engine v2.5.13
+     *
+     * @param username the name of the user to create
+     * @note if a non-exist username specified, this method would also end normally
+     */
+    @Override
+    public void dropUser(String username) {
+        if ((username == null) || (username.isEmpty())) {
+            throw new IllegalArgumentException("username cannot be empty");
+        }
+
+        HttpResponse httpResponse = httpclient.delete(HttpAPI.USER_AUTH + "?u=" + username, null);
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                return;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    /**
+     * method GET for the /api/users endpoint to drop an existing user,
+     * which is enabled since TSDB's engine v2.5.13
+     *
+     * @return a list of the existing users
+     */
+    @Override
+    public List<UserResult> listUsers() {
+        HttpResponse httpResponse = httpclient.get(HttpAPI.USER_AUTH, null);
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                List<UserResult> result = JSON.parseArray(content, UserResult.class);
+                return result;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }

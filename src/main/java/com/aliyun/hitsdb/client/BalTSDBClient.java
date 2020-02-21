@@ -9,6 +9,7 @@ import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.*;
 import com.aliyun.hitsdb.client.value.response.*;
 import com.aliyun.hitsdb.client.value.type.Suggest;
+import com.aliyun.hitsdb.client.value.type.UserPrivilege;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1115,6 +1116,71 @@ public class BalTSDBClient implements TSDB {
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
                 return client().multiFieldQueryLast(lastPointQuery);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    /**
+     * method POST for the /api/users endpoint to create a new user,
+     * which is enabled since TSDB's engine v2.5.13
+     *
+     * @param username  the name of the user to create
+     * @param password  the plain password for the user to create
+     * @param privilege the privilege for the user to create
+     * @since 0.2.7
+     */
+    @Override
+    public void createUser(String username, String password, UserPrivilege privilege) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().createUser(username, password, privilege);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    /**
+     * method DELETE for the /api/users endpoint to drop an existing user,
+     * which is enabled since TSDB's engine v2.5.13
+     *
+     * @param username the name of the user to create
+     * @note if a non-exist username specified, this method would also end normally
+     */
+    @Override
+    public void dropUser(String username) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().dropUser(username);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    /**
+     * method GET for the /api/users endpoint to drop an existing user,
+     * which is enabled since TSDB's engine v2.5.13
+     *
+     * @return a list of the existing users
+     */
+    @Override
+    public List<UserResult> listUsers() {
+        List<UserResult> result;
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                result =  client().listUsers();
+                return result;
             } catch (Exception e) {
                 exception = e;
             }
