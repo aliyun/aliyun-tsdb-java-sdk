@@ -26,6 +26,10 @@ public interface HttpAPI {
     String MPUT = "/api/mput";
     String MQUERY = "/api/mquery";
     String QUERY_MLAST = "/api/query/mlast";
+    /**
+     * User authentication API
+     */
+    String USER_AUTH = "/api/users";
 
     String SQL = "/api/sqlquery";
 }

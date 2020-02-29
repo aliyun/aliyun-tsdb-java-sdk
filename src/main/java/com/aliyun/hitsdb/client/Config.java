@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 public interface Config {
-    String BASICTYPE = "basic";
+    String BASICTYPE = "Basic";    // it should be "Basic" according to RFC 2617
     String ALITYPE = "alibaba-signature";
 
     boolean isSslEnable();

@@ -181,7 +181,7 @@ public class HttpClient {
             }
         }
 
-        if (sslEnable && authType != null && !authType.trim().equals("")) {
+        if (authType != null && !authType.trim().equals("")) {
             setAuthHeader(request);
         }
 
@@ -241,11 +241,11 @@ public class HttpClient {
 
     public void checkAuthInfo() {
         if (HiTSDBConfig.BASICTYPE.equalsIgnoreCase(authType)) {
-            if (instanceId == null || instanceId.trim().equals("")) {
-                if (!host.startsWith("ts-")) {
-                    throw new HttpClientException("sorry, authentication need instance id");
-                }
-            }
+            //if (instanceId == null || instanceId.trim().equals("")) {
+            //    if (!host.startsWith("ts-")) {
+            //        throw new HttpClientException("sorry, authentication need instance id");
+            //    }
+            //}
             if (tsdbUser == null || tsdbUser.trim().equals("")) {
                 throw new HttpClientException("sorry, basic authentication need user name");
             }
@@ -312,7 +312,7 @@ public class HttpClient {
             }
         }
 
-        if (sslEnable && authType != null && !authType.trim().equals("")) {
+        if (authType != null && !authType.trim().equals("")) {
             setAuthHeader(request);
         }
 

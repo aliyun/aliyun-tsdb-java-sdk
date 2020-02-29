@@ -5,5 +5,6 @@ public enum HttpStatus {
     ServerSuccessNoContent,
     ServerNotSupport,
     ServerError,
+    ServerUnauthorized,
     UnKnow
 }

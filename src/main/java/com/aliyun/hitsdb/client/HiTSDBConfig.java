@@ -208,7 +208,18 @@ public class HiTSDBConfig extends AbstractConfig {
             return this;
         }
 
-        public Builder basicAuth(String instanceId, String tsdbUser, String basicPwd) {
+        /**
+         * expose the basicAuth without the instanceId as the argument,
+         * because the TSDB server does not support multi-tenant so far
+         */
+        public Builder basicAuth(String tsdbUser, String basicPwd) {
+            this.authType = TSDBConfig.BASICTYPE;
+            this.tsdbUser = tsdbUser;
+            this.basicPwd = basicPwd;
+            return this;
+        }
+
+        Builder basicAuth(String instanceId, String tsdbUser, String basicPwd) {
             this.authType = TSDBConfig.BASICTYPE;
             this.instanceId = instanceId;
             this.tsdbUser = tsdbUser;

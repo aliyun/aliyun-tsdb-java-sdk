@@ -30,7 +30,11 @@ public class ResultResponse {
                 this.httpStatus = HttpStatus.ServerSuccess;
             }
         } else if (statusCode >= 400 && statusCode < 500) {
-            this.httpStatus = HttpStatus.ServerNotSupport;
+            if (statusCode == 401) {
+                this.httpStatus = HttpStatus.ServerUnauthorized;
+            } else {
+                this.httpStatus = HttpStatus.ServerNotSupport;
+            }
         } else if (statusCode >= 500 && statusCode < 600) {
             this.httpStatus = HttpStatus.ServerError;
         } else {
