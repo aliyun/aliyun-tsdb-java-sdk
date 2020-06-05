@@ -15,6 +15,8 @@ import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.value.request.Query;
 import com.aliyun.hitsdb.client.value.response.QueryResult;
 
+import static com.aliyun.hitsdb.client.TSDBClient.setTypeIfNeeded;
+
 public class QueryHttpResponseCallback implements FutureCallback<HttpResponse> {
 	
 	private final String address;
@@ -41,6 +43,7 @@ public class QueryHttpResponseCallback implements FutureCallback<HttpResponse> {
         case ServerSuccess:
             String content = resultResponse.getContent();
             List<QueryResult> queryResultList = JSON.parseArray(content, QueryResult.class);
+            setTypeIfNeeded(query, queryResultList);
             callback.response(this.address, query, queryResultList);
             return;
         case ServerNotSupport:

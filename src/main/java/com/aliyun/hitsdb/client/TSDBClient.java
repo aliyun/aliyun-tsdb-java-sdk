@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +59,7 @@ public class TSDBClient implements TSDB {
         } catch (SecurityException e) {
             e.printStackTrace();
         }
+        JSON.DEFAULT_PARSER_FEATURE &= ~Feature.UseBigDecimal.getMask();  // disable deserialize a double to BigDecimal
     }
 
     public TSDBClient(Config config) throws HttpClientInitException {
@@ -412,6 +415,7 @@ public class TSDBClient implements TSDB {
                     LOGGER.error("Empty result from TSDB server. {} ", queryResultList.toString());
                     return null;
                 }
+                setTypeIfNeeded(query, queryResultList);
 
                 // We need to obtain the measurement name from the sub query's metric.
                 MultiValuedQueryResult tupleFormat = convertQueryResultIntoTupleFormat(
@@ -432,6 +436,116 @@ public class TSDBClient implements TSDB {
         }
     }
 
+    /**
+     * Use {@link Query#isShowType()} to determine whether the data type needs to be displayed,
+     * and then use {@link Query#getType()}} to determine whether type inference is required.
+     */
+    public static void setTypeIfNeeded(final Query query, final List<QueryResult> queryResultList) {
+        if (query == null || !query.isShowType()) {
+            return;
+        }
+        final Class<?> queryType = query.getType();
+        for (QueryResult queryResult : queryResultList) {
+            if (queryType != null) {
+                queryResult.setType(queryType);
+                continue;
+            }
+            final LinkedHashMap<Long, Object> dps = queryResult.getDps();
+            if (dps == null || dps.size() == 0) {
+                continue;
+            }
+            Class<?> typeExist = null;
+            for (Object value : dps.values()) {
+                final Class<?> type = getType(value);
+                if (type == BigDecimal.class) {
+                    typeExist = BigDecimal.class;
+                    break;
+                }
+                if (typeExist == null) {
+                    typeExist = type;
+                    continue;
+                }
+                // If there is a type inconsistency in the query results,
+                // there is only one possibility, that is, the case where long and double coexist.
+                // Therefore, the type is inferred as BigDecimal to deal with this special situation.
+                if (typeExist != type) {
+                    typeExist = BigDecimal.class;
+                    break;
+                }
+            }
+            queryResult.setType(typeExist);
+        }
+    }
+
+    /**
+     * Use {@link Query#isShowType()} to determine whether the data type needs to be displayed,
+     * and then use {@link Query#getType()}} to determine whether type inference is required.
+     */
+    public static void setTypeIfNeeded4MultiField(final MultiFieldQuery query, final List<MultiFieldQueryResult> queryResultList) {
+        if (query == null || !query.isShowType()) {
+            return;
+        }
+        final List<Class<?>> queryType = query.getTypes();
+        for (MultiFieldQueryResult queryResult : queryResultList) {
+            if (queryType != null) {
+                queryResult.setTypes(queryType);
+                continue;
+            }
+            final List<List<Object>> dps = queryResult.getValues();
+            if (dps == null || dps.size() == 0) {
+                continue;
+            }
+            final List<Class<?>> typeList = new LinkedList<Class<?>>();
+            final int columnSize = queryResult.getColumns().size();
+            for (int i = 1; i < columnSize; i++) {
+                Class<?> typeExist = null;
+                for (List<Object> dp : dps) {
+                    final Object value = dp.get(i);
+                    final Class<?> type = getType(value);
+                    if (type == BigDecimal.class) {
+                        typeExist = BigDecimal.class;
+                        break;
+                    }
+                    if (typeExist == null) {
+                        typeExist = type;
+                        continue;
+                    }
+                    // If there is a type inconsistency in the query results,
+                    // there is only one possibility, that is, the case where long and double coexist.
+                    // Therefore, the type is inferred as BigDecimal to deal with this special situation.
+                    if (typeExist != type) {
+                        typeExist = BigDecimal.class;
+                        break;
+                    }
+                }
+                typeList.add(typeExist);
+            }
+            queryResult.setTypes(typeList);
+        }
+    }
+
+    /**
+     * Get the data type of the value from data point.
+     */
+    public static Class<?> getType(Object value) {
+        if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+            return Long.class;
+        } else if (value instanceof Float || value instanceof Double) {
+            return Double.class;
+        } else if (value instanceof BigDecimal) {
+            return BigDecimal.class;
+        } else if (value instanceof Boolean) {
+            return Boolean.class;
+        } else if (value instanceof String) {
+            return String.class;
+        } else {
+            // If there is a data type that has not been considered,
+            // output it as the Object type for the time being,
+            // instead of throwing an exception to make the client exit.
+            LOGGER.warn("There is a data type that has not been considered, detail: " + value);
+            return Object.class;
+        }
+    }
 
     /**
      * @param fieldAndDpValueFilter The field and the corresponding dpValue filter.
@@ -610,6 +724,7 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 List<QueryResult> queryResultList;
                 queryResultList = JSON.parseArray(content, QueryResult.class);
+                setTypeIfNeeded(query, queryResultList);
                 return queryResultList;
             case ServerNotSupport:
                 throw new HttpServerNotSupportException(resultResponse);
@@ -1418,6 +1533,7 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 List<MultiFieldQueryResult> queryResultList;
                 queryResultList = JSON.parseArray(content, MultiFieldQueryResult.class);
+                setTypeIfNeeded4MultiField(query, queryResultList);
                 return queryResultList;
             case ServerNotSupport:
                 throw new HttpServerNotSupportException(resultResponse);

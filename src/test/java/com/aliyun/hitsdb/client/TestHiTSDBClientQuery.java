@@ -76,6 +76,38 @@ public class TestHiTSDBClientQuery {
     }
 
     @Test
+    public void testQueryWithShowType() {
+        Query query = Query.timeRange(1346846400, 1346846401)
+                .sub(SubQuery.metric("sys.cpu.nice2")
+                        .aggregator(Aggregator.NONE)
+                        .build())
+                .showType()
+                .build();
+
+        List<QueryResult> result = tsdb.query(query);
+        System.out.println("查询结果：" + result);
+        final QueryResult queryResult = result.get(0);
+        final Class<?> type = queryResult.getType();
+        System.out.println(type);
+    }
+
+    @Test
+    public void testQueryWithSpecialType() {
+        Query query = Query.timeRange(1346846400, 1346846401)
+                .sub(SubQuery.metric("sys.cpu.nice2")
+                        .aggregator(Aggregator.NONE)
+                        .build())
+                .withType(Long.class)
+                .build();
+
+        List<QueryResult> result = tsdb.query(query);
+        System.out.println("查询结果：" + result);
+        final QueryResult queryResult = result.get(0);
+        final Class<?> type = queryResult.getType();
+        System.out.println(type);
+    }
+
+    @Test
     public void testQueryCallback() {
 
 //	    	int t0 = (int) (1508742134297l/1000);

@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.aliyun.hitsdb.client.value.JSONValue;
+import com.alibaba.fastjson.annotation.JSONField;
 
 public class Query extends JSONValue {
 	private Long start;
@@ -13,6 +14,10 @@ public class Query extends JSONValue {
 	private Boolean msResolution;
 	private Boolean delete;
 	private List<SubQuery> queries;
+	@JSONField(serialize = false)
+	private boolean showType;
+	@JSONField(serialize = false)
+	private Class<?> type;
 
 	public static class Builder {
 		private Long startTime;
@@ -20,6 +25,8 @@ public class Query extends JSONValue {
 		private Boolean msResolution;
 		private Boolean delete;
 		private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
+		private boolean showType;
+		private Class<?> type;
 
 		/**
 		 * 1970-02-20 00:59:28
@@ -105,6 +112,23 @@ public class Query extends JSONValue {
 			return this;
 		}
 
+		/**
+		 * After calling this method, the data type of the data point will be displayed in the query result.
+		 */
+		public Builder showType() {
+			this.showType = true;
+			return this;
+		}
+
+		/**
+		 * The user can specify the data type of the data point in the query result.
+		 */
+		public Builder withType(Class<?> type) {
+			this.showType = true;
+			this.type = type;
+			return this;
+		}
+
 		public Query build() {
 			Query query = new Query();
 			if (this.startTime == null) {
@@ -127,6 +151,8 @@ public class Query extends JSONValue {
 			query.queries = this.subQueryList;
 			query.delete = this.delete;
 			query.msResolution = this.msResolution;
+			query.showType = this.showType;
+			query.type = this.type;
 			return query;
 		}
 
@@ -193,4 +219,19 @@ public class Query extends JSONValue {
 		return queries;
 	}
 
+    public boolean isShowType() {
+        return showType;
+    }
+
+    public void setShowType(boolean showType) {
+        this.showType = showType;
+    }
+
+    public Class<?> getType() {
+        return type;
+    }
+
+    public void setType(Class<?> type) {
+        this.type = type;
+    }
 }

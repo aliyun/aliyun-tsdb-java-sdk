@@ -9,7 +9,7 @@ public class QueryResult extends JSONValue {
     private Map<String, String> tags;
     private List<String> aggregateTags;
     private LinkedHashMap<Long, Object> dps = new LinkedHashMap<Long, Object>();
-    
+    private Class<?> type;
     @Deprecated
     private LinkedHashMap<Long, String> sdps = new LinkedHashMap<Long, String>();
 
@@ -79,6 +79,14 @@ public class QueryResult extends JSONValue {
 
     public void setTags(Map<String, String> tags) {
         this.tags = tags;
+    }
+
+    public Class<?> getType() {
+        return type;
+    }
+
+    public void setType(Class<?> type) {
+        this.type = type;
     }
 
     @Deprecated

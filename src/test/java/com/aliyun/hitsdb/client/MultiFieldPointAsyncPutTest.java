@@ -4,7 +4,13 @@ import com.aliyun.hitsdb.client.callback.BatchPutCallback;
 import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.value.Result;
-import com.aliyun.hitsdb.client.value.request.*;
+import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
+import com.aliyun.hitsdb.client.value.request.MultiFieldQuery;
+import com.aliyun.hitsdb.client.value.request.MultiFieldSubQuery;
+import com.aliyun.hitsdb.client.value.request.MultiFieldSubQueryDetails;
+import com.aliyun.hitsdb.client.value.request.Point;
+import com.aliyun.hitsdb.client.value.request.Query;
+import com.aliyun.hitsdb.client.value.request.SubQuery;
 import com.aliyun.hitsdb.client.value.response.MultiFieldQueryResult;
 import com.aliyun.hitsdb.client.value.response.QueryResult;
 import com.aliyun.hitsdb.client.value.type.Aggregator;
@@ -13,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -175,8 +182,90 @@ public class MultiFieldPointAsyncPutTest {
         assertEquals(1, result.getValues().size());
         List<Object> values = result.getValues().get(0);
         assertEquals(t, values.get(0));
-        assertEquals(v1, ((Number)values.get(1)).doubleValue());
-        assertEquals(v2, ((Number)values.get(2)).doubleValue());
+        assertEquals(v1, ((Number) values.get(1)).doubleValue());
+        assertEquals(v2, ((Number) values.get(2)).doubleValue());
+    }
+
+
+    @Test
+    public void testMultiFieldPointQueryShowType() throws InterruptedException {
+        long t = System.currentTimeMillis();
+        double v1 = Math.random();
+        double v2 = Math.random();
+        MultiFieldPoint point = MultiFieldPoint
+                .metric("test-test-test")
+                .tag("a", "1")
+                .tag("b", "2")
+                .timestamp(t)
+                .field("f1", v1)
+                .field("f2", v2)
+                .build();
+        tsdb.multiFieldPut(point);
+        Thread.sleep(2000);
+
+        MultiFieldQuery query = MultiFieldQuery.start(t)
+                .sub(MultiFieldSubQuery.metric("test-test-test")
+                        .tag("a", "1")
+                        .tag("b", "2")
+                        .fieldsInfo(MultiFieldSubQueryDetails.field("f1").aggregator(Aggregator.NONE).build())
+                        .fieldsInfo(MultiFieldSubQueryDetails.field("f2").aggregator(Aggregator.NONE).build())
+                        .build())
+                .showType()
+                .build();
+        List<MultiFieldQueryResult> queryResults = tsdb.multiFieldQuery(query);
+        assertNotNull(queryResults);
+        assertEquals(1, queryResults.size());
+        MultiFieldQueryResult result = queryResults.get(0);
+        final List<Class<?>> types = result.getTypes();
+        assertEquals(2, types.size());
+        assertEquals(Double.class, types.get(0));
+        assertEquals(Double.class, types.get(1));
+        assertEquals(1, result.getValues().size());
+        List<Object> values = result.getValues().get(0);
+        assertEquals(t, values.get(0));
+        assertEquals(v1, ((Number) values.get(1)).doubleValue());
+        assertEquals(v2, ((Number) values.get(2)).doubleValue());
+    }
+
+
+    @Test
+    public void testMultiFieldPointQueryWithTypes() throws InterruptedException {
+        long t = System.currentTimeMillis();
+        double v1 = Math.random();
+        double v2 = Math.random();
+        MultiFieldPoint point = MultiFieldPoint
+                .metric("test-test-test")
+                .tag("a", "1")
+                .tag("b", "2")
+                .timestamp(t)
+                .field("f1", v1)
+                .field("f2", v2)
+                .build();
+        tsdb.multiFieldPut(point);
+        Thread.sleep(2000);
+
+        MultiFieldQuery query = MultiFieldQuery.start(t)
+                .sub(MultiFieldSubQuery.metric("test-test-test")
+                        .tag("a", "1")
+                        .tag("b", "2")
+                        .fieldsInfo(MultiFieldSubQueryDetails.field("f1").aggregator(Aggregator.NONE).build())
+                        .fieldsInfo(MultiFieldSubQueryDetails.field("f2").aggregator(Aggregator.NONE).build())
+                        .build())
+                .withTypes(Arrays.asList(new Class<?>[]{Double.class, Double.class}))
+                .build();
+        List<MultiFieldQueryResult> queryResults = tsdb.multiFieldQuery(query);
+        assertNotNull(queryResults);
+        assertEquals(1, queryResults.size());
+        MultiFieldQueryResult result = queryResults.get(0);
+        final List<Class<?>> types = result.getTypes();
+        assertEquals(2, types.size());
+        assertEquals(Double.class, types.get(0));
+        assertEquals(Double.class, types.get(1));
+        assertEquals(1, result.getValues().size());
+        List<Object> values = result.getValues().get(0);
+        assertEquals(t, values.get(0));
+        assertEquals(v1, ((Number) values.get(1)).doubleValue());
+        assertEquals(v2, ((Number) values.get(2)).doubleValue());
     }
 
 }
