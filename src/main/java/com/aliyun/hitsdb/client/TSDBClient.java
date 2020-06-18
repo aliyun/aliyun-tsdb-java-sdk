@@ -455,8 +455,10 @@ public class TSDBClient implements TSDB {
                 continue;
             }
             Class<?> typeExist = null;
-            for (Object value : dps.values()) {
-                final Class<?> type = getType(value);
+            for (Entry<Long, Object> entry : dps.entrySet()) {
+                final Long ts = entry.getKey();
+                final Object value = entry.getValue();
+                final Class<?> type = getType4Single(ts, value, dps);
                 if (type == BigDecimal.class) {
                     typeExist = BigDecimal.class;
                     break;
@@ -501,7 +503,7 @@ public class TSDBClient implements TSDB {
                 Class<?> typeExist = null;
                 for (List<Object> dp : dps) {
                     final Object value = dp.get(i);
-                    final Class<?> type = getType(value);
+                    final Class<?> type = getType4Multi(i, value, dp);
                     if (type == BigDecimal.class) {
                         typeExist = BigDecimal.class;
                         break;
@@ -525,14 +527,62 @@ public class TSDBClient implements TSDB {
     }
 
     /**
-     * Get the data type of the value from data point.
+     * Get the data type of the value from data point for single-value situation.
+     *
+     * @param ts    the timestamp of the data point
+     * @param value the value of the data point
+     * @param dps   data points
      */
-    public static Class<?> getType(Object value) {
+    public static Class<?> getType4Single(Long ts, Object value, LinkedHashMap<Long, Object> dps) {
         if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
             return Long.class;
-        } else if (value instanceof Float || value instanceof Double) {
+        } else if (value instanceof Float) {
+            if (((Float) value) % 1 == 0) {
+                dps.put(ts, ((Float) value).longValue());
+                return Long.class;
+            }
             return Double.class;
-        } else if (value instanceof BigDecimal) {
+        } else if (value instanceof Double) {
+            if (((Double) value) % 1 == 0) {
+                dps.put(ts, ((Double) value).longValue());
+                return Long.class;
+            }
+            return Double.class;
+        } else return getOtherClass(value);
+    }
+
+    /**
+     * Get the data type of the value from data point for multi-value situation.
+     *
+     * @param index the index of multi-value list
+     * @param value the value of the field
+     * @param dps   data points
+     */
+    public static Class<?> getType4Multi(int index, Object value, List<Object> dps) {
+        if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+            return Long.class;
+        } else if (value instanceof Float) {
+            if (((Float) value) % 1 == 0) {
+                dps.set(index, ((Float) value).longValue());
+                return Long.class;
+            }
+            return Double.class;
+        } else if (value instanceof Double) {
+            if (((Double) value) % 1 == 0) {
+                dps.set(index, ((Double) value).longValue());
+                return Long.class;
+            }
+            return Double.class;
+        } else {
+            return getOtherClass(value);
+        }
+    }
+
+    /**
+     * Handle unusual data types.
+     */
+    private static Class<?> getOtherClass(Object value) {
+        if (value instanceof BigDecimal) {
             return BigDecimal.class;
         } else if (value instanceof Boolean) {
             return Boolean.class;
