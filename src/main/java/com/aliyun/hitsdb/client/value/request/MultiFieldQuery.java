@@ -1,5 +1,6 @@
 package com.aliyun.hitsdb.client.value.request;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.aliyun.hitsdb.client.value.JSONValue;
 
 import java.util.ArrayList;
@@ -13,12 +14,18 @@ public class MultiFieldQuery extends JSONValue {
     private Long end;
     private List<MultiFieldSubQuery> queries;
     private Boolean msResolution;
+    @JSONField(serialize = false)
+    private boolean showType;
+    @JSONField(serialize = false)
+    private List<Class<?>> types;
 
     public static class Builder {
         private Long startTime;
         private Long endTime;
         private Boolean msResolution;
         private List<MultiFieldSubQuery> subQueryList = new ArrayList<MultiFieldSubQuery>();
+        private boolean showType;
+        private List<Class<?>> types;
 
         /**
          * 1970-02-20 00:59:28
@@ -62,6 +69,23 @@ public class MultiFieldQuery extends JSONValue {
             return this;
         }
 
+        /**
+         * After calling this method, the data type of the data point will be displayed in the query result.
+         */
+        public Builder showType() {
+            this.showType = true;
+            return this;
+        }
+
+        /**
+         * The user can specify the data type of data points under different fields in the query results.
+         */
+        public Builder withTypes(List<Class<?>> types) {
+            this.showType = true;
+            this.types = types;
+            return this;
+        }
+
         public Builder sub(MultiFieldSubQuery... subQuerys) {
             for (MultiFieldSubQuery subQuery : subQuerys) {
                 subQueryList.add(subQuery);
@@ -102,6 +126,8 @@ public class MultiFieldQuery extends JSONValue {
             }
             query.queries = this.subQueryList;
             query.msResolution = this.msResolution;
+            query.showType = this.showType;
+            query.types = this.types;
             return query;
         }
     }
@@ -161,5 +187,21 @@ public class MultiFieldQuery extends JSONValue {
 
     public List<MultiFieldSubQuery> getQueries() {
         return queries;
+    }
+
+    public boolean isShowType() {
+        return showType;
+    }
+
+    public void setShowType(boolean showType) {
+        this.showType = showType;
+    }
+
+    public List<Class<?>> getTypes() {
+        return types;
+    }
+
+    public void setTypes(List<Class<?>> types) {
+        this.types = types;
     }
 }

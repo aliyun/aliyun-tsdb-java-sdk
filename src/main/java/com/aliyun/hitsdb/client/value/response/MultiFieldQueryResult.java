@@ -10,6 +10,7 @@ public class MultiFieldQueryResult {
     private Map<String, String> tags;
     private List<String> columns = new ArrayList<String>();
     private List<List<Object>> values = new ArrayList<List<Object>>();
+    private List<Class<?>> types;
 
     public String getMetric() {
         return metric;
@@ -49,6 +50,14 @@ public class MultiFieldQueryResult {
 
     public Map<String, String> getTags() {
         return tags;
+    }
+
+    public List<Class<?>> getTypes() {
+        return types;
+    }
+
+    public void setTypes(List<Class<?>> types) {
+        this.types = types;
     }
 
     @Override
