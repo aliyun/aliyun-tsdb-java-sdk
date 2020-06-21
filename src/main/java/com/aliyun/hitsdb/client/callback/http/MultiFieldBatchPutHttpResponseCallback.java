@@ -54,15 +54,6 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
             this.hitsdbHttpClient.setSslEnable(true);
             errorRetry();
             return;
-        } else if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_UNAUTHORIZED) {
-            try {
-                this.hitsdbHttpClient.checkAuthInfo();//认证信息校验避免进入多余的retry
-                errorRetry();
-                return;
-            } catch (HttpClientException e) {
-                this.failedWithResponse(e);
-                return;
-            }
         }
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.compress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
