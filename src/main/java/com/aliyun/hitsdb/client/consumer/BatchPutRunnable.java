@@ -1,19 +1,8 @@
 package com.aliyun.hitsdb.client.consumer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutDetailsCallback;
@@ -24,8 +13,20 @@ import com.aliyun.hitsdb.client.http.HttpAddressManager;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
-import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
+import com.aliyun.hitsdb.client.value.request.AbstractPoint;
+import com.aliyun.hitsdb.client.value.request.Point;
+import org.apache.http.HttpResponse;
+import org.apache.http.concurrent.FutureCallback;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 public class BatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutRunnable.class);
@@ -44,6 +45,19 @@ public class BatchPutRunnable implements Runnable {
      * 批量提交回调
      */
     private final AbstractBatchPutCallback<?> batchPutCallback;
+
+    /**
+     * 批量提交回调，可以针对不同时间线指定不同的回调
+     * 其中 Key 为时间线的 HashCode，可以通过
+     * {@link com.aliyun.hitsdb.client.value.request.AbstractPoint#hashCode4Callback} 计算获得
+     */
+    private final Map<Integer, AbstractBatchPutCallback<?>> batchPutCallbacks;
+
+    /**
+     * 判断 {@link #batchPutCallbacks} 的 HashCode 计算是否基于 TimeLine
+     * 默认为 true 表示基于 metric + tags 计算而来，反之为 false 表示只通过 metric 计算而来
+     */
+    private final boolean callbacksByTimeLine;
 
     /**
      * 消费者队列控制器。
@@ -80,6 +94,8 @@ public class BatchPutRunnable implements Runnable {
         this.semaphoreManager = tsdbHttpClient.getSemaphoreManager();
         this.httpAddressManager = tsdbHttpClient.getHttpAddressManager();
         this.batchPutCallback = config.getBatchPutCallback();
+        this.batchPutCallbacks = config.getBatchPutCallbacks();
+        this.callbacksByTimeLine = config.isCallbacksByTimeLine();
         this.batchSize = config.getBatchPutSize();
         this.batchPutTimeLimit = config.getBatchPutTimeLimit();
         this.config = config;
@@ -90,16 +106,6 @@ public class BatchPutRunnable implements Runnable {
 
     @Override
     public void run() {
-        Map<String, String> paramsMap = new HashMap<String, String>();
-        if (this.batchPutCallback != null) {
-            if (batchPutCallback instanceof BatchPutCallback) {
-            } else if (batchPutCallback instanceof BatchPutSummaryCallback) {
-                paramsMap.put("summary", "true");
-            } else if (batchPutCallback instanceof BatchPutDetailsCallback) {
-                paramsMap.put("details", "true");
-            }
-        }
-
         Point waitPoint = null;
         boolean readyClose = false;
         int waitTimeLimit = batchPutTimeLimit / 3;
@@ -155,7 +161,7 @@ public class BatchPutRunnable implements Runnable {
             String strJson = serialize(pointList);
 
             // 发送
-            sendHttpRequest(pointList, strJson, paramsMap);
+            sendHttpRequest(pointList, strJson);
         }
 
         if (readyClose) {
@@ -179,22 +185,56 @@ public class BatchPutRunnable implements Runnable {
     }
 
 
-    private void sendHttpRequest(List<Point> pointList, String strJson, Map<String, String> paramsMap) {
+    private void sendHttpRequest(List<Point> pointList, String strJson) {
         String address = getAddressAndSemaphoreAcquire();
-        if (this.batchPutCallback != null) {
+        if (this.batchPutCallbacks != null && this.batchPutCallbacks.size() > 0) {
+            final Map<Integer, List<Point>> pointListByHash = new HashMap<Integer, List<Point>>();
+            for (Point point : pointList) {
+                int hash;
+                if (callbacksByTimeLine) {
+                    hash = point.hashCode4Callback();
+                } else {
+                    hash = AbstractPoint.hashCode4Callback(point.getMetric());
+                }
+                List<Point> points;
+                if (pointListByHash.containsKey(hash)) {
+                    points = pointListByHash.get(hash);
+                } else {
+                    points = new LinkedList<Point>();
+                }
+                points.add(point);
+                pointListByHash.put(hash, points);
+            }
+            for (Map.Entry<Integer, List<Point>> entry : pointListByHash.entrySet()) {
+                final Integer hash = entry.getKey();
+                final List<Point> points = entry.getValue();
+                final AbstractBatchPutCallback<?> callback = this.batchPutCallbacks.get(hash);
+                sendHttpRequestWithCallback(points, callback, strJson, address);
+            }
+        } else {
+            sendHttpRequestWithCallback(pointList, this.batchPutCallback, strJson, address);
+        }
+    }
+
+    private void sendHttpRequestWithCallback(List<Point> pointList,
+                                             AbstractBatchPutCallback<?> batchPutCallback,
+                                             String strJson,
+                                             String address) {
+        if (batchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
                     .createBatchPutDataCallback(
                             address,
-                            this.batchPutCallback,
+                            batchPutCallback,
                             pointList,
                             config
                     );
 
             try {
+                final Map<String, String> paramsMap = getParamsMap(this.batchPutCallback);
                 tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
-                this.batchPutCallback.failed(address, pointList, ex);
+                batchPutCallback.failed(address, pointList, ex);
             }
         } else {
             FutureCallback<HttpResponse> noLogicBatchPutHttpFutureCallback = this.httpResponseCallbackFactory
@@ -211,6 +251,19 @@ public class BatchPutRunnable implements Runnable {
                 noLogicBatchPutHttpFutureCallback.failed(ex);
             }
         }
+    }
+
+    private Map<String, String> getParamsMap(AbstractBatchPutCallback<?> batchPutCallback) {
+        final Map<String, String> paramsMap = new HashMap<String, String>();
+        if (batchPutCallback != null) {
+            if (batchPutCallback instanceof BatchPutCallback) {
+            } else if (batchPutCallback instanceof BatchPutSummaryCallback) {
+                paramsMap.put("summary", "true");
+            } else if (batchPutCallback instanceof BatchPutDetailsCallback) {
+                paramsMap.put("details", "true");
+            }
+        }
+        return paramsMap;
     }
 
     private String serialize(List<Point> pointList) {

@@ -6,6 +6,7 @@ import com.aliyun.hitsdb.client.http.Host;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractConfig implements Config {
 
@@ -36,9 +37,30 @@ public abstract class AbstractConfig implements Config {
     protected AbstractBatchPutCallback<?> batchPutCallback;
 
     /**
+     * 异步批量写回调接口，可以针对不同时间线指定不同的回调
+     * 其中 Key 为时间线的 HashCode，可以通过
+     * {@link com.aliyun.hitsdb.client.value.request.AbstractPoint#hashCode4Callback} 计算获得
+     */
+    protected Map<Integer, AbstractBatchPutCallback<?>> batchPutCallbacks;
+
+    /**
      * 多值异步批量写回调接口
      */
     protected AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
+
+    /**
+     * 多值异步批量写回调接口，可以针对不同时间线指定不同的回调
+     * 其中 Key 为时间线的 HashCode，可以通过
+     * {@link com.aliyun.hitsdb.client.value.request.AbstractPoint#hashCode4Callback} 计算获得
+     */
+    protected Map<Integer, AbstractMultiFieldBatchPutCallback<?>> multiFieldBatchPutCallbacks;
+
+    /**
+     * 判断 {@link #batchPutCallbacks} 和 {@link #multiFieldBatchPutCallbacks} 的 HashCode 计算是否基于 TimeLine
+     * 默认为 true 表示基于 metric + tags 计算而来，反之为 false 表示只通过 metric 计算而来
+     */
+    protected boolean callbacksByTimeLine = true;
+
     /**
      * 单值消费者线程数
      */
@@ -182,6 +204,16 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
+    public Map<Integer, AbstractBatchPutCallback<?>> getBatchPutCallbacks() {
+        return batchPutCallbacks;
+    }
+
+    @Override
+    public void setBatchPutCallbacks(Map<Integer, AbstractBatchPutCallback<?>> batchPutCallbacks) {
+        this.batchPutCallbacks = batchPutCallbacks;
+    }
+
+    @Override
     public AbstractMultiFieldBatchPutCallback<?> getMultiFieldBatchPutCallback() {
         return this.multiFieldBatchPutCallback;
     }
@@ -189,6 +221,26 @@ public abstract class AbstractConfig implements Config {
     @Override
     public void setMultiFieldBatchPutCallback(AbstractMultiFieldBatchPutCallback callback) {
         this.multiFieldBatchPutCallback = callback;
+    }
+
+    @Override
+    public Map<Integer, AbstractMultiFieldBatchPutCallback<?>> getMultiFieldBatchPutCallbacks() {
+        return multiFieldBatchPutCallbacks;
+    }
+
+    @Override
+    public void setMultiFieldBatchPutCallbacks(Map<Integer, AbstractMultiFieldBatchPutCallback<?>> multiFieldBatchPutCallbacks) {
+        this.multiFieldBatchPutCallbacks = multiFieldBatchPutCallbacks;
+    }
+
+    @Override
+    public boolean isCallbacksByTimeLine() {
+        return callbacksByTimeLine;
+    }
+
+    @Override
+    public void setCallbacksByTimeLine(boolean callbacksByTimeLine) {
+        this.callbacksByTimeLine = callbacksByTimeLine;
     }
 
     @Override
@@ -290,7 +342,9 @@ public abstract class AbstractConfig implements Config {
         config.host = host;
         config.port = port;
         config.batchPutCallback = this.batchPutCallback;
+        config.batchPutCallbacks = this.batchPutCallbacks;
         config.multiFieldBatchPutCallback = this.multiFieldBatchPutCallback;
+        config.multiFieldBatchPutCallbacks = this.multiFieldBatchPutCallbacks;
         config.batchPutSize = this.batchPutSize;
         config.batchPutTimeLimit = this.batchPutTimeLimit;
         config.batchPutBufferSize = this.batchPutBufferSize;

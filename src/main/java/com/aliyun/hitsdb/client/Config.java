@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface Config {
@@ -37,11 +38,23 @@ public interface Config {
 
     void setBatchPutCallback(AbstractBatchPutCallback callback);
 
+    Map<Integer, AbstractBatchPutCallback<?>> getBatchPutCallbacks();
+
+    void setBatchPutCallbacks(Map<Integer, AbstractBatchPutCallback<?>> batchPutCallbacks);
+
     AbstractMultiFieldBatchPutCallback<?> getMultiFieldBatchPutCallback();
 
     void setMultiFieldBatchPutCallback(AbstractMultiFieldBatchPutCallback callback);
 
+    Map<Integer, AbstractMultiFieldBatchPutCallback<?>> getMultiFieldBatchPutCallbacks();
+
+    void setMultiFieldBatchPutCallbacks(Map<Integer, AbstractMultiFieldBatchPutCallback<?>> multiFieldBatchPutCallbacks);
+
     boolean isAsyncPut();
+
+    boolean isCallbacksByTimeLine();
+
+    void setCallbacksByTimeLine(boolean callbacksByTimeLine);
 
     int getBatchPutConsumerThreadCount();
 

@@ -61,4 +61,31 @@ public abstract class AbstractPoint extends JSONValue {
             throw new IllegalArgumentException("The timestamp must be in range [4284768,9999999999999],but is " + timestamp);
         }
     }
+
+    /**
+     * 根据当前数据点中的 metric 和 tags，计算出时间线对应的 HashCode
+     */
+    public int hashCode4Callback() {
+        return hashCode4Callback(metric, tags);
+    }
+
+    /**
+     * 根据指定的 metric，计算出对应的 HashCode
+     */
+    public static int hashCode4Callback(String metric) {
+        return hashCode4Callback(metric, null);
+    }
+
+    /**
+     * 根据指定的 metric 和 tags，计算出时间线对应的 HashCode
+     */
+    public static int hashCode4Callback(String metric, Map<String, String> tags) {
+        if (metric == null && tags == null) {
+            return 0;
+        }
+        int result = 1;
+        result = 31 * result + (metric == null ? 0 : metric.hashCode());
+        result = 31 * result + (tags == null ? 0 : tags.hashCode());
+        return result;
+    }
 }

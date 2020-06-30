@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class TSDBConfig extends AbstractConfig {
@@ -41,7 +42,10 @@ public class TSDBConfig extends AbstractConfig {
         private int batchPutBufferSize = 10000;
         private int multiFieldBatchPutBufferSize = 10000;
         private AbstractBatchPutCallback<?> batchPutCallback;
+        private Map<Integer, AbstractBatchPutCallback<?>> batchPutCallbacks;
         private AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
+        private Map<Integer, AbstractMultiFieldBatchPutCallback<?>> multiFieldBatchPutCallbacks;
+        private boolean callbacksByTimeLine = true;
         private int batchPutConsumerThreadCount = 1;
         private int multiFieldBatchPutConsumerThreadCount = 1;
         private int batchPutRetryCount = 0;
@@ -269,8 +273,23 @@ public class TSDBConfig extends AbstractConfig {
             return this;
         }
 
+        public Builder listenBatchPuts(Map<Integer, AbstractBatchPutCallback<?>> cbs) {
+            this.batchPutCallbacks = cbs;
+            return this;
+        }
+
         public Builder listenMultiFieldBatchPut(AbstractMultiFieldBatchPutCallback<?> cb) {
             this.multiFieldBatchPutCallback = cb;
+            return this;
+        }
+
+        public Builder listenMultiFieldBatchPuts(Map<Integer, AbstractMultiFieldBatchPutCallback<?>> cbs) {
+            this.multiFieldBatchPutCallbacks = cbs;
+            return this;
+        }
+
+        public Builder callbacksByTimeLine(boolean callbacksByTimeLine) {
+            this.callbacksByTimeLine = callbacksByTimeLine;
             return this;
         }
 
@@ -301,7 +320,10 @@ public class TSDBConfig extends AbstractConfig {
             config.host = this.host;
             config.port = this.port;
             config.batchPutCallback = this.batchPutCallback;
+            config.batchPutCallbacks = this.batchPutCallbacks;
             config.multiFieldBatchPutCallback = this.multiFieldBatchPutCallback;
+            config.multiFieldBatchPutCallbacks = this.multiFieldBatchPutCallbacks;
+            config.callbacksByTimeLine = this.callbacksByTimeLine;
             config.batchPutSize = this.batchPutSize;
             config.batchPutTimeLimit = this.batchPutTimeLimit;
             config.batchPutBufferSize = this.batchPutBufferSize;

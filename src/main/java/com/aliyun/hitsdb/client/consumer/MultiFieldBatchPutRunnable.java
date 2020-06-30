@@ -13,8 +13,9 @@ import com.aliyun.hitsdb.client.http.HttpAddressManager;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
-import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
+import com.aliyun.hitsdb.client.value.request.AbstractPoint;
+import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -43,6 +45,19 @@ public class MultiFieldBatchPutRunnable implements Runnable {
      * 批量提交回调
      */
     private final AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
+
+    /**
+     * 多值异步批量写回调接口，可以针对不同时间线指定不同的回调
+     * 其中 Key 为时间线的 HashCode，可以通过
+     * {@link com.aliyun.hitsdb.client.value.request.AbstractPoint#hashCode4Callback} 计算获得
+     */
+    private final Map<Integer, AbstractMultiFieldBatchPutCallback<?>> multiFieldBatchPutCallbacks;
+
+    /**
+     * 判断 {@link #multiFieldBatchPutCallbacks} 的 HashCode 计算是否基于 TimeLine
+     * 默认为 true 表示基于 metric + tags 计算而来，反之为 false 表示只通过 metric 计算而来
+     */
+    private final boolean callbacksByTimeLine;
 
     /**
      * 消费者队列控制器。
@@ -79,6 +94,8 @@ public class MultiFieldBatchPutRunnable implements Runnable {
         this.semaphoreManager = tsdbHttpClient.getSemaphoreManager();
         this.httpAddressManager = tsdbHttpClient.getHttpAddressManager();
         this.multiFieldBatchPutCallback = config.getMultiFieldBatchPutCallback();
+        this.multiFieldBatchPutCallbacks = config.getMultiFieldBatchPutCallbacks();
+        this.callbacksByTimeLine = config.isCallbacksByTimeLine();
         this.batchSize = config.getBatchPutSize();
         this.batchPutTimeLimit = config.getBatchPutTimeLimit();
         this.config = config;
@@ -89,16 +106,6 @@ public class MultiFieldBatchPutRunnable implements Runnable {
 
     @Override
     public void run() {
-        Map<String, String> paramsMap = new HashMap<String, String>();
-        if (this.multiFieldBatchPutCallback != null) {
-            if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
-            } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
-                paramsMap.put("summary", "true");
-            } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
-                paramsMap.put("details", "true");
-            }
-        }
-
         MultiFieldPoint waitPoint = null;
         boolean readyClose = false;
         int waitTimeLimit = batchPutTimeLimit / 3;
@@ -154,7 +161,7 @@ public class MultiFieldBatchPutRunnable implements Runnable {
             String strJson = serialize(pointList);
 
             // 发送
-            sendHttpRequest(pointList, strJson, paramsMap);
+            sendHttpRequest(pointList, strJson);
         }
 
         if (readyClose) {
@@ -177,23 +184,56 @@ public class MultiFieldBatchPutRunnable implements Runnable {
         return address;
     }
 
-
-    private void sendHttpRequest(List<MultiFieldPoint> pointList, String strJson, Map<String, String> paramsMap) {
+    private void sendHttpRequest(List<MultiFieldPoint> pointList, String strJson) {
         String address = getAddressAndSemaphoreAcquire();
-        if (this.multiFieldBatchPutCallback != null) {
+        if (this.multiFieldBatchPutCallbacks != null && this.multiFieldBatchPutCallbacks.size() > 0) {
+            final Map<Integer, List<MultiFieldPoint>> pointListByHash = new HashMap<Integer, List<MultiFieldPoint>>();
+            for (MultiFieldPoint point : pointList) {
+                int hash;
+                if (callbacksByTimeLine) {
+                    hash = point.hashCode4Callback();
+                } else {
+                    hash = AbstractPoint.hashCode4Callback(point.getMetric());
+                }
+                List<MultiFieldPoint> points;
+                if (pointListByHash.containsKey(hash)) {
+                    points = pointListByHash.get(hash);
+                } else {
+                    points = new LinkedList<MultiFieldPoint>();
+                }
+                points.add(point);
+                pointListByHash.put(hash, points);
+            }
+            for (Map.Entry<Integer, List<MultiFieldPoint>> entry : pointListByHash.entrySet()) {
+                final Integer hash = entry.getKey();
+                final List<MultiFieldPoint> points = entry.getValue();
+                final AbstractMultiFieldBatchPutCallback<?> callback = this.multiFieldBatchPutCallbacks.get(hash);
+                sendHttpRequestWithCallback(points, callback, strJson, address);
+            }
+        } else {
+            sendHttpRequestWithCallback(pointList, this.multiFieldBatchPutCallback, strJson, address);
+        }
+    }
+
+    private void sendHttpRequestWithCallback(List<MultiFieldPoint> pointList,
+                                             AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback,
+                                             String strJson,
+                                             String address) {
+        if (multiFieldBatchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
                     .createMultiFieldBatchPutDataCallback(
                             address,
-                            this.multiFieldBatchPutCallback,
+                            multiFieldBatchPutCallback,
                             pointList,
                             config
                     );
 
             try {
+                final Map<String, String> paramsMap = getParamsMap(multiFieldBatchPutCallback);
                 tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, paramsMap, postHttpCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
-                this.multiFieldBatchPutCallback.failed(address, pointList, ex);
+                multiFieldBatchPutCallback.failed(address, pointList, ex);
             }
         } else {
             FutureCallback<HttpResponse> noLogicBatchPutHttpFutureCallback = this.httpResponseCallbackFactory
@@ -210,6 +250,19 @@ public class MultiFieldBatchPutRunnable implements Runnable {
                 noLogicBatchPutHttpFutureCallback.failed(ex);
             }
         }
+    }
+
+    private Map<String, String> getParamsMap(AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback) {
+        Map<String, String> paramsMap = new HashMap<String, String>();
+        if (multiFieldBatchPutCallback != null) {
+            if (this.multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
+            } else if (this.multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
+                paramsMap.put("summary", "true");
+            } else if (this.multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
+                paramsMap.put("details", "true");
+            }
+        }
+        return paramsMap;
     }
 
     private String serialize(List<MultiFieldPoint> pointList) {
