@@ -76,6 +76,10 @@ public interface Config {
 
     int getHttpConnectTimeout();
 
+    int getHttpSocketTimeout();
+
+    int getHttpConnectionRequestTimeout();
+
     int getIoThreadCount();
 
     boolean isPutRequestLimitSwitch();

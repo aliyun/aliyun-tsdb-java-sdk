@@ -59,6 +59,8 @@ public class TSDBConfig extends AbstractConfig {
         private boolean httpCompress = false;
         private int httpConnectionPool = 64; // 每个Host分配的连接数
         private int httpConnectTimeout = 90; // 单位：秒
+        private int httpSocketTimeout = 90; // 单位：秒
+        private int httpConnectionRequestTimeout = 90; // 单位：秒
         private int httpConnectionLiveTime = 0; // 单位：秒
         private int httpKeepaliveTime = -1; // 0 表示短连接。-1表示长连接。单位：秒。
 
@@ -263,6 +265,16 @@ public class TSDBConfig extends AbstractConfig {
             return this;
         }
 
+        public Builder httpSocketTimeout(int httpSocketTimeout) {
+            this.httpSocketTimeout = httpSocketTimeout;
+            return this;
+        }
+
+        public Builder httpConnectionRequestTimeout(int httpConnectionRequestTimeout) {
+            this.httpConnectionRequestTimeout = httpConnectionRequestTimeout;
+            return this;
+        }
+
         public Builder ioThreadCount(int ioThreadCount) {
             this.ioThreadCount = ioThreadCount;
             return this;
@@ -331,6 +343,8 @@ public class TSDBConfig extends AbstractConfig {
             config.batchPutRetryCount = this.batchPutRetryCount;
             config.httpConnectionPool = this.httpConnectionPool;
             config.httpConnectTimeout = this.httpConnectTimeout;
+            config.httpSocketTimeout = this.httpSocketTimeout;
+            config.httpConnectionRequestTimeout = this.httpConnectionRequestTimeout;
             config.putRequestLimitSwitch = this.putRequestLimitSwitch;
             config.putRequestLimit = this.putRequestLimit;
             config.batchPutConsumerThreadCount = this.batchPutConsumerThreadCount;

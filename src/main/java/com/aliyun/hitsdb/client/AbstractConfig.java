@@ -114,6 +114,17 @@ public abstract class AbstractConfig implements Config {
      * HTTP连接超时时间
      */
     protected int httpConnectTimeout;
+
+    /**
+     * Socket 超时时间
+     */
+    protected int httpSocketTimeout;
+
+    /**
+     * 获取 HTTP 连接超时时间
+     */
+    protected int httpConnectionRequestTimeout;
+
     /**
      * HTTP连接不活动时存活时间
      */
@@ -289,6 +300,16 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
+    public int getHttpSocketTimeout() {
+        return httpSocketTimeout;
+    }
+
+    @Override
+    public int getHttpConnectionRequestTimeout() {
+        return httpConnectionRequestTimeout;
+    }
+
+    @Override
     public int getIoThreadCount() {
         return ioThreadCount;
     }
@@ -352,6 +373,8 @@ public abstract class AbstractConfig implements Config {
         config.batchPutRetryCount = this.batchPutRetryCount;
         config.httpConnectionPool = this.httpConnectionPool;
         config.httpConnectTimeout = this.httpConnectTimeout;
+        config.httpSocketTimeout = this.httpSocketTimeout;
+        config.httpConnectionRequestTimeout = this.httpConnectionRequestTimeout;
         config.putRequestLimitSwitch = this.putRequestLimitSwitch;
         config.putRequestLimit = this.putRequestLimit;
         config.batchPutConsumerThreadCount = this.batchPutConsumerThreadCount;
