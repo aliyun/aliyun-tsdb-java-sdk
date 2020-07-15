@@ -537,16 +537,8 @@ public class TSDBClient implements TSDB {
         if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
             return Long.class;
         } else if (value instanceof Float) {
-            if (((Float) value) % 1 == 0) {
-                dps.put(ts, ((Float) value).longValue());
-                return Long.class;
-            }
             return Double.class;
         } else if (value instanceof Double) {
-            if (((Double) value) % 1 == 0) {
-                dps.put(ts, ((Double) value).longValue());
-                return Long.class;
-            }
             return Double.class;
         } else return getOtherClass(value);
     }
