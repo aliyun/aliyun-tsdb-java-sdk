@@ -3,6 +3,7 @@ package com.aliyun.hitsdb.client;
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.http.Host;
+import org.apache.hc.client5.http.HttpRequestRetryStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -163,6 +164,8 @@ public abstract class AbstractConfig implements Config {
     protected String basicPwd;
 
     protected byte[] certContent;
+
+    protected HttpRequestRetryStrategy retryStrategy;
 
     @Override
     public boolean isSslEnable() {
@@ -359,6 +362,16 @@ public abstract class AbstractConfig implements Config {
         return this.multiFieldBatchPutBufferSize;
     }
 
+    @Override
+    public HttpRequestRetryStrategy getRetryStrategy() {
+        return retryStrategy;
+    }
+
+    @Override
+    public void setRetryStrategy(HttpRequestRetryStrategy retryStrategy) {
+        this.retryStrategy = retryStrategy;
+    }
+
     protected void copy(AbstractConfig config, String host, int port) {
         config.host = host;
         config.port = port;
@@ -389,5 +402,6 @@ public abstract class AbstractConfig implements Config {
         if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
             config.putRequestLimit = this.httpConnectionPool;
         }
+        config.retryStrategy = this.retryStrategy;
     }
 }

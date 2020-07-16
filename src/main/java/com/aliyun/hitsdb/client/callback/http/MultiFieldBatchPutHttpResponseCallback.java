@@ -16,8 +16,8 @@ import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
+import org.apache.hc.core5.concurrent.FutureCallback;
+import org.apache.hc.core5.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
     @Override
     public void completed(HttpResponse httpResponse) {
         // 处理响应
-        if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
+        if (httpResponse.getCode() == org.apache.hc.core5.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
             this.hitsdbHttpClient.setSslEnable(true);
             errorRetry();
             return;

@@ -29,7 +29,7 @@ public class TestAsyncPutWithCallbacks {
     private TSDB tsdb;
 
     @Test
-    public void testAsyncPutWithCallbacksByTimeline() {
+    public void testAsyncPutWithCallbacksByTimeline() throws InterruptedException {
 
         final BatchPutCallback cb1 = new BatchPutCallback() {
 
@@ -130,10 +130,11 @@ public class TestAsyncPutWithCallbacks {
             System.out.println("put3:" + i);
             tsdb.put(point);
         }
+        Thread.sleep(2000);
     }
 
     @Test
-    public void testAsyncPutWithCallbacksByMetric() {
+    public void testAsyncPutWithCallbacksByMetric() throws InterruptedException {
 
         final BatchPutCallback cb1 = new BatchPutCallback() {
 
@@ -228,10 +229,11 @@ public class TestAsyncPutWithCallbacks {
             System.out.println("put3:" + i);
             tsdb.put(point);
         }
+        Thread.sleep(2000);
     }
 
     @Test
-    public void testAsyncMultiPutWithCallbacksByTimeline() {
+    public void testAsyncMultiPutWithCallbacksByTimeline() throws InterruptedException {
 
         final MultiFieldBatchPutCallback cb1 = new MultiFieldBatchPutCallback() {
 
@@ -332,10 +334,11 @@ public class TestAsyncPutWithCallbacks {
             System.out.println("put3:" + i);
             tsdb.multiFieldPut(point);
         }
+        Thread.sleep(2000);
     }
 
     @Test
-    public void testAsyncMultiPutWithCallbacksByMetric() {
+    public void testAsyncMultiPutWithCallbacksByMetric() throws InterruptedException {
 
         final MultiFieldBatchPutCallback cb1 = new MultiFieldBatchPutCallback() {
 
@@ -430,12 +433,13 @@ public class TestAsyncPutWithCallbacks {
             System.out.println("put3:" + i);
             tsdb.multiFieldPut(point);
         }
+        Thread.sleep(2000);
     }
 
     @After
     public void teardown() throws Exception {
         if (tsdb != null) {
-            tsdb.close();
+            tsdb.close(true);
         }
     }
 }

@@ -27,8 +27,8 @@ import com.aliyun.hitsdb.client.value.type.Suggest;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 import com.aliyun.hitsdb.client.value.type.UserPrivilege;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.concurrent.FutureCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

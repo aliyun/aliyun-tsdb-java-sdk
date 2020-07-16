@@ -4,19 +4,17 @@ import java.net.SocketTimeoutException;
 import java.util.List;
 
 import com.aliyun.hitsdb.client.Config;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.concurrent.FutureCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutDetailsCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutSummaryCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientConnectionRefusedException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientException;
 import com.aliyun.hitsdb.client.exception.http.HttpClientSocketTimeoutException;
 import com.aliyun.hitsdb.client.exception.http.HttpServerErrorException;
 import com.aliyun.hitsdb.client.exception.http.HttpServerNotSupportException;
@@ -57,7 +55,7 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
     @Override
     public void completed(HttpResponse httpResponse) {
         // 处理响应
-        if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
+        if (httpResponse.getCode() == org.apache.hc.core5.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
             this.hitsdbHttpClient.setSslEnable(true);
             errorRetry();
             return;

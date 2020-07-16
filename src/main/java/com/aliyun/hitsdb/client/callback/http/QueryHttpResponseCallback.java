@@ -2,8 +2,8 @@ package com.aliyun.hitsdb.client.callback.http;
 
 import java.util.List;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.concurrent.FutureCallback;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.callback.QueryCallback;

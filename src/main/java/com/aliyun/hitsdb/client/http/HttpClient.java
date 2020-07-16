@@ -1,11 +1,51 @@
 package com.aliyun.hitsdb.client.http;
 
+import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.HiTSDBConfig;
+import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
+import com.aliyun.hitsdb.client.exception.http.HttpClientException;
+import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
+import org.apache.hc.client5.http.async.methods.SimpleHttpRequests;
+import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.core5.concurrent.FutureCallback;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.EntityDetails;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.HttpHeaders;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.Method;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
+import org.apache.hc.core5.http.nio.AsyncEntityProducer;
+import org.apache.hc.core5.http.nio.AsyncRequestProducer;
+import org.apache.hc.core5.http.nio.AsyncResponseConsumer;
+import org.apache.hc.core5.http.nio.CapacityChannel;
+import org.apache.hc.core5.http.nio.entity.AsyncEntityProducers;
+import org.apache.hc.core5.http.nio.support.BasicRequestProducer;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.net.URIBuilder;
+import org.apache.hc.core5.reactor.IOReactorStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -13,32 +53,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
-
-import com.aliyun.hitsdb.client.Config;
-import com.aliyun.hitsdb.client.TSDBConfig;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.http.Header;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.concurrent.FutureCallback;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.aliyun.hitsdb.client.HiTSDBConfig;
-import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
-import com.aliyun.hitsdb.client.exception.http.HttpClientException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
-import com.aliyun.hitsdb.client.http.request.HttpDeleteWithEntity;
-import com.aliyun.hitsdb.client.http.request.HttpGetWithEntity;
-import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 
 public class HttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClient.class);
@@ -133,7 +147,7 @@ public class HttpClient {
         if (!force) {
             // 优雅关闭
             while (true) {
-                if (httpclient.isRunning()) { // 正在运行则等待
+                if (IOReactorStatus.ACTIVE.equals(httpclient.getStatus())) { // 正在运行则等待
                     int i = this.unCompletedTaskNum.get();
                     if (i == 0) {
                         break;
@@ -161,24 +175,22 @@ public class HttpClient {
     }
 
     public HttpResponse delete(String apiPath, String json) throws HttpClientException {
-        final HttpDeleteWithEntity request = new HttpDeleteWithEntity(getUrl(apiPath));
-        return execute(request, json);
+        return execute(SimpleHttpRequests.delete(getUrl(apiPath)), json);
     }
 
     public void delete(String apiPath, String json, FutureCallback<HttpResponse> httpCallback) {
-        final HttpDeleteWithEntity request = new HttpDeleteWithEntity(getUrl(apiPath));
-        executeCallback(request, json, httpCallback);
+        executeCallback(new BasicClassicHttpRequest(Method.DELETE.toString(), getUrl(apiPath)), json, httpCallback);
     }
 
-    private HttpResponse execute(HttpEntityEnclosingRequestBase request, String json) throws HttpClientException {
+    private HttpResponse execute(SimpleHttpRequest request, String json) throws HttpClientException {
         if (json != null && json.length() > 0) {
             request.addHeader("Content-Type", "application/json");
-            if (!this.httpCompress) {
-                request.setEntity(generateStringEntity(json));
-            } else {
-                request.addHeader("Accept-Encoding", "gzip, deflate");
-                request.setEntity(generateGZIPCompressEntity(json));
-            }
+//            if (!this.httpCompress) {
+                request.setBody(json, ContentType.APPLICATION_JSON);
+//            } else {
+//                request.addHeader("Accept-Encoding", "gzip, deflate");
+//                request.setEntity(generateGZIPCompressEntity(json));
+//            }
         }
 
         if (authType != null && !authType.trim().equals("")) {
@@ -186,16 +198,16 @@ public class HttpClient {
         }
 
         unCompletedTaskNum.incrementAndGet();
-        Future<HttpResponse> future = httpclient.execute(request, null);
+        Future<SimpleHttpResponse> future = httpclient.execute(request, null);
         try {
             HttpResponse httpResponse = future.get();
             int retry = 0;
-            while (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_TEMPORARY_REDIRECT
-                    || httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-                if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_TEMPORARY_REDIRECT) {
+            while (httpResponse.getCode() == HttpStatus.SC_TEMPORARY_REDIRECT
+                    || httpResponse.getCode() == HttpStatus.SC_UNAUTHORIZED) {
+                if (httpResponse.getCode() == HttpStatus.SC_TEMPORARY_REDIRECT) {
                     sslEnable = true;
                     httpResponse = redirectResponse(httpResponse, request, httpclient);
-                } else if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+                } else if (httpResponse.getCode() == HttpStatus.SC_UNAUTHORIZED) {
                     LOGGER.info("need authentication.....");
                     setAuthHeader(request);
                     httpResponse = authResponse(request, httpclient);
@@ -218,7 +230,7 @@ public class HttpClient {
     }
 
     public static HttpResponse redirectResponse(HttpResponse httpResponse,
-                                                HttpEntityEnclosingRequestBase request,
+                                                SimpleHttpRequest request,
                                                 CloseableHttpAsyncClient httpclient)
             throws ExecutionException, InterruptedException {
         HttpResponse result = null;
@@ -227,8 +239,8 @@ public class HttpClient {
         for (Header header : headers) {
             if (header.getName().equalsIgnoreCase(HttpHeaders.LOCATION)) {
                 String newUrl = header.getValue();
-                request.setURI(URI.create(newUrl));
-                Future<HttpResponse> future = httpclient.execute(request, null);
+                request.setUri(URI.create(newUrl));
+                Future<SimpleHttpResponse> future = httpclient.execute(request, null);
                 result = future.get();
                 break;
             }
@@ -273,7 +285,7 @@ public class HttpClient {
         }
     }
 
-    public void setAuthHeader(HttpEntityEnclosingRequestBase request) {
+    public void setAuthHeader(HttpRequest request) {
         checkAuthInfo();
         if (Config.BASICTYPE.equalsIgnoreCase(authType)) {
             String auth = (instanceId == null || instanceId.trim().equals("")) ?
@@ -294,14 +306,14 @@ public class HttpClient {
         }
     }
 
-    public static HttpResponse authResponse(HttpEntityEnclosingRequestBase request,
+    public static HttpResponse authResponse(SimpleHttpRequest request,
                                             CloseableHttpAsyncClient httpclient)
             throws ExecutionException, InterruptedException {
-        Future<HttpResponse> future = httpclient.execute(request, null);
+        Future<SimpleHttpResponse> future = httpclient.execute(request, null);
         return future.get();
     }
 
-    private void executeCallback(HttpEntityEnclosingRequestBase request, String json, FutureCallback<HttpResponse> httpCallback) {
+    private void executeCallback(ClassicHttpRequest request, String json, final FutureCallback<HttpResponse> httpCallback) {
         if (json != null && json.length() > 0) {
             request.addHeader("Content-Type", "application/json");
             if (!this.httpCompress) {
@@ -321,13 +333,48 @@ public class HttpClient {
             unCompletedTaskNum.incrementAndGet();
             responseCallback = this.httpResponseCallbackFactory.wrapUpBaseHttpFutureCallback(httpCallback);
         }
+        AsyncEntityProducer asyncEntityProducer = null;
+        if (json != null && json.length() > 0) {
+            asyncEntityProducer = AsyncEntityProducers.create(json, ContentType.APPLICATION_JSON);
+        }
+        AsyncRequestProducer producer = new BasicRequestProducer(request, asyncEntityProducer);
+        AsyncResponseConsumer<HttpResponse> consumer = new AsyncResponseConsumer<HttpResponse>() {
+            @Override
+            public void releaseResources() {
+            }
 
-        httpclient.execute(request, responseCallback);
+            @Override
+            public void updateCapacity(CapacityChannel capacityChannel) {
+            }
+
+            @Override
+            public void consume(ByteBuffer src) {
+            }
+
+            @Override
+            public void streamEnd(List<? extends Header> trailers) {
+            }
+
+            @Override
+            public void consumeResponse(HttpResponse response, EntityDetails entityDetails, HttpContext context, FutureCallback<HttpResponse> resultCallback) throws HttpException, IOException {
+                if (httpCallback != null) {
+                    httpCallback.completed(response);
+                }
+            }
+
+            @Override
+            public void informationResponse(HttpResponse response, HttpContext context) {
+            }
+
+            @Override
+            public void failed(Exception cause) {
+            }
+        };
+        httpclient.execute(producer, consumer, responseCallback);
     }
 
-    private StringEntity generateStringEntity(String json) {
-        StringEntity stringEntity = new StringEntity(json, Charset.forName("UTF-8"));
-        return stringEntity;
+    private HttpEntity generateStringEntity(String json) {
+        return new StringEntity(json, Charset.forName("UTF-8"));
     }
 
     private ByteArrayEntity generateGZIPCompressEntity(String json) {
@@ -348,21 +395,15 @@ public class HttpClient {
             }
         }
 
-        ByteArrayEntity byteEntity = new ByteArrayEntity(baos.toByteArray());
-        byteEntity.setContentType("application/json");
-        byteEntity.setContentEncoding("gzip");
-
-        return byteEntity;
+        return new ByteArrayEntity(baos.toByteArray(), ContentType.APPLICATION_JSON, "gzip");
     }
 
     public HttpResponse get(String apiPath, String json) throws HttpClientException {
-        final HttpGetWithEntity request = new HttpGetWithEntity(getUrl(apiPath));
-        return execute(request, json);
+        return execute(SimpleHttpRequests.get(getUrl(apiPath)), json);
     }
 
     public void get(String apiPath, String json, FutureCallback<HttpResponse> httpCallback) {
-        final HttpGetWithEntity request = new HttpGetWithEntity(getUrl(apiPath));
-        executeCallback(request, json, httpCallback);
+        executeCallback(new BasicClassicHttpRequest(Method.GET.toString(), getUrl(apiPath)), json, httpCallback);
     }
 
     public HttpResponseCallbackFactory getHttpResponseCallbackFactory() {
@@ -392,8 +433,7 @@ public class HttpClient {
     public void post(String apiPath, String json, Map<String, String> params, FutureCallback<HttpResponse> httpCallback) {
         String httpFullAPI = getUrl(apiPath);
         URI uri = createURI(httpFullAPI, params);
-        final HttpPost request = new HttpPost(uri);
-        executeCallback(request, json, httpCallback);
+        executeCallback(new BasicClassicHttpRequest(Method.POST.toString(), uri), json, httpCallback);
     }
 
     public void postToAddress(String address, String apiPath, String json, Map<String, String> params, FutureCallback<HttpResponse> httpCallback) {
@@ -404,15 +444,13 @@ public class HttpClient {
             httpFullAPI = "http://" + address + apiPath;
         }
         URI uri = createURI(httpFullAPI, params);
-        final HttpPost request = new HttpPost(uri);
-        executeCallback(request, json, httpCallback);
+        executeCallback(new BasicClassicHttpRequest(Method.POST.toString(), uri), json, httpCallback);
     }
 
     public HttpResponse post(String apiPath, String json, Map<String, String> params) throws HttpClientException {
         String httpFullAPI = getUrl(apiPath);
         URI uri = createURI(httpFullAPI, params);
-        final HttpPost request = new HttpPost(uri);
-        return execute(request, json);
+        return execute(SimpleHttpRequests.post(uri), json);
     }
 
     private URI createURI(String httpFullAPI, Map<String, String> params) {
@@ -439,13 +477,11 @@ public class HttpClient {
     }
 
     public HttpResponse put(String apiPath, String json) throws HttpClientException {
-        final HttpPut request = new HttpPut(getUrl(apiPath));
-        return execute(request, json);
+        return execute(SimpleHttpRequests.put(getUrl(apiPath)), json);
     }
 
     public void put(String apiPath, String json, FutureCallback<HttpResponse> httpCallback) {
-        final HttpPost request = new HttpPost(getUrl(apiPath));
-        executeCallback(request, json, httpCallback);
+        executeCallback(new BasicClassicHttpRequest(Method.PUT.toString(), getUrl(apiPath)), json, httpCallback);
     }
 
     public void start() {

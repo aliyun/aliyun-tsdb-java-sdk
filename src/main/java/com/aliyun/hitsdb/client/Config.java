@@ -4,6 +4,7 @@ import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
+import org.apache.hc.client5.http.HttpRequestRetryStrategy;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -95,4 +96,8 @@ public interface Config {
     int getMaxTPS();
 
     Config copy(String host, int port);
+
+    HttpRequestRetryStrategy getRetryStrategy();
+
+    void setRetryStrategy(HttpRequestRetryStrategy retryStrategy);
 }

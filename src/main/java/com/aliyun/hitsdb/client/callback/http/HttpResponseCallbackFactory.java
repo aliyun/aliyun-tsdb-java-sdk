@@ -7,8 +7,8 @@ import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
+import org.apache.hc.core5.concurrent.FutureCallback;
+import org.apache.hc.core5.http.HttpResponse;
 
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.QueryCallback;

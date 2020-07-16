@@ -4,6 +4,8 @@ import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
+import org.apache.hc.client5.http.HttpRequestRetryStrategy;
+import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -80,6 +82,8 @@ public class TSDBConfig extends AbstractConfig {
         private List<Host> addresses = new ArrayList();
 
         private Set<String> uniqueHost = new HashSet();
+
+        private HttpRequestRetryStrategy retryStrategy;
 
         public Builder(String host) {
             this.host = host;
@@ -310,6 +314,16 @@ public class TSDBConfig extends AbstractConfig {
             return this;
         }
 
+        public Builder retryStrategy(HttpRequestRetryStrategy retryStrategy) {
+            this.retryStrategy = retryStrategy;
+            return this;
+        }
+
+        public Builder defaultRetryStrategy() {
+            this.retryStrategy = new DefaultHttpRequestRetryStrategy();
+            return this;
+        }
+
         public  TSDBConfig config() {
             if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
                 throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
@@ -367,6 +381,7 @@ public class TSDBConfig extends AbstractConfig {
             config.tsdbUser = this.tsdbUser;
             config.basicPwd = this.basicPwd;
             config.certContent = this.certContent;
+            config.retryStrategy = this.retryStrategy;
 
             return config;
         }

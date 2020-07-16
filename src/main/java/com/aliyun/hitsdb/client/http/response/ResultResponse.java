@@ -1,17 +1,6 @@
 package com.aliyun.hitsdb.client.http.response;
 
-import java.io.IOException;
-
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.ParseException;
-import org.apache.http.StatusLine;
-import org.apache.http.client.entity.GzipDecompressingEntity;
-import org.apache.http.util.EntityUtils;
-
-import com.aliyun.hitsdb.client.exception.http.HttpClientException;
-import com.aliyun.hitsdb.client.http.HttpClient;
+import org.apache.hc.core5.http.HttpResponse;
 
 public class ResultResponse {
     private int statusCode;
@@ -64,26 +53,6 @@ public class ResultResponse {
     }
 
     public String getContent() {
-        if (this.content == null) {
-            HttpEntity entity = this.httpResponse.getEntity();
-            try {
-                String content = null;
-                Header[] headers = this.httpResponse.getHeaders("Content-Encoding");
-                if (headers != null && headers.length > 0 && headers[0].getValue().equalsIgnoreCase("gzip")) {
-                    GzipDecompressingEntity gzipEntity = new GzipDecompressingEntity(entity);
-                    content = EntityUtils.toString(gzipEntity, HttpClient.DEFAULT_CHARSET);
-                } else {
-                    content = EntityUtils.toString(entity, HttpClient.DEFAULT_CHARSET);
-                }
-
-                this.content = content;
-            } catch (ParseException e) {
-                throw new HttpClientException(e);
-            } catch (IOException e) {
-                throw new HttpClientException(e);
-            }
-        }
-
         return content;
     }
 
@@ -92,8 +61,7 @@ public class ResultResponse {
     }
 
     public static ResultResponse simplify(HttpResponse httpResponse, boolean compress) {
-        StatusLine statusLine = httpResponse.getStatusLine();
-        int statusCode = statusLine.getStatusCode();
+        int statusCode = httpResponse.getCode();
         ResultResponse resultResponse = new ResultResponse(statusCode);
         resultResponse.httpResponse = httpResponse;
         resultResponse.compress = compress;

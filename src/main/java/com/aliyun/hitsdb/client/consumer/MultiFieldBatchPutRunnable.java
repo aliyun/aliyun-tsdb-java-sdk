@@ -16,8 +16,8 @@ import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 import com.aliyun.hitsdb.client.value.request.AbstractPoint;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
-import org.apache.http.HttpResponse;
-import org.apache.http.concurrent.FutureCallback;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.concurrent.FutureCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

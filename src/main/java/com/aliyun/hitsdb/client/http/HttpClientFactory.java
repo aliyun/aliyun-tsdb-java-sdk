@@ -1,46 +1,33 @@
 package com.aliyun.hitsdb.client.http;
 
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
+import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
+import com.aliyun.hitsdb.client.util.Objects;
+import org.apache.hc.client5.http.ConnectionKeepAliveStrategy;
+import org.apache.hc.client5.http.HttpRequestRetryStrategy;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
+import org.apache.hc.core5.http.ConnectionReuseStrategy;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.protocol.HttpContext;
+import org.apache.hc.core5.reactor.IOReactorConfig;
+import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.core5.util.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLContext;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-import javax.security.auth.x500.X500Principal;
-
-import com.aliyun.hitsdb.client.Config;
-import com.aliyun.hitsdb.client.util.Objects;
-import org.apache.http.ConnectionReuseStrategy;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.ConnectionKeepAliveStrategy;
-import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.impl.nio.client.HttpAsyncClients;
-import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
-import org.apache.http.impl.nio.reactor.IOReactorConfig;
-import org.apache.http.nio.conn.NoopIOSessionStrategy;
-import org.apache.http.nio.conn.SchemeIOSessionStrategy;
-import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
-import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
-import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 
 public class HttpClientFactory {
 
@@ -52,87 +39,12 @@ public class HttpClientFactory {
         Objects.requireNonNull(config);
 
         // 创建 ConnectingIOReactor
-        ConnectingIOReactor ioReactor = initIOReactorConfig(config);
+        IOReactorConfig ioReactor = initIOReactorConfig(config);
 
         // 创建链接管理器
-        PoolingNHttpClientConnectionManager cm;
-        TrustManager[] trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                        // don't check
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] certs, String authType) throws CertificateException {
-
-                        if (certs == null) {
-                            throw new IllegalArgumentException("checkServerTrusted:x509Certificate array isnull");
-                        }
-
-                        if (!(certs.length > 0)) {
-                            throw new IllegalArgumentException("checkServerTrusted: X509Certificate is empty");
-                        }
-
-                        if (!(null != authType && authType.contains("RSA"))) {
-                            throw new CertificateException("checkServerTrusted: AuthType is not RSA");
-                        }
-
-                        for (X509Certificate cert : certs) {
-                            cert.checkValidity();
-                            if (!cert.getSubjectDN().getName().contains(certDNList[0])
-                                    && !cert.getSubjectDN().getName().contains(certDNList[1])) {
-                                throw new IllegalArgumentException("checkServerTrusted: host is invalid");
-                            }
-                        }
-                    }
-                }
-        };
-        HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                try {
-                    String peerHost = session.getPeerHost();
-                    X509Certificate[] peerCertificates = (X509Certificate[]) session
-                            .getPeerCertificates();
-                    for (X509Certificate certificate : peerCertificates) {
-                        X500Principal subjectX500Principal = certificate
-                                .getSubjectX500Principal();
-                        String name = subjectX500Principal.getName();
-                        String[] split = name.split(",");
-                        for (String str : split) {
-                            if (str.startsWith("CN")) {//证书绑定的域名或者ip
-                                if (peerHost.equals(hostname) &&
-                                        (str.contains(certDNList[0]) ||
-                                                str.contains(certDNList[0]))) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                } catch (SSLPeerUnverifiedException e1) {
-                    throw new IllegalArgumentException("host check failed: SSLPeerUnverifiedException");
-                }
-                return false;
-            }
-        };
+        PoolingAsyncClientConnectionManager cm;
         try {
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustAllCerts, null);
-
-            Registry<SchemeIOSessionStrategy> sessionStrategyRegistry =
-                    RegistryBuilder.<SchemeIOSessionStrategy>create()
-                            .register("http", NoopIOSessionStrategy.INSTANCE)
-                            .register("https",
-                                    new SSLIOSessionStrategy(sslContext, null,
-                                            null, hostnameVerifier))
-                            .build();
-            cm = new PoolingNHttpClientConnectionManager(ioReactor, sessionStrategyRegistry);
+            cm = PoolingAsyncClientConnectionManagerBuilder.create().build();
         } catch (Exception e) {
             throw new HttpClientInitException();
         }
@@ -141,7 +53,7 @@ public class HttpClientFactory {
         SemaphoreManager semaphoreManager = createSemaphoreManager(config);
 
         // 创建HttpAsyncClient
-        CloseableHttpAsyncClient httpAsyncClient = createPoolingHttpClient(config, cm);
+        CloseableHttpAsyncClient httpAsyncClient = createPoolingHttpClient(config, ioReactor, cm);
 
         // 启动定时调度
         ScheduledExecutorService connectionGcService = initFixedCycleCloseConnection(cm);
@@ -158,36 +70,29 @@ public class HttpClientFactory {
         int httpConnectTimeout = config.getHttpConnectTimeout();
         if (httpConnectTimeout >= 0) {
             // ConnectTimeout:连接超时.连接建立时间，三次握手完成时间.
-            requestConfigBuilder.setConnectTimeout(httpConnectTimeout * 1000);
+            requestConfigBuilder.setConnectTimeout(Timeout.ofSeconds(httpConnectTimeout));
         }
         int httpSocketTimeout = config.getHttpSocketTimeout();
         if (httpSocketTimeout >= 0) {
             // SocketTimeout:Socket请求超时.数据传输过程中数据包之间间隔的最大时间.
-            requestConfigBuilder.setSocketTimeout(httpSocketTimeout * 1000);
+            requestConfigBuilder.setResponseTimeout(Timeout.ofSeconds(httpSocketTimeout));
         }
         final int httpConnectionRequestTimeout = config.getHttpConnectionRequestTimeout();
         if (httpConnectionRequestTimeout >= 0) {
             // ConnectionRequestTimeout:httpclient使用连接池来管理连接，这个时间就是从连接池获取连接的超时时间，可以想象下数据库连接池
-            requestConfigBuilder.setConnectionRequestTimeout(httpConnectionRequestTimeout * 1000);
+            requestConfigBuilder.setConnectionRequestTimeout(Timeout.ofSeconds(httpConnectionRequestTimeout));
         }
         return requestConfigBuilder.build();
     }
 
-    private static ConnectingIOReactor initIOReactorConfig(Config config) {
+    private static IOReactorConfig initIOReactorConfig(Config config) {
         int ioThreadCount = config.getIoThreadCount();
-        IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(ioThreadCount).build();
-        ConnectingIOReactor ioReactor;
-        try {
-            ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
-            return ioReactor;
-        } catch (IOReactorException e) {
-            throw new HttpClientInitException();
-        }
+        return IOReactorConfig.custom().setIoThreadCount(ioThreadCount).build();
     }
 
     private static final AtomicInteger NUM = new AtomicInteger();
 
-    private static ScheduledExecutorService initFixedCycleCloseConnection(final PoolingNHttpClientConnectionManager cm) {
+    private static ScheduledExecutorService initFixedCycleCloseConnection(final PoolingAsyncClientConnectionManager cm) {
         // 定时关闭所有空闲链接
         ScheduledExecutorService connectionGcService = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactory() {
@@ -209,7 +114,7 @@ public class HttpClientFactory {
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Close idle connections, fixed cycle operation");
                     }
-                    cm.closeIdleConnections(3, TimeUnit.MINUTES);
+                    cm.closeIdle(TimeValue.ofMinutes(3));
                 } catch (Exception ex) {
                     LOGGER.error("", ex);
                 }
@@ -234,7 +139,7 @@ public class HttpClientFactory {
     }
 
     private static CloseableHttpAsyncClient createPoolingHttpClient(
-            Config config, PoolingNHttpClientConnectionManager cm) throws HttpClientInitException {
+            Config config, IOReactorConfig ioReactor, PoolingAsyncClientConnectionManager cm) throws HttpClientInitException {
         int httpConnectionPool = config.getHttpConnectionPool();
         int httpConnectionLiveTime = config.getHttpConnectionLiveTime();
         int httpKeepaliveTime = config.getHttpKeepaliveTime();
@@ -244,10 +149,15 @@ public class HttpClientFactory {
         if (httpConnectionPool > 0) {
             cm.setMaxTotal(httpConnectionPool);
             cm.setDefaultMaxPerRoute(httpConnectionPool);
-            cm.closeExpiredConnections();
+            cm.closeExpired();
         }
 
         HttpAsyncClientBuilder httpAsyncClientBuilder = HttpAsyncClients.custom();
+        httpAsyncClientBuilder.setIOReactorConfig(ioReactor);
+        HttpRequestRetryStrategy retryStrategy = config.getRetryStrategy();
+        if (retryStrategy != null) {
+            httpAsyncClientBuilder.setRetryStrategy(retryStrategy);
+        }
 
         // 设置连接管理器
         httpAsyncClientBuilder.setConnectionManager(cm);
@@ -266,14 +176,7 @@ public class HttpClientFactory {
             httpAsyncClientBuilder.setConnectionReuseStrategy(hiTSDBConnectionReuseStrategy);
         }
 
-        // 设置连接自动关闭
-        if (httpConnectionLiveTime > 0) {
-            TSDBHttpAsyncCallbackExecutor httpAsyncCallbackExecutor = new TSDBHttpAsyncCallbackExecutor(httpConnectionLiveTime);
-            httpAsyncClientBuilder.setEventHandler(httpAsyncCallbackExecutor);
-        }
-
-        CloseableHttpAsyncClient client = httpAsyncClientBuilder.build();
-        return client;
+        return httpAsyncClientBuilder.build();
     }
 }
 
@@ -287,8 +190,8 @@ class HiTSDBConnectionKeepAliveStrategy implements ConnectionKeepAliveStrategy {
     }
 
     @Override
-    public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-        return 1000 * time;
+    public TimeValue getKeepAliveDuration(HttpResponse response, HttpContext context) {
+        return TimeValue.of(time, TimeUnit.SECONDS);
     }
 
 }
@@ -296,8 +199,7 @@ class HiTSDBConnectionKeepAliveStrategy implements ConnectionKeepAliveStrategy {
 class HiTSDBConnectionReuseStrategy implements ConnectionReuseStrategy {
 
     @Override
-    public boolean keepAlive(HttpResponse response, HttpContext context) {
+    public boolean keepAlive(HttpRequest request, HttpResponse response, HttpContext context) {
         return false;
     }
-
 }
