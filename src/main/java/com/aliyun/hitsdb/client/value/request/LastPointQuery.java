@@ -23,6 +23,8 @@ public class LastPointQuery extends JSONValue {
 
         private Boolean tupleFormat;
 
+        private LastLimit limit;
+
         public Builder timestamp(long timestamp) {
             this.timestamp = timestamp;
             return this;
@@ -51,6 +53,11 @@ public class LastPointQuery extends JSONValue {
             return this;
         }
 
+        public Builder limit(LastLimit limit) {
+            this.limit = limit;
+            return this;
+        }
+
         public LastPointQuery build() {
             if (queries == null || queries.isEmpty()) {
                 throw new IllegalArgumentException("the LastPointSubQuery must be set");
@@ -61,6 +68,7 @@ public class LastPointQuery extends JSONValue {
             query.timestamp = timestamp;
             query.setQueries(queries);
             query.tupleFormat = tupleFormat;
+            query.limit = limit;
             return query;
         }
     }
@@ -75,6 +83,8 @@ public class LastPointQuery extends JSONValue {
     private Integer backScan;
 
     private Long timestamp;
+
+    private LastLimit limit;
 
     /**
      * Optional tupleFormat parameter.
@@ -122,5 +132,13 @@ public class LastPointQuery extends JSONValue {
 
     public void setQueries(List<LastPointSubQuery> queries) {
         this.queries = queries;
+    }
+
+    public LastLimit getLimit() {
+        return limit;
+    }
+
+    public void setLimit(LastLimit limit) {
+        this.limit = limit;
     }
 }

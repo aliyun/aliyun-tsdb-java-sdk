@@ -1,5 +1,6 @@
 package com.aliyun.hitsdb.client.value.response;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -11,6 +12,7 @@ public class LastDataValue {
     private Object value;
     private String tsuid;
     private Map<String, String> tags;
+    private LinkedHashMap<Long, Object> dps;
 
     public String getMetric() {
         return metric;
@@ -58,6 +60,14 @@ public class LastDataValue {
 
     public void setTsuid(String tsuid) {
         this.tsuid = tsuid;
+    }
+
+    public LinkedHashMap<Long, Object> getDps() {
+        return dps;
+    }
+
+    public void setDps(LinkedHashMap<Long, Object> dps) {
+        this.dps = dps;
     }
 
     @Override
