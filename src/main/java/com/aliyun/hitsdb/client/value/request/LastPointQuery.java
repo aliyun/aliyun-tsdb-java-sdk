@@ -4,6 +4,7 @@ import com.aliyun.hitsdb.client.value.JSONValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created By jianhong.hjh
@@ -25,6 +26,8 @@ public class LastPointQuery extends JSONValue {
 
         private LastLimit limit;
 
+        private Map<String, Map<String, Integer>> hint;
+
         public Builder timestamp(long timestamp) {
             this.timestamp = timestamp;
             return this;
@@ -37,6 +40,11 @@ public class LastPointQuery extends JSONValue {
 
         public Builder msResolution(boolean msResolution) {
             this.msResolution = msResolution;
+            return this;
+        }
+
+        public Builder hint(Map<String, Map<String, Integer>> hint) {
+            this.hint = hint;
             return this;
         }
 
@@ -69,6 +77,7 @@ public class LastPointQuery extends JSONValue {
             query.setQueries(queries);
             query.tupleFormat = tupleFormat;
             query.limit = limit;
+            query.hint = hint;
             return query;
         }
     }
@@ -93,6 +102,8 @@ public class LastPointQuery extends JSONValue {
     private Boolean tupleFormat;
 
     private List<LastPointSubQuery> queries;
+
+    private Map<String, Map<String, Integer>> hint;
 
     public Boolean isMsResolution() {
         return msResolution;
@@ -140,5 +151,13 @@ public class LastPointQuery extends JSONValue {
 
     public void setLimit(LastLimit limit) {
         this.limit = limit;
+    }
+
+    public Map<String, Map<String, Integer>> getHint() {
+        return hint;
+    }
+
+    public void setHint(Map<String, Map<String, Integer>> hint) {
+        this.hint = hint;
     }
 }

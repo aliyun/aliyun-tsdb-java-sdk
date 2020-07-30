@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,9 @@ public class TestHiTSDBClientQuery {
                 .sub(SubQuery.metric("test-test-test")
                         .aggregator(Aggregator.NONE)
                         .tag("K1","V1")
+                        .hint(Collections.<String, Map<String, Integer>>emptyMap())
                         .build())
+                .hint(Collections.<String, Map<String, Integer>>emptyMap())
                 .build();
             List<QueryResult> result = tsdb.query(query);
             assertEquals(1,result.size());

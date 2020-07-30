@@ -17,6 +17,7 @@ public class MultiFieldSubQuery {
     private Integer limit;
     private Integer offset;
     private int index;
+    private Map<String, Map<String, Integer>> hint;
 
     public static class Builder {
         private String metric;
@@ -25,6 +26,7 @@ public class MultiFieldSubQuery {
         private Map<String, String> tags = new HashMap<String, String>();
         private List<Filter> filters = new ArrayList<Filter>();
         private List<MultiFieldSubQueryDetails> fieldsInfo = new ArrayList<MultiFieldSubQueryDetails>();
+        private Map<String, Map<String, Integer>> hint;
 
         public Builder(final String metric) {
             Objects.requireNonNull(metric, "metric name");
@@ -126,6 +128,11 @@ public class MultiFieldSubQuery {
             return this;
         }
 
+        public Builder hint(Map<String, Map<String, Integer>> hint) {
+            this.hint = hint;
+            return this;
+        }
+
         public MultiFieldSubQuery build() {
             MultiFieldSubQuery subQuery = new MultiFieldSubQuery();
             subQuery.metric = this.metric;
@@ -152,6 +159,8 @@ public class MultiFieldSubQuery {
             if (this.offset != null && this.offset > 0) {
                 subQuery.offset = this.offset;
             }
+
+            subQuery.hint = this.hint;
 
             return subQuery;
         }
@@ -201,5 +210,13 @@ public class MultiFieldSubQuery {
 
     public List<MultiFieldSubQueryDetails> getFields() {
         return fields;
+    }
+
+    public Map<String, Map<String, Integer>> getHint() {
+        return hint;
+    }
+
+    public void setHint(Map<String, Map<String, Integer>> hint) {
+        this.hint = hint;
     }
 }

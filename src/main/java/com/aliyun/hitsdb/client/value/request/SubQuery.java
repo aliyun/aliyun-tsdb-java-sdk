@@ -36,6 +36,7 @@ public class SubQuery {
     private String dpValue;
     private String preDpValue;
     private List<Filter> filters;
+    private Map<String, Map<String, Integer>> hint;
 
     public static class Builder {
         private Aggregator aggregatorType;
@@ -54,6 +55,7 @@ public class SubQuery {
         private Boolean explicitTags;
         private Integer realTimeSeconds;
         private List<Filter> filters;
+        private Map<String, Map<String, Integer>> hint;
 
         public Builder(String metric, Aggregator aggregator) {
             Objects.requireNonNull(metric, "metric");
@@ -314,6 +316,11 @@ public class SubQuery {
             return this;
         }
 
+        public Builder hint(Map<String, Map<String, Integer>> hint) {
+            this.hint = hint;
+            return this;
+        }
+
         public SubQuery build() {
             SubQuery subQuery = new SubQuery();
             subQuery.aggregatorType = this.aggregatorType;
@@ -360,7 +367,7 @@ public class SubQuery {
             if (subQuery.tags != null && subQuery.tags.isEmpty()) {
                 subQuery.tags = null;
             }
-
+            subQuery.hint = this.hint;
             return subQuery;
         }
     }
@@ -484,5 +491,13 @@ public class SubQuery {
 
     public DeltaOptions getDeltaOptions() {
         return deltaOptions;
+    }
+
+    public Map<String, Map<String, Integer>> getHint() {
+        return hint;
+    }
+
+    public void setHint(Map<String, Map<String, Integer>> hint) {
+        this.hint = hint;
     }
 }
