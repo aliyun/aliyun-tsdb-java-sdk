@@ -13,9 +13,18 @@ public class MultiFieldSubQueryDetails {
     private Boolean delta;
     private Integer top;
     private String dpValue;
+    /**
+     * a extension of post value filtering which is supported from v2.6.1 by TSDB Server
+     * which can be used to specify the filter condition for one field when querying all fields by specifying *
+     * (dpValue's filter condition will apply to all the fields)
+     */
+    private String where;
     private String preDpValue;
 
     public static class Builder {
+
+        private static final String FieldNameWildCard = "*";
+
         private String field;
         private String alias = null;
         private Aggregator aggregatorType;
@@ -24,6 +33,7 @@ public class MultiFieldSubQueryDetails {
         private Boolean delta = false;
         private Integer top = 0;
         private String dpValue = null;
+        private String where = null;
         private String preDpValue = null;
 
         public Builder(String field, Aggregator aggregatorType) {
@@ -105,6 +115,18 @@ public class MultiFieldSubQueryDetails {
         }
 
         /**
+         * Set where clause
+         * @param whereClause
+         * @return
+         */
+        public Builder where(String whereClause) {
+            if (whereClause != null && !whereClause.isEmpty()) {
+                this.where = whereClause;
+            }
+            return this;
+        }
+
+        /**
          * Set data point pre-value filter
          * @param preDpValue
          * @return
@@ -174,6 +196,22 @@ public class MultiFieldSubQueryDetails {
             if (this.dpValue != null) {
                 fieldDetails.dpValue = this.dpValue;
             }
+
+            /**
+             * only do some basic check for where clause.
+             * the semantic check will be executed on the server side
+             */
+            if (this.where != null) {
+                if (this.dpValue != null) {
+                    throw new IllegalArgumentException("\"where\" and \"dpValue\" cannot be specified at the same time");
+                }
+
+                if (!FieldNameWildCard.equals(this.field)) {
+                    throw new IllegalArgumentException("where clause can not be specified unless the \"field\" was specified as wildcard");
+                }
+                fieldDetails.where = this.where;
+            }
+
             if (this.preDpValue != null) {
                 fieldDetails.preDpValue = this.preDpValue;
             }
@@ -233,6 +271,10 @@ public class MultiFieldSubQueryDetails {
 
     public String getDpValue() {
         return dpValue;
+    }
+
+    public String getWhere() {
+        return where;
     }
 
     public String getPreDpValue() {
