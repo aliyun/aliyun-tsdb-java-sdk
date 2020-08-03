@@ -137,6 +137,9 @@ public class TestHiTSDBClientMultiFieldFeatures {
         List<MultiFieldQueryResult> result = tsdb.multiFieldQuery(query);
         if (result != null) {
             System.out.println("##### Multi-field Query Result : " + JSON.toJSONString(result));
+            if (result.size() > 0) {
+                System.out.println("##### Multi-field Query Result asMap : " + JSON.toJSONString(result.get(0).asMap()));
+            }
         } else {
             System.out.println("##### Empty reply from HiTSDB server. ######");
         }
