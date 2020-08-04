@@ -40,14 +40,26 @@ public class TSDBClientTest {
 
     @Test
     public void testDataTypeWithSingleDoubleDataPoint() {
-        final String content = "[{\"metric\":\"yuzhouwan\",\"tags\":{\"name\":\"asdf2014\"},\"aggregateTags\":[],\"dps\":{\"1346846400\":1.1}}]";
-        final List<QueryResult> queryResultList = JSON.parseArray(content, QueryResult.class);
-        Assert.assertEquals(1, queryResultList.size());
+        {
+            final String content = "[{\"metric\":\"yuzhouwan\",\"tags\":{\"name\":\"asdf2014\"},\"aggregateTags\":[],\"dps\":{\"1346846400\":1.0}}]";
+            final List<QueryResult> queryResultList = JSON.parseArray(content, QueryResult.class);
+            Assert.assertEquals(1, queryResultList.size());
 
-        final Query query = new Query();
-        query.setShowType(true);
-        TSDBClient.setTypeIfNeeded(query, queryResultList);
-        Assert.assertEquals(Double.class, queryResultList.get(0).getType());
+            final Query query = new Query();
+            query.setShowType(true);
+            TSDBClient.setTypeIfNeeded(query, queryResultList);
+            Assert.assertEquals(Double.class, queryResultList.get(0).getType());
+        }
+        {
+            final String content = "[{\"metric\":\"yuzhouwan\",\"tags\":{\"name\":\"asdf2014\"},\"aggregateTags\":[],\"dps\":{\"1346846400\":1.1}}]";
+            final List<QueryResult> queryResultList = JSON.parseArray(content, QueryResult.class);
+            Assert.assertEquals(1, queryResultList.size());
+
+            final Query query = new Query();
+            query.setShowType(true);
+            TSDBClient.setTypeIfNeeded(query, queryResultList);
+            Assert.assertEquals(Double.class, queryResultList.get(0).getType());
+        }
     }
 
     @Test
@@ -64,14 +76,26 @@ public class TSDBClientTest {
 
     @Test
     public void testDataTypeWithMultiDoubleDataPoints() {
-        final String content = "[{\"metric\":\"yuzhouwan\",\"tags\":{\"name\":\"asdf2014\"},\"aggregateTags\":[],\"dps\":{\"1346846400\":1.1,\"1346846401\":2.2,\"1346846402\":3.3}}]";
-        final List<QueryResult> queryResultList = JSON.parseArray(content, QueryResult.class);
-        Assert.assertEquals(1, queryResultList.size());
+        {
+            final String content = "[{\"metric\":\"yuzhouwan\",\"tags\":{\"name\":\"asdf2014\"},\"aggregateTags\":[],\"dps\":{\"1346846400\":1.0,\"1346846401\":2.0,\"1346846402\":3.0}}]";
+            final List<QueryResult> queryResultList = JSON.parseArray(content, QueryResult.class);
+            Assert.assertEquals(1, queryResultList.size());
 
-        final Query query = new Query();
-        query.setShowType(true);
-        TSDBClient.setTypeIfNeeded(query, queryResultList);
-        Assert.assertEquals(Double.class, queryResultList.get(0).getType());
+            final Query query = new Query();
+            query.setShowType(true);
+            TSDBClient.setTypeIfNeeded(query, queryResultList);
+            Assert.assertEquals(Double.class, queryResultList.get(0).getType());
+        }
+        {
+            final String content = "[{\"metric\":\"yuzhouwan\",\"tags\":{\"name\":\"asdf2014\"},\"aggregateTags\":[],\"dps\":{\"1346846400\":1.1,\"1346846401\":2.2,\"1346846402\":3.3}}]";
+            final List<QueryResult> queryResultList = JSON.parseArray(content, QueryResult.class);
+            Assert.assertEquals(1, queryResultList.size());
+
+            final Query query = new Query();
+            query.setShowType(true);
+            TSDBClient.setTypeIfNeeded(query, queryResultList);
+            Assert.assertEquals(Double.class, queryResultList.get(0).getType());
+        }
     }
 
     @Test
