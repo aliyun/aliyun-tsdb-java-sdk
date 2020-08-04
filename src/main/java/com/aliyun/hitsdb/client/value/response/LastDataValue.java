@@ -1,5 +1,8 @@
 package com.aliyun.hitsdb.client.value.response;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import com.aliyun.hitsdb.client.value.request.ValueSerializer;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -9,9 +12,11 @@ public class LastDataValue {
     private String metric;
     private String field;
     private long timestamp;
+    @JSONField(serializeUsing = ValueSerializer.class, deserializeUsing = ValueSerializer.class)
     private Object value;
     private String tsuid;
     private Map<String, String> tags;
+    @JSONField(serializeUsing = QueryResultDpsSerializer.class, deserializeUsing = QueryResultDpsSerializer.class)
     private LinkedHashMap<Long, Object> dps;
 
     public String getMetric() {

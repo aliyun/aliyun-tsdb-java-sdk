@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client.value.request;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.TSDBConfig;
 import com.aliyun.hitsdb.client.util.Objects;
@@ -164,6 +165,7 @@ public class MultiFieldPoint extends AbstractPoint {
         return PointType.MULTI_FIELD;
     }
 
+    @JSONField( serializeUsing = FieldsSerializer.class, deserializeUsing = FieldsSerializer.class )
     private Map<String, Object> fields;
 
     public Map<String, Object> getFields() {

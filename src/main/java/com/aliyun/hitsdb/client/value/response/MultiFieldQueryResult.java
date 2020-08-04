@@ -1,5 +1,8 @@
 package com.aliyun.hitsdb.client.value.response;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson.serializer.ValueFilter;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -11,6 +14,7 @@ public class MultiFieldQueryResult {
     private List<String> aggregatedTags;
     private Map<String, String> tags;
     private List<String> columns = new ArrayList<String>();
+    @JSONField(serializeUsing = MultiFieldQueryValuesSerializer.class, deserializeUsing = MultiFieldQueryValuesSerializer.class)
     private List<List<Object>> values = new ArrayList<List<Object>>();
     private List<Class<?>> types;
 
