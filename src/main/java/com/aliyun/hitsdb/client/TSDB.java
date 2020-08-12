@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public interface TSDB extends Closeable {
@@ -617,4 +618,19 @@ public interface TSDB extends Closeable {
      * @return a list of the existing users
      */
     List<UserResult> listUsers();
+
+    /**
+     * For /api/index/disable API.
+     */
+    void disableIndex(Map<String, Set<String>> hint);
+
+    /**
+     * For /api/index/get API.
+     */
+    Map<String, Set<String>> getIndex();
+
+    /**
+     * For /api/index/get API.
+     */
+    Set<String> getIndex(String metric);
 }

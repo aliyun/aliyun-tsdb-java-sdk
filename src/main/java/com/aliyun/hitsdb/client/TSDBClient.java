@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
@@ -1710,6 +1711,72 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 List<UserResult> result = JSON.parseArray(content, UserResult.class);
                 return result;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    @Override
+    public void disableIndex(Map<String, Set<String>> hint) {
+        final HttpResponse httpResponse = httpclient.post(HttpAPI.INDEX_DISABLE, JSON.toJSONString(hint));
+        final ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        final HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccess:
+            case ServerSuccessNoContent:
+                return;
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    @Override
+    public Map<String, Set<String>> getIndex() {
+        HttpResponse httpResponse = httpclient.get(HttpAPI.INDEX_GET, null);
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                return null;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                return JSON.parseObject(content, new TypeReference<Map<String, Set<String>>>() {
+                });
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    @Override
+    public Set<String> getIndex(String metric) {
+        HttpResponse httpResponse = httpclient.get(HttpAPI.INDEX_GET + "?" + metric, null);
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                return null;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                return JSON.parseObject(content, new TypeReference<Set<String>>() {
+                });
             case ServerNotSupport:
                 throw new HttpServerNotSupportException(resultResponse);
             case ServerError:

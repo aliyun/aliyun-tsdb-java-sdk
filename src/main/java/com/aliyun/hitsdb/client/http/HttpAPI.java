@@ -32,4 +32,7 @@ public interface HttpAPI {
     String USER_AUTH = "/api/users";
 
     String SQL = "/api/sqlquery";
+
+    String INDEX_DISABLE = "/api/index/disable";
+    String INDEX_GET = "/api/index/get";
 }

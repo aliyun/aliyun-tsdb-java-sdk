@@ -1224,4 +1224,19 @@ public class BalTSDBClient implements TSDB {
             SYNC.set(true);
         }
     }
+
+    @Override
+    public void disableIndex(Map<String, Set<String>> hint) {
+        client().disableIndex(hint);
+    }
+
+    @Override
+    public Map<String, Set<String>> getIndex() {
+        return client().getIndex();
+    }
+
+    @Override
+    public Set<String> getIndex(String metric) {
+        return client().getIndex(metric);
+    }
 }
