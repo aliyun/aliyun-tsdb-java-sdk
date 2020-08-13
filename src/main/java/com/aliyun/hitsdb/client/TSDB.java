@@ -533,6 +533,8 @@ public interface TSDB extends Closeable {
      */
     boolean truncate() throws HttpUnknowStatusException;
 
+    <T extends Result> T multiFieldPutSync(MultiFieldPoint point, Class<T> resultType);
+
     /**
      * Following APIs are for TSDB's multi-field data model structure's puts and queries.
      * They replace the multiValued* APIs

@@ -1012,6 +1012,11 @@ public class BalTSDBClient implements TSDB {
         throw new RuntimeException(exception);
     }
 
+    @Override
+    public <T extends Result> T multiFieldPutSync(MultiFieldPoint point, Class<T> resultType) {
+        return multiFieldPutSync(Collections.singletonList(point), resultType);
+    }
+
     /**
      * Following APIs, which have multiField prefix, are for TSDB's multi-field data model structure's puts and queries.
      * Since TSDB release 2.3.7
