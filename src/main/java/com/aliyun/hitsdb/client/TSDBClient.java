@@ -1469,6 +1469,11 @@ public class TSDBClient implements TSDB {
         }
     }
 
+    @Override
+    public <T extends Result> T multiFieldPutSync(MultiFieldPoint point, Class<T> resultType) {
+        return multiFieldPutSync(Collections.singletonList(point), resultType);
+    }
+
     /**
      * Following APIs are for TSDB's multi-field data model structure's puts and queries.
      * Since release TSDB 2.3.7
