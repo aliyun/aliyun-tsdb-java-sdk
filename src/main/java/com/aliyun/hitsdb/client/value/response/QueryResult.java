@@ -1,6 +1,8 @@
 package com.aliyun.hitsdb.client.value.response;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.aliyun.hitsdb.client.value.JSONValue;
+import com.aliyun.hitsdb.client.value.request.ByteArrayValue;
 
 import java.util.*;
 
@@ -8,6 +10,7 @@ public class QueryResult extends JSONValue {
     private String metric;
     private Map<String, String> tags;
     private List<String> aggregateTags;
+    @JSONField(serializeUsing = QueryResultDpsSerializer.class, deserializeUsing = QueryResultDpsSerializer.class)
     private LinkedHashMap<Long, Object> dps = new LinkedHashMap<Long, Object>();
     private Class<?> type;
     @Deprecated
@@ -29,19 +32,23 @@ public class QueryResult extends JSONValue {
         }
     };
 
-    public List<KeyValue> getOrderDps(){
+    public List<KeyValue> getOrderDps() {
        return getOrderDps(false);
     }
 
-    public List<KeyValue> getOrderDps(boolean reverse){
-        if(dps == null || dps.isEmpty()){
+    public List<KeyValue> getOrderDps(boolean reverse) {
+        if(dps == null || dps.isEmpty()) {
             return Collections.emptyList();
         }
         List<KeyValue> keyValues = new ArrayList<KeyValue>(dps.size());
-        for(Map.Entry<Long,Object> entry : dps.entrySet()){
-            keyValues.add(new KeyValue(entry.getKey(),entry.getValue()));
+        for(Map.Entry<Long,Object> entry : dps.entrySet()) {
+            if (entry.getValue() instanceof byte[]){
+                keyValues.add(new KeyValue(entry.getKey(), new ByteArrayValue((byte [])entry.getValue())));
+            }else{
+                keyValues.add(new KeyValue(entry.getKey(),entry.getValue()));
+            }
         }
-        if(reverse){
+        if(reverse) {
             Collections.sort(keyValues,REVERSE_ORDER_CMP);
         } else {
             Collections.sort(keyValues,ORDER_CMP);

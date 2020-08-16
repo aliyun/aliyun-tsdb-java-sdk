@@ -1,5 +1,7 @@
 package com.aliyun.hitsdb.client.value.response;
 
+import com.alibaba.fastjson.annotation.JSONField;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +11,7 @@ public class MultiFieldQueryLastResult {
     private String metric;
     private Map<String, String> tags = new HashMap<String, String>();
     private List<String> columns = new ArrayList<String>();
+    @JSONField(serializeUsing = MultiFieldQueryValuesSerializer.class, deserializeUsing = MultiFieldQueryValuesSerializer.class)
     private List<List<Object>> values = new ArrayList<List<Object>>();
 
     public String getMetric() {

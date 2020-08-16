@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
 import com.alibaba.fastjson.annotation.JSONType;
 import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.util.Objects;
@@ -208,6 +209,7 @@ public class Point extends AbstractPoint {
         return new MetricBuilder(metric);
     }
 
+    @JSONField(serializeUsing = ValueSerializer.class, deserializeUsing = ValueSerializer.class)
     private Object value;
     private String granularity;
     private String aggregator;
