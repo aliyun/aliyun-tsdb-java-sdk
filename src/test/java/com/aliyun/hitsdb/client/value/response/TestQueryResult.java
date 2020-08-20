@@ -2,12 +2,14 @@ package com.aliyun.hitsdb.client.value.response;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.value.request.ByteArrayValue;
+import com.aliyun.hitsdb.client.value.request.GeoPointValue;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author cuiyuan
@@ -70,7 +72,7 @@ public class TestQueryResult {
             return null;
         }
 
-        public static CaseQueryResult wrap(QueryResult queryResult){
+        public static CaseQueryResult wrap(QueryResult queryResult) {
             CaseQueryResult result = new CaseQueryResult();
             result.setMetric(queryResult.getMetric());
             result.setTags(queryResult.getTags());
@@ -78,6 +80,37 @@ public class TestQueryResult {
             result.setAggregateTags(queryResult.getAggregateTags());
             result.setSdps(queryResult.getSdps());
             return result;
+        }
+    }
+
+    @Test
+    public void testQueryResultWithGeoPointSerialize(){
+        String jsonString = "[\n" +
+                "  {\n" +
+                "    \"metric\": \"test1\",\n" +
+                "    \"tags\": {\n" +
+                "      \"tagk1\": \"tagv1\",\n" +
+                "      \"tagk2\": \"tagv2\"\n" +
+                "    },\n" +
+                "    \"aggregateTags\": [],\n" +
+                "    \"dps\": {\n" +
+                "      \"1024234234\": {\n" +
+                "        \"type\": \"geopoint\",\n" +
+                "        \"content\": \"POINT (111 22)\"\n" +
+                "      }\n" +
+                "    }\n" +
+                "  }\n" +
+                "]\n" +
+                "\n" +
+                "\n";
+
+        List<QueryResult> queryResults = JSON.parseArray(jsonString, QueryResult.class);
+        int index = 0;
+        for (Map.Entry dp : queryResults.get(0).getDps().entrySet()) {
+            Assert.assertEquals(dp.getKey(), 1024234234L);
+            Assert.assertEquals(dp.getValue(), new GeoPointValue("POINT (111 22)"));
+            Assert.assertEquals(index, 0);
+            index++;
         }
     }
 

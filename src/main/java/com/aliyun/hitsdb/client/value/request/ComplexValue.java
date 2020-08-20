@@ -1,5 +1,7 @@
 package com.aliyun.hitsdb.client.value.request;
 
+import com.alibaba.fastjson.JSONObject;
+
 import java.util.Map;
 
 /**
@@ -35,4 +37,7 @@ public class ComplexValue {
         this.content = content;
     }
 
+    public static boolean isJsonObjectTypeMatch(JSONObject jsonObject) {
+        return jsonObject.containsKey(TypeKey) && jsonObject.containsKey(ContentKey) && jsonObject.size() == 2;
+    }
 }

@@ -36,4 +36,31 @@ public class PointTest {
 		p =JSON.parseObject(jsonString,Point.class);
 		Assert.assertSame(p.getValue(), 2);
 	}
+
+	@Test
+	public void testGeoPointValueSerialize() {
+		String metric = "test";
+
+		final String wktString = "POINT (110 23)";
+		final GeoPointValue gp = new GeoPointValue(wktString);
+		Point point = Point.metric(metric).tag("tagk1", "tagv1").tag("tagk2", "tagv2").tag("tagk3", "tagv3")
+				.timestamp(System.currentTimeMillis()).value(gp).build();
+
+		String jsonString = JSON.toJSONString(point);
+		Assert.assertTrue(jsonString.contains("type"));
+		Assert.assertTrue(jsonString.contains("geopoint"));
+		Assert.assertTrue(jsonString.contains("content"));
+		Assert.assertTrue(jsonString.contains(wktString));
+
+
+		Point p = JSON.parseObject(jsonString, Point.class);
+		Assert.assertEquals(p.getValue(), gp);
+
+		point.setValue(2);
+		jsonString = JSON.toJSONString(point);
+		Assert.assertFalse(jsonString.contains("type"));
+		Assert.assertFalse(jsonString.contains("content"));
+		p =JSON.parseObject(jsonString, Point.class);
+		Assert.assertSame(p.getValue(), 2);
+	}
 }

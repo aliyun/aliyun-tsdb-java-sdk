@@ -21,6 +21,6 @@ public class ByteArrayValue extends ComplexValue {
     }
 
     public static boolean isJsonObjectTypeMatch(JSONObject jsonObject) {
-        return jsonObject.containsKey(TypeKey) && jsonObject.containsKey(ContentKey) && jsonObject.size() == 2;
+        return ComplexValue.isJsonObjectTypeMatch(jsonObject) && jsonObject.get(TypeKey).equals(TypeValue);
     }
 }

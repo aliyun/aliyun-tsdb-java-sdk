@@ -32,11 +32,14 @@ public class FieldsSerializer implements ObjectSerializer, ObjectDeserializer {
             for (Map.Entry<String, Object> entry : ((JSONObject) parse).entrySet()) {
                 if (entry.getValue() instanceof JSONObject) {
                     JSONObject jsonObject = (JSONObject) entry.getValue();
-                    if (ByteArrayValue.isJsonObjectTypeMatch(jsonObject)) {
+                    if (ComplexValue.isJsonObjectTypeMatch(jsonObject)) {
                         String valueType = jsonObject.getString(ByteArrayValue.TypeKey);
                         if (ByteArrayValue.TypeValue.equals(valueType)) {
                             ByteArrayValue bv = JSON.parseObject(jsonObject.toJSONString(), ByteArrayValue.class);
                             entry.setValue(bv.decode());
+                        } else if (GeoPointValue.TypeValue.equals(valueType)) {
+                            GeoPointValue gp = JSON.parseObject(jsonObject.toJSONString(), GeoPointValue.class);
+                            entry.setValue(gp);
                         } else {
                             log.error("Illegal value type {}", valueType);
                             throw new IllegalArgumentException("Illegal value type " + valueType);

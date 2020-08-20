@@ -7,6 +7,8 @@ import com.alibaba.fastjson.parser.deserializer.ObjectDeserializer;
 import com.alibaba.fastjson.serializer.JSONSerializer;
 import com.alibaba.fastjson.serializer.ObjectSerializer;
 import com.aliyun.hitsdb.client.value.request.ByteArrayValue;
+import com.aliyun.hitsdb.client.value.request.ComplexValue;
+import com.aliyun.hitsdb.client.value.request.GeoPointValue;
 import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,11 +35,15 @@ public class MultiFieldQueryValuesSerializer implements ObjectSerializer, Object
             for (int j = 0; j < objects.size(); j++) {
                 if (objects.get(j) instanceof JSONObject) {
                     JSONObject jsonObject = (JSONObject) (objects.get(j));
-                    if (ByteArrayValue.isJsonObjectTypeMatch(jsonObject)) {
+                    if (ComplexValue.isJsonObjectTypeMatch(jsonObject)) {
                         String valueType = jsonObject.getString(ByteArrayValue.TypeKey);
                         if (ByteArrayValue.TypeValue.equals(valueType)){
                             ByteArrayValue bv = JSON.parseObject(jsonObject.toJSONString(), ByteArrayValue.class);
                             objects.set(j, bv.decode());
+                            changed = true;
+                        } else if (GeoPointValue.TypeValue.equals(valueType)) {
+                            GeoPointValue gp = JSON.parseObject(jsonObject.toJSONString(), GeoPointValue.class);
+                            objects.set(j, gp);
                             changed = true;
                         } else{
                             log.error("Illegal value type {}", valueType);
