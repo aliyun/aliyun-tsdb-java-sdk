@@ -98,6 +98,23 @@ public class TestQuery {
         Assert.assertEquals("{\"aggregator\":\"avg\",\"downsample\":\"60m-avg\",\"filters\":[{\"filter\":\"web[0-9]+.lax.mysite.com\",\"groupBy\":true,\"tagk\":\"host\",\"type\":\"regexp\"},{\"filter\":\"web[0-9]+.lax.mysite.com\",\"groupBy\":true,\"tagk\":\"host2\",\"type\":\"literal_or\"}],\"index\":0,\"metric\":\"test-metric\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}", json);
     }
 
+    @Test
+    public void testSubQueryGeoFilter() {
+        SubQuery subQuery = SubQuery
+                .metric("test-metric")
+                .aggregator(Aggregator.AVG)
+                .rate()
+                .downsample("60m-avg")
+                .tag("tagk1", "tagv1")
+                .tag("tagk2", "tagv2")
+                .filter(Filter.filter(FilterType.Regexp, "host", "web[0-9]+.lax.mysite.com",true).build())
+                .filter(Filter.filter(FilterType.GeoIntersects, "location", "POLYGON (())",false).build())
+                .build();
+
+        String json = subQuery.toJSON();
+        Assert.assertEquals(json,
+                "{\"aggregator\":\"avg\",\"downsample\":\"60m-avg\",\"filters\":[{\"filter\":\"web[0-9]+.lax.mysite.com\",\"groupBy\":true,\"tagk\":\"host\",\"type\":\"regexp\"},{\"filter\":\"POLYGON (())\",\"tagk\":\"location\",\"type\":\"intersects\"}],\"index\":0,\"metric\":\"test-metric\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}");
+    }
 
     @Test
     public void testQueryOnlyStart() throws ParseException {

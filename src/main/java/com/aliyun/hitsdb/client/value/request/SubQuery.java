@@ -177,31 +177,6 @@ public class SubQuery {
         }
 
         /**
-         * Add a geo filter
-         *
-         * @param type   geo filter type
-         * @param filter filter info
-         * @return
-         */
-        public Builder filter(FilterType type, String filter) {
-            // Geo filter sanity check
-            if (type != FilterType.GeoBBox && type != FilterType.GeoDistance) {
-                return this;
-            }
-
-            if (filters == null) {
-                filters = new ArrayList<Filter>();
-            }
-
-            Filter f = new Filter();
-            f.setType(type);
-            f.setFilter(filter);
-
-            filters.add(f);
-            return this;
-        }
-
-        /**
          * set the rate
          *
          * @param rate rate

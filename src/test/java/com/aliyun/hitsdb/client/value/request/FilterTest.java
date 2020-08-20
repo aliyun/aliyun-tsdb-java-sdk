@@ -20,4 +20,10 @@ public class FilterTest {
         Filter filter = Filter.filter(FilterType.Wildcard,"tagk","null",false).build();
         assertNotNull(filter);
     }
+
+    @Test
+    public void testGeoFilterBuilder() {
+        Filter filter = Filter.filter(FilterType.GeoIntersects,"tagk","POLYGON ((111 22, 111 23, 111 24, 111 22))",false).build();
+        assertNotNull(filter);
+    }
 }

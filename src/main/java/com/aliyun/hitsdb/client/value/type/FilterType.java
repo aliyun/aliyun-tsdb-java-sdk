@@ -9,8 +9,7 @@ public enum FilterType {
     NotLiteralOr("not_literal_or"),
     Wildcard("wildcard"),
     Regexp("regexp"),
-    GeoBBox("geo_bbox"),
-    GeoDistance("geo_distance");
+    GeoIntersects("intersects");
 
 	private String name;
 
