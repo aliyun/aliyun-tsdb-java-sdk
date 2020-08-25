@@ -5,10 +5,9 @@ import com.aliyun.hitsdb.client.value.request.ByteArrayValue;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author cuiyuan
@@ -42,10 +41,51 @@ public class TestQueryResult {
     }
 
     @Test
+    public void testQueryResultTimeOrder() {
+        String jsonString = "[{\"aggregateTags\":[],\"dps\":{1509589800000:6.0,1509631800000:7.0,1509589200000:5.0,1509637800000:8.0,1509469800000:0.1,1509556200000:4.0,1509507000000:0.3,1509502800000:0.2},\"metric\":\"testBaseQuery\",\"sdps\":{},\"tags\":{\"tgk1\":\"tgv1\"}}]";
+        String expectedString = "[{\"aggregateTags\":[],\"dps\":{1509469800000:0.1,1509502800000:0.2,1509507000000:0.3,1509556200000:4.0,1509589200000:5.0,1509589800000:6.0,1509631800000:7.0,1509637800000:8.0},\"metric\":\"testBaseQuery\",\"sdps\":{},\"tags\":{\"tgk1\":\"tgv1\"}}]";
+        List<QueryResult> queryResult = JSON.parseArray(jsonString, QueryResult.class);
+        Assert.assertEquals(expectedString, wrap(queryResult).toString());
+
+        List<QueryResult> queryResult1 = JSON.parseArray(expectedString, QueryResult.class);
+        Assert.assertEquals(expectedString, wrap(queryResult1).toString());
+    }
+
+    public static List<CaseQueryResult> wrap(List<QueryResult> queryResults){
+        List<CaseQueryResult> results = new ArrayList<CaseQueryResult>(queryResults.size());
+        for(int i = 0,size = queryResults.size();i < size;i ++){
+            results.add(CaseQueryResult.wrap(queryResults.get(i)));
+        }
+        return results;
+    }
+
+    public static class CaseQueryResult extends QueryResult {
+        @Override
+        public List<KeyValue> getOrderDps() {
+            return null;
+        }
+
+        @Override
+        public List<KeyValue> getOrderDps(boolean reverse) {
+            return null;
+        }
+
+        public static CaseQueryResult wrap(QueryResult queryResult){
+            CaseQueryResult result = new CaseQueryResult();
+            result.setMetric(queryResult.getMetric());
+            result.setTags(queryResult.getTags());
+            result.setDps(queryResult.getDps());
+            result.setAggregateTags(queryResult.getAggregateTags());
+            result.setSdps(queryResult.getSdps());
+            return result;
+        }
+    }
+
+    @Test
     public void testQueryResutlSerialize2() {
         QueryResult queryResult = new QueryResult();
         queryResult.setMetric("hello");
-        LinkedHashMap<Long,Object> hashMap = new LinkedHashMap<>();
+        LinkedHashMap<Long,Object> hashMap = new LinkedHashMap<Long,Object>();
         final byte[] value = new byte[]{0x01,0x02,0x03};
         hashMap.put(123L, new ByteArrayValue(value));
         queryResult.setDps(hashMap);

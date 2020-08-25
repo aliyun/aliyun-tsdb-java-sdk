@@ -19,8 +19,8 @@ public class TestMultiFieldQueryResult {
     public void testMultiFieldQueryResultSerialize() {
         MultiFieldQueryResult multiFieldQueryResult = new MultiFieldQueryResult();
         multiFieldQueryResult.setMetric("hello");
-        List<List<Object>> values  = new ArrayList<>();
-        List<Object> value = new ArrayList<>();
+        List<List<Object>> values  = new ArrayList<List<Object>>();
+        List<Object> value = new ArrayList<Object>();
         final byte[] bytes = new byte[]{0x01,0x02,0x03};
         value.add(2);
         value.add(bytes);
