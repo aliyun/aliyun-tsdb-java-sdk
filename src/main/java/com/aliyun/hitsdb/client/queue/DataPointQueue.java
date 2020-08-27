@@ -137,4 +137,8 @@ public class DataPointQueue implements DataQueue {
         return pointQueue.isEmpty() && multiFieldPointQueue.isEmpty();
     }
 
+    @Override
+    public Point[] getPoints() {
+        return pointQueue.toArray(new Point[0]);
+    }
 }

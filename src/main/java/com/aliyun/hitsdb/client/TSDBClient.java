@@ -1725,4 +1725,20 @@ public class TSDBClient implements TSDB {
                 throw new HttpUnknowStatusException(resultResponse);
         }
     }
+
+    @Override
+    public void flush() {
+        final Point[] points = this.queue.getPoints();
+        if (points == null || points.length == 0) {
+            return;
+        }
+        final int batchPutSize = this.config.getBatchPutSize();
+        final ArrayList<Point> pointList = new ArrayList<Point>(points.length);
+        Collections.addAll(pointList, points);
+        for (int i = 0; i <= points.length - 1; i += batchPutSize) {
+            final int endBound = Math.min(points.length, i + batchPutSize);
+            final List<Point> sub = pointList.subList(i, endBound);
+            this.putSync(sub);
+        }
+    }
 }

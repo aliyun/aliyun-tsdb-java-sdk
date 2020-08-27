@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client;
 
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
+import com.aliyun.hitsdb.client.exception.NotImplementedException;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.http.Host;
 import com.aliyun.hitsdb.client.util.*;
@@ -1191,6 +1192,11 @@ public class BalTSDBClient implements TSDB {
             }
         }
         throw new RuntimeException(exception);
+    }
+
+    @Override
+    public void flush() {
+        throw new NotImplementedException();
     }
 
     @Override
