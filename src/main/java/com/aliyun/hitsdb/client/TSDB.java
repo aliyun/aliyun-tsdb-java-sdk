@@ -626,4 +626,9 @@ public interface TSDB extends Closeable {
      * @return a list of the existing users
      */
     List<UserResult> listUsers();
+
+    /**
+     * Flush data points in queue.
+     */
+    void flush();
 }

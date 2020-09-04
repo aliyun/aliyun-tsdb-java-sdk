@@ -22,4 +22,6 @@ public interface DataQueue {
     void waitEmpty();
 
     boolean isEmpty();
+
+    Point[] getPoints();
 }
