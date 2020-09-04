@@ -391,6 +391,20 @@ public class BalTSDBClient implements TSDB {
         throw new RuntimeException(exception);
     }
 
+    @Override
+    public void put(Collection<Point> points) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                client().put(points);
+                return;
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
     @Deprecated
     @Override
     public void multiValuedPut(MultiValuedPoint point) {

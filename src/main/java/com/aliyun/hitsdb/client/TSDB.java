@@ -32,6 +32,13 @@ public interface TSDB extends Closeable {
     void put(Point... points);
 
     /**
+     * Asynchronous put points
+     *
+     * @param points points
+     */
+    void put(Collection<Point> points);
+
+    /**
      * Asynchronous multi-valued put point
      *
      * @param point point

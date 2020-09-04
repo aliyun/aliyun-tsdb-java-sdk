@@ -1396,6 +1396,13 @@ public class TSDBClient implements TSDB {
         }
     }
 
+    @Override
+    public void put(Collection<Point> points) {
+        for (Point p : points) {
+            this.put(p);
+        }
+    }
+
     @Deprecated
     @Override
     public void multiValuedPut(MultiValuedPoint... points) {
