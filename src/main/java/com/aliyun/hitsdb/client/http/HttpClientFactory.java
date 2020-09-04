@@ -154,23 +154,23 @@ public class HttpClientFactory {
 
 
     private static RequestConfig initRequestConfig(Config config) {
-        RequestConfig requestConfig = null;
-
-        // 设置请求
+        final RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
         int httpConnectTimeout = config.getHttpConnectTimeout();
-        // 需要设置
         if (httpConnectTimeout >= 0) {
-            RequestConfig.Builder requestConfigBuilder = RequestConfig.custom();
             // ConnectTimeout:连接超时.连接建立时间，三次握手完成时间.
             requestConfigBuilder.setConnectTimeout(httpConnectTimeout * 1000);
-            // SocketTimeout:Socket请求超时.数据传输过程中数据包之间间隔的最大时间.
-            requestConfigBuilder.setSocketTimeout(httpConnectTimeout * 1000);
-            // ConnectionRequestTimeout:httpclient使用连接池来管理连接，这个时间就是从连接池获取连接的超时时间，可以想象下数据库连接池
-            requestConfigBuilder.setConnectionRequestTimeout(httpConnectTimeout * 1000);
-            requestConfig = requestConfigBuilder.build();
         }
-
-        return requestConfig;
+        int httpSocketTimeout = config.getHttpSocketTimeout();
+        if (httpSocketTimeout >= 0) {
+            // SocketTimeout:Socket请求超时.数据传输过程中数据包之间间隔的最大时间.
+            requestConfigBuilder.setSocketTimeout(httpSocketTimeout * 1000);
+        }
+        final int httpConnectionRequestTimeout = config.getHttpConnectionRequestTimeout();
+        if (httpConnectionRequestTimeout >= 0) {
+            // ConnectionRequestTimeout:httpclient使用连接池来管理连接，这个时间就是从连接池获取连接的超时时间，可以想象下数据库连接池
+            requestConfigBuilder.setConnectionRequestTimeout(httpConnectionRequestTimeout * 1000);
+        }
+        return requestConfigBuilder.build();
     }
 
     private static ConnectingIOReactor initIOReactorConfig(Config config) {
