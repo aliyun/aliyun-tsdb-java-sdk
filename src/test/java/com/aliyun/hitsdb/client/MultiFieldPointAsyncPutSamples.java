@@ -6,7 +6,7 @@ import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutDetailsCallback;
 import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutSummaryCallback;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
-import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
+import com.aliyun.hitsdb.client.value.response.batch.MultiFieldDetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 
 import java.io.IOException;
@@ -75,7 +75,7 @@ public class MultiFieldPointAsyncPutSamples {
             final AtomicInteger num = new AtomicInteger();
 
             @Override
-            public void response(String address, List<MultiFieldPoint> points, DetailsResult result) {
+            public void response(String address, List<MultiFieldPoint> points, MultiFieldDetailsResult result) {
                 int count = num.addAndGet(points.size());
                 System.out.println(result);
                 System.out.println("已处理" + count + "个点");

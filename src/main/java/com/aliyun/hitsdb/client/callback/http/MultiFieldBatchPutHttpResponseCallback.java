@@ -14,7 +14,7 @@ import com.aliyun.hitsdb.client.http.response.HttpStatus;
 import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
-import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
+import com.aliyun.hitsdb.client.value.response.batch.MultiFieldDetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
@@ -79,10 +79,10 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                     ((MultiFieldBatchPutSummaryCallback) multiFieldBatchPutCallback).response(this.address, pointList, summaryResult);
                     return;
                 } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
-                    DetailsResult detailsResult = null;
+                    MultiFieldDetailsResult detailsResult = null;
                     if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
                         String content = resultResponse.getContent();
-                        detailsResult = JSON.parseObject(content, DetailsResult.class);
+                        detailsResult = JSON.parseObject(content, MultiFieldDetailsResult.class);
                     }
                     ((MultiFieldBatchPutDetailsCallback) multiFieldBatchPutCallback).response(this.address, pointList, detailsResult);
                     return;
