@@ -12,6 +12,7 @@ public class LastPointSubQuery extends HashMap<String, Object> {
 
     public static class Builder {
         private LastPointSubQuery query = new LastPointSubQuery();
+        private Map<String, Map<String, Integer>> hint;
 
         public Builder(String metric) {
             this.query.setMetric(metric);
@@ -32,7 +33,13 @@ public class LastPointSubQuery extends HashMap<String, Object> {
             this.query.setTsuids(tsuids);
         }
 
+        public Builder hint(Map<String, Map<String, Integer>> hint) {
+            this.hint = hint;
+            return this;
+        }
+
         public LastPointSubQuery build() {
+            this.query.setHint(this.hint);
             return this.query;
         }
     }
@@ -61,6 +68,7 @@ public class LastPointSubQuery extends HashMap<String, Object> {
     private static final String FIELDS = "fields";
     private static final String TAGS = "tags";
     private static final String TSUIDS = "tsuids";
+    private Map<String, Map<String, Integer>> hint;
 
     public String getMetric() {
         return (String) this.get(METRIC);
@@ -98,5 +106,13 @@ public class LastPointSubQuery extends HashMap<String, Object> {
             throw new IllegalArgumentException("metric and tsuid parameter provided at the same time is not supported.");
         }
         this.put(TSUIDS, tsuids);
+    }
+
+    public Map<String, Map<String, Integer>> getHint() {
+        return hint;
+    }
+
+    public void setHint(Map<String, Map<String, Integer>> hint) {
+        this.hint = hint;
     }
 }

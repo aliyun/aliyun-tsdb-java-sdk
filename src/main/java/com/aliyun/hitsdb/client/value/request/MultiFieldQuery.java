@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class MultiFieldQuery extends JSONValue {
 
@@ -18,6 +19,7 @@ public class MultiFieldQuery extends JSONValue {
     private boolean showType;
     @JSONField(serialize = false)
     private List<Class<?>> types;
+    private Map<String, Map<String, Integer>> hint;
 
     public static class Builder {
         private Long startTime;
@@ -26,6 +28,7 @@ public class MultiFieldQuery extends JSONValue {
         private List<MultiFieldSubQuery> subQueryList = new ArrayList<MultiFieldSubQuery>();
         private boolean showType;
         private List<Class<?>> types;
+        private Map<String, Map<String, Integer>> hint;
 
         /**
          * 1970-02-20 00:59:28
@@ -86,6 +89,11 @@ public class MultiFieldQuery extends JSONValue {
             return this;
         }
 
+        public Builder hint(Map<String, Map<String, Integer>> hint) {
+            this.hint = hint;
+            return this;
+        }
+
         public Builder sub(MultiFieldSubQuery... subQuerys) {
             for (MultiFieldSubQuery subQuery : subQuerys) {
                 subQueryList.add(subQuery);
@@ -128,6 +136,7 @@ public class MultiFieldQuery extends JSONValue {
             query.msResolution = this.msResolution;
             query.showType = this.showType;
             query.types = this.types;
+            query.hint = this.hint;
             return query;
         }
     }
@@ -203,5 +212,13 @@ public class MultiFieldQuery extends JSONValue {
 
     public void setTypes(List<Class<?>> types) {
         this.types = types;
+    }
+
+    public Map<String, Map<String, Integer>> getHint() {
+        return hint;
+    }
+
+    public void setHint(Map<String, Map<String, Integer>> hint) {
+        this.hint = hint;
     }
 }

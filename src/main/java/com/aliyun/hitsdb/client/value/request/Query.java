@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.aliyun.hitsdb.client.value.JSONValue;
 import com.alibaba.fastjson.annotation.JSONField;
@@ -18,6 +19,7 @@ public class Query extends JSONValue {
 	private boolean showType;
 	@JSONField(serialize = false)
 	private Class<?> type;
+	private Map<String, Map<String, Integer>> hint;
 
 	public static class Builder {
 		private Long startTime;
@@ -27,6 +29,7 @@ public class Query extends JSONValue {
 		private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
 		private boolean showType;
 		private Class<?> type;
+		private Map<String, Map<String, Integer>> hint;
 
 		/**
 		 * 1970-02-20 00:59:28
@@ -129,6 +132,11 @@ public class Query extends JSONValue {
 			return this;
 		}
 
+		public Builder hint(Map<String, Map<String, Integer>> hint) {
+			this.hint = hint;
+			return this;
+		}
+
 		public Query build() {
 			Query query = new Query();
 			if (this.startTime == null) {
@@ -153,6 +161,7 @@ public class Query extends JSONValue {
 			query.msResolution = this.msResolution;
 			query.showType = this.showType;
 			query.type = this.type;
+			query.hint = this.hint;
 			return query;
 		}
 
@@ -234,4 +243,12 @@ public class Query extends JSONValue {
     public void setType(Class<?> type) {
         this.type = type;
     }
+
+	public Map<String, Map<String, Integer>> getHint() {
+		return hint;
+	}
+
+	public void setHint(Map<String, Map<String, Integer>> hint) {
+		this.hint = hint;
+	}
 }
