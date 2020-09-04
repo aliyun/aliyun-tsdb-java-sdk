@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author cuiyuan
@@ -28,7 +29,7 @@ public class QueryResultDpsSerializer implements ObjectSerializer, ObjectDeseria
         if (parse == null) {
             return null;
         }
-        LinkedHashMap<Long, Object> retMap = new LinkedHashMap<Long, Object>();
+        TreeMap<Long, Object> retMap = new TreeMap<Long, Object>();
         for (Map.Entry<String, Object> entry : ((JSONObject) parse).entrySet()) {
             if (entry.getValue() instanceof JSONObject) {
                 JSONObject jsonObject = (JSONObject) entry.getValue();
@@ -43,10 +44,10 @@ public class QueryResultDpsSerializer implements ObjectSerializer, ObjectDeseria
                     }
                 }
             }
-            retMap.put(Long.parseLong(entry.getKey()), entry.getValue());
+            retMap.put(Long.parseLong(String.valueOf(entry.getKey())), entry.getValue());
         }
 
-        return retMap;
+        return new LinkedHashMap<Long, Object>(retMap);
     }
 
 
