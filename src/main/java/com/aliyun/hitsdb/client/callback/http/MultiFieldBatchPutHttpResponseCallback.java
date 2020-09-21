@@ -5,6 +5,7 @@ import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutDetailsCallback;
+import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutIgnoreErrorsCallback;
 import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutSummaryCallback;
 import com.aliyun.hitsdb.client.exception.http.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
@@ -15,6 +16,7 @@ import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
 import com.aliyun.hitsdb.client.value.response.batch.MultiFieldDetailsResult;
+import com.aliyun.hitsdb.client.value.response.batch.MultiFieldIgnoreErrorsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
@@ -85,6 +87,14 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                         detailsResult = JSON.parseObject(content, MultiFieldDetailsResult.class);
                     }
                     ((MultiFieldBatchPutDetailsCallback) multiFieldBatchPutCallback).response(this.address, pointList, detailsResult);
+                    return;
+                } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutIgnoreErrorsCallback) {
+                    MultiFieldIgnoreErrorsResult ignoreErrorsResult = null;
+                    if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
+                        String content = resultResponse.getContent();
+                        ignoreErrorsResult = JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
+                    }
+                    ((MultiFieldBatchPutIgnoreErrorsCallback) multiFieldBatchPutCallback).response(this.address, pointList, ignoreErrorsResult);
                     return;
                 }
             case ServerNotSupport: {
