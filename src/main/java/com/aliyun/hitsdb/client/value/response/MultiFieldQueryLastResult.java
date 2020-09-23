@@ -4,6 +4,8 @@ import com.alibaba.fastjson.annotation.JSONField;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -44,5 +46,17 @@ public class MultiFieldQueryLastResult {
 
     public Map<String, String> getTags() {
         return tags;
+    }
+
+    public List<Map<String, Object>> asMap() {
+        final List<Map<String, Object>> columnValueMap = new LinkedList<Map<String, Object>>();
+        for (List<Object> value : values) {
+            final LinkedHashMap<String, Object> kv = new LinkedHashMap<String, Object>();
+            for (int j = 0; j < columns.size(); j++) {
+                kv.put(columns.get(j), value.get(j));
+            }
+            columnValueMap.add(kv);
+        }
+        return columnValueMap;
     }
 }
