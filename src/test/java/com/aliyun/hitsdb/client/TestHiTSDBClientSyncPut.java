@@ -80,7 +80,7 @@ public class TestHiTSDBClientSyncPut {
 			point.setTags(tags);
 			points.add(point);
 		}
-		Result result = tsdb.putSync(points, DetailsResult.class);
+		Result result = tsdb.putSync(, points, DetailsResult.class);
 		System.out.println(result);
 	}
 }

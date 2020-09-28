@@ -1249,4 +1249,18 @@ public class BalTSDBClient implements TSDB {
             SYNC.set(true);
         }
     }
+
+    /**
+     * switch the current database in use,
+     * so that the target database of the following query or write would be switched to the new one
+     *
+     * @param database
+     */
+    @Override
+    public void useDatabase(String database) {
+        //TODO:
+        throw new NotImplementedException();
+    }
+
+
 }

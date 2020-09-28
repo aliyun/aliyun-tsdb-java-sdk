@@ -49,6 +49,7 @@ public class TSDBClient implements TSDB {
     private RateLimiter rateLimiter;
     private final Config config;
     private static Field queryDeleteField;
+    private String currentDatabase;
 
     static {
         try {
@@ -86,6 +87,9 @@ public class TSDBClient implements TSDB {
             this.queue = null;
             this.consumer = null;
         }
+
+        // set the default database
+        this.currentDatabase = TSDB.DEFAULT_DATABASE;
 
         this.httpclient.start();
         LOGGER.info("The tsdb client has started.");
@@ -160,10 +164,26 @@ public class TSDBClient implements TSDB {
         LOGGER.info("The tsdb client has closed.");
     }
 
+    private static Map<String, String> wrapDatabaseRequestParam(String database) {
+        if ((database == null) || database.isEmpty()) {
+            throw new IllegalArgumentException("invalid database specified");
+        }
+
+        Map<String, String> paramsMap = new HashMap<String, String>();
+        if (!database.equals(TSDB.DEFAULT_DATABASE)) {
+            paramsMap.put("db", database);
+        }
+
+        return paramsMap;
+    }
+
     @Override
     public void deleteData(String metric, long startTime, long endTime) {
         MetricTimeRange metricTimeRange = new MetricTimeRange(metric, startTime, endTime);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -171,7 +191,10 @@ public class TSDBClient implements TSDB {
     @Override
     public void deleteData(String metric, Map<String, String> tags, long startTime, long endTime) {
         MetricTimeRange metricTimeRange = new MetricTimeRange(metric, tags, startTime, endTime);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -179,7 +202,10 @@ public class TSDBClient implements TSDB {
     @Override
     public void deleteData(String metric, List<String> fields, long startTime, long endTime) {
         MetricTimeRange metricTimeRange = new MetricTimeRange(metric, fields, startTime, endTime);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -187,7 +213,10 @@ public class TSDBClient implements TSDB {
     @Override
     public void deleteData(String metric, Map<String, String> tags, List<String> fields, long startTime, long endTime) {
         MetricTimeRange metricTimeRange = new MetricTimeRange(metric, tags, fields, startTime, endTime);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -252,7 +281,10 @@ public class TSDBClient implements TSDB {
 
     @Override
     public void deleteMeta(Timeline timeline) {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_META, timeline.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_META, timeline.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -284,7 +316,9 @@ public class TSDBClient implements TSDB {
 
     @Override
     public void deleteMeta(DeleteMetaRequest request) {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_META, request.toJSON());
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_META, request.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -311,7 +345,9 @@ public class TSDBClient implements TSDB {
 
 
     private List<TagResult> doDumpMeta(DumpMetaValue dumpMetaValue) {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON());
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -333,7 +369,10 @@ public class TSDBClient implements TSDB {
     @Override
     public List<String> dumpMetric(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(tagkey, tagValuePrefix, max, true);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -401,7 +440,9 @@ public class TSDBClient implements TSDB {
         }
         Query query = Query.timeRange(startTime, endTime).sub(singleValuedSubQueries).build();
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -756,7 +797,9 @@ public class TSDBClient implements TSDB {
 
     @Override
     public List<QueryResult> query(Query query) {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -782,6 +825,12 @@ public class TSDBClient implements TSDB {
 	@Override
 	public SQLResult queryBySQL(String sql) throws HttpUnknowStatusException {
 		SQLValue sqlValue = new SQLValue(sql);
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+        if (!paramsMap.isEmpty()) {
+            throw new IllegalStateException("SQL interface not support database besides default");
+        }
+
 		HttpResponse httpResponse = httpclient.post(HttpAPI.SQL, sqlValue.toJSON());
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
@@ -809,7 +858,9 @@ public class TSDBClient implements TSDB {
             httpCallback = this.httpResponseCallbackFactory.createQueryCallback(address, callback, query);
         }
 
-        httpclient.postToAddress(address, HttpAPI.QUERY, query.toJSON(), httpCallback);
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        httpclient.postToAddress(address, HttpAPI.QUERY, query.toJSON(), paramsMap, httpCallback);
     }
 
     @Override
@@ -819,7 +870,9 @@ public class TSDBClient implements TSDB {
     }
 
 	private List<String> suggest(SuggestValue suggestValue) {
-		HttpResponse httpResponse = httpclient.post(HttpAPI.SUGGEST, suggestValue.toJSON());
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+		HttpResponse httpResponse = httpclient.post(HttpAPI.SUGGEST, suggestValue.toJSON(), paramsMap);
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
@@ -853,7 +906,9 @@ public class TSDBClient implements TSDB {
 
     @Override
     public List<LookupResult> lookup(LookupRequest lookupRequest) {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.LOOKUP, lookupRequest.toJSON());
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.LOOKUP, lookupRequest.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -874,6 +929,7 @@ public class TSDBClient implements TSDB {
 
     @Override
     public int ttl() {
+        //TODO: the GET method of HttpClient needs to support query parameters
         HttpResponse httpResponse = httpclient.get(HttpAPI.TTL, null);
         ResultResponse result = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = result.getHttpStatus();
@@ -898,7 +954,10 @@ public class TSDBClient implements TSDB {
     @Override
     public void ttl(int lifetime) {
         TTLValue ttlValue = new TTLValue(lifetime);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.TTL, ttlValue.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.TTL, ttlValue.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -907,7 +966,10 @@ public class TSDBClient implements TSDB {
     public void ttl(int lifetime, TimeUnit unit) {
         int seconds = (int) unit.toSeconds(lifetime);
         TTLValue ttlValue = new TTLValue(seconds);
-        HttpResponse httpResponse = httpclient.post(HttpAPI.TTL, ttlValue.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.TTL, ttlValue.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -1008,15 +1070,15 @@ public class TSDBClient implements TSDB {
 
         String jsonString = JSON.toJSONString(singleValuedPoints, SerializerFeature.DisableCircularReferenceDetect);
 
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
         HttpResponse httpResponse;
         if (resultType.equals(Result.class)) {
-            httpResponse = httpclient.post(HttpAPI.PUT, jsonString);
+            httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else if (resultType.equals(SummaryResult.class)) {
-            Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else if (resultType.equals(DetailsResult.class)) {
-            Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else {
@@ -1056,20 +1118,31 @@ public class TSDBClient implements TSDB {
         return putSync(points, Result.class);
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Synchronous put method
+     *
+     * @param points     points
+     * @param resultType resultType
+     * @return Result
+     */
     @Override
     public <T extends Result> T putSync(Collection<Point> points, Class<T> resultType) {
+        return putSyncInternal(this.currentDatabase, points, resultType);
+    }
+
+
+    <T extends Result> T putSyncInternal(String database, Collection<Point> points, Class<T> resultType) {
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(database);
 
         HttpResponse httpResponse;
         if (resultType.equals(Result.class)) {
-            httpResponse = httpclient.post(HttpAPI.PUT, jsonString);
+            httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else if (resultType.equals(SummaryResult.class)) {
-            Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else if (resultType.equals(DetailsResult.class)) {
-            Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else {
@@ -1113,7 +1186,10 @@ public class TSDBClient implements TSDB {
         } catch (IllegalAccessException e) {
             throw new HttpClientException(e);
         }
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -1133,7 +1209,10 @@ public class TSDBClient implements TSDB {
         JSONObject obj = new JSONObject();
         obj.put("queries", timelinesJSON);
         String jsonString = obj.toJSONString();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1276,7 +1355,10 @@ public class TSDBClient implements TSDB {
         JSONObject obj = new JSONObject();
         obj.put("queries", timelinesJSON);
         String jsonString = obj.toJSONString();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1312,7 +1394,10 @@ public class TSDBClient implements TSDB {
         JSONObject obj = new JSONObject();
         obj.put("queries", tsuidsJSONObjList); /* Convert to "queries":[{"tsuid":["000001000001000001","000001000001000002,...]}] */
         String jsonString = obj.toJSONString();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1434,7 +1519,10 @@ public class TSDBClient implements TSDB {
                     "please use multiFieldQueryLast() instead.");
         }
         String jsonString = query.toJSON();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1457,7 +1545,9 @@ public class TSDBClient implements TSDB {
 
     @Override
     public boolean truncate() throws HttpUnknowStatusException {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.TRUNCATE, EMPTY_JSON_STR);
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.TRUNCATE, EMPTY_JSON_STR, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1487,24 +1577,31 @@ public class TSDBClient implements TSDB {
      */
 
     /**
-     * Synchronous /api/mput endpoint
+     * /api/mput endpoint
+     * Synchronous put method
      *
-     * @param points points
-     * @return
+     * @param points     points
+     * @param resultType
+     * @return Result
      */
     @Override
     public <T extends Result> T multiFieldPutSync(Collection<MultiFieldPoint> points, Class<T> resultType) {
+        return multiFieldPutSyncInternal(this.currentDatabase, points, resultType);
+    }
+
+
+    <T extends Result> T multiFieldPutSyncInternal(String database, Collection<MultiFieldPoint> points, Class<T> resultType) {
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(database);
 
         HttpResponse httpResponse;
         if (resultType.equals(Result.class)) {
-            httpResponse = httpclient.post(HttpAPI.MPUT, jsonString);
+            httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
         } else if (resultType.equals(SummaryResult.class)) {
-            Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
         } else if (resultType.equals(DetailsResult.class)) {
-            Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
         } else {
@@ -1577,7 +1674,9 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public List<MultiFieldQueryResult> multiFieldQuery(MultiFieldQuery query) throws HttpUnknowStatusException {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.MQUERY, query.toJSON());
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.MQUERY, query.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1617,7 +1716,10 @@ public class TSDBClient implements TSDB {
         }
 
         String jsonString = lastPointQuery.toJSON();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_MLAST, jsonString);
+
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_MLAST, jsonString, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1736,16 +1838,72 @@ public class TSDBClient implements TSDB {
     @Override
     public void flush() {
         final Point[] points = this.queue.getPoints();
-        if (points == null || points.length == 0) {
-            return;
+        final MultiFieldPoint[] mpoints = this.queue.getMultiFieldPoints();
+        if ((points != null) && (points.length > 0)) {
+            flushPoints(this.currentDatabase, points);
         }
+
+        if ((mpoints != null) && (mpoints.length > 0)) {
+            flushPoints(this.currentDatabase, mpoints);
+        }
+    }
+
+    private <T extends AbstractPoint> void flushPoints(String database, T[] points) {
         final int batchPutSize = this.config.getBatchPutSize();
-        final ArrayList<Point> pointList = new ArrayList<Point>(points.length);
+        final ArrayList<T> pointList = new ArrayList<T>(points.length);
         Collections.addAll(pointList, points);
+
+        boolean singleValue = true;
+        if (points.length > 1) {
+            if (points[0] instanceof MultiFieldPoint) {
+                singleValue = false;
+            } else if (!(points[0] instanceof Point)) {
+                throw new IllegalArgumentException(String.format("unrecognised implementation of AbstractPoint: %s", points[0].getClass().getName()));
+            }
+        }
+
         for (int i = 0; i <= points.length - 1; i += batchPutSize) {
             final int endBound = Math.min(points.length, i + batchPutSize);
-            final List<Point> sub = pointList.subList(i, endBound);
-            this.putSync(sub);
+            final List<T> sub = pointList.subList(i, endBound);
+            if (singleValue) {
+                List<Point> subPoints = (List<Point>)sub;
+                this.putSyncInternal(database, subPoints, Result.class);
+            } else {
+                List<MultiFieldPoint> subPoints = (List<MultiFieldPoint>)sub;
+                this.multiFieldPutSyncInternal(database, subPoints, Result.class);
+            }
         }
+    }
+
+    /**
+     * switch the current database in use,
+     * so that the target database of the following query or write would be switched to the new one
+     *
+     * @param database
+     */
+    @Override
+    public void useDatabase(String database) {
+        if ((database == null) || database.isEmpty()) {
+            throw new IllegalArgumentException("invalid database specified");
+        }
+
+        String previousDatabase = this.currentDatabase;
+        if (previousDatabase.equals(database)) {
+            return;
+        }
+
+        this.queue.pause();
+
+        final Point[] points = this.queue.getPoints();
+        final MultiFieldPoint[] mpoints = this.queue.getMultiFieldPoints();
+
+        //switch to new database
+        this.currentDatabase = database;
+
+        this.queue.unpause();
+
+        //flush the retrieved points;
+        flushPoints(previousDatabase, points);
+        flushPoints(previousDatabase, mpoints);
     }
 }

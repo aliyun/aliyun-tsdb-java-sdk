@@ -17,6 +17,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public interface TSDB extends Closeable {
+
+    String DEFAULT_DATABASE = "default";
+
     /**
      * Asynchronous put point
      *
@@ -73,9 +76,9 @@ public interface TSDB extends Closeable {
     /**
      * Synchronous put method
      *
+     * @param <T>        Result.class, SummaryResult.class, DetailsResult.class
      * @param points     points
      * @param resultType resultType
-     * @param <T>        Result.class, SummaryResult.class, DetailsResult.class
      * @return Result
      */
     <T extends Result> T putSync(Collection<Point> points, Class<T> resultType);
@@ -631,4 +634,10 @@ public interface TSDB extends Closeable {
      * Flush data points in queue.
      */
     void flush();
+
+    /**
+     * switch the current database in use,
+     * so that the target database of the following query or write would be switched to the new one
+     */
+    void useDatabase(String database);
 }

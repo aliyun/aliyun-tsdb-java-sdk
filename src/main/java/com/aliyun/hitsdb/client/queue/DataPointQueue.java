@@ -18,6 +18,9 @@ public class DataPointQueue implements DataQueue {
     private final BlockingQueue<Point> pointQueue;
     private final BlockingQueue<MultiFieldPoint> multiFieldPointQueue;
     private final AtomicBoolean forbiddenWrite = new AtomicBoolean(false);
+    private final AtomicBoolean pause = new AtomicBoolean(false);    // used for context switch
+    private static final int PAUSE_RETRIES = 5;
+    private static final int PAUSE_WAIT_MILLIS = 500;
     private final int waitCloseTimeLimit;
     private final boolean backpressure;
 
@@ -56,6 +59,20 @@ public class DataPointQueue implements DataQueue {
     private void verifyWrite() {
         if (forbiddenWrite.get()) {
             throw new IllegalStateException("client has been closed.");
+        }
+
+        // if the context being switched, block for temporary
+        int i = 0;
+        while (pause.get()) {
+            if (i < PAUSE_RETRIES) {
+                try {
+                    Thread.sleep(PAUSE_WAIT_MILLIS * (i + 1));
+                } catch (InterruptedException iex) {
+                    throw new RuntimeException("unexpected interrupt while being blocked", iex);
+                }
+            } else {
+                throw new IllegalStateException("the background queue is blocked due to context switch");
+            }
         }
     }
 
@@ -140,5 +157,37 @@ public class DataPointQueue implements DataQueue {
     @Override
     public Point[] getPoints() {
         return pointQueue.toArray(new Point[0]);
+    }
+
+    @Override
+    public MultiFieldPoint[] getMultiFieldPoints() {
+        return multiFieldPointQueue.toArray(new MultiFieldPoint[0]);
+    }
+
+    /**
+     * pause for a while to block all the put request
+     */
+    @Override
+    public void pause() {
+        int i = 0;
+        while (!forbiddenWrite.compareAndSet(false, true)) {
+            if (i < PAUSE_RETRIES) {
+                try {
+                    Thread.sleep(PAUSE_WAIT_MILLIS * (i + 1));
+                } catch (InterruptedException iex) {
+                    throw new RuntimeException("unexpected interrupt waiting for switching context", iex);
+                }
+            } else {
+                throw new IllegalStateException("too many times retried");
+            }
+        }
+    }
+
+    /**
+     * unpause for recovery
+     */
+    @Override
+    public void unpause() {
+        forbiddenWrite.compareAndSet(true, false);
     }
 }
