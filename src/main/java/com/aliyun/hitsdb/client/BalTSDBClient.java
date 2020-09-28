@@ -1259,4 +1259,16 @@ public class BalTSDBClient implements TSDB {
     public void multiFieldPut(Collection<MultiFieldPoint> points, AbstractMultiFieldBatchPutCallback batchPutCallback) {
         throw new NotImplementedException();
     }
+
+    /**
+     * switch the current database in use,
+     * so that the target database of the following query or write would be switched to the new one
+     *
+     * @param database
+     */
+    @Override
+    public void useDatabase(String database) {
+        //TODO:
+        throw new NotImplementedException();
+    }
 }

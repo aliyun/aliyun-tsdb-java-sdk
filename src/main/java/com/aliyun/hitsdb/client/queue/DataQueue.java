@@ -31,4 +31,16 @@ public interface DataQueue {
     boolean isEmpty();
 
     Point[] getPoints();
+
+    MultiFieldPoint[] getMultiFieldPoints();
+
+    /**
+     * pause for a while to block all the put request
+     */
+    void pause();
+
+    /**
+     * unpause for recovery
+     */
+    void unpause();
 }
