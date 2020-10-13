@@ -54,8 +54,9 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         // 处理响应
         if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
             this.hitsdbHttpClient.setSslEnable(true);
-            errorRetry();
-            return;
+            if (errorRetry()) {
+                return;
+            }
         }
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.compress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
@@ -145,7 +146,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         return newAddress;
     }
 
-    private void errorRetry() {
+    private boolean errorRetry() {
         String newAddress;
         boolean acquire;
         int retryTimes = this.batchPutRetryTimes;
@@ -160,7 +161,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
 
         if (retryTimes == 0) {
             this.hitsdbHttpClient.getSemaphoreManager().release(address);
-            return;
+            return false;
         }
 
         // retry!
@@ -176,6 +177,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
 
         String jsonString = JSON.toJSONString(pointList);
         this.hitsdbHttpClient.post(HttpAPI.MPUT, jsonString, retryCallback);
+        return true;
     }
 
     @Override
@@ -185,13 +187,17 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientSocketTimeoutException(ex);
             } else {
-                errorRetry();
+                if (errorRetry()) {
+                    return;
+                }
             }
         } else if (ex instanceof java.net.ConnectException) {
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientConnectionRefusedException(this.address, ex);
             } else {
-                errorRetry();
+                if (errorRetry()) {
+                    return;
+                }
             }
         }
 
