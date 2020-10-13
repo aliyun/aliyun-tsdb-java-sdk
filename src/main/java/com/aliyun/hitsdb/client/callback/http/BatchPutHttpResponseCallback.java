@@ -4,19 +4,19 @@ import java.net.SocketTimeoutException;
 import java.util.List;
 
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.callback.BatchPutIgnoreErrorsCallback;
+import com.aliyun.hitsdb.client.value.response.batch.IgnoreErrorsResult;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutDetailsCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutSummaryCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientConnectionRefusedException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientException;
 import com.aliyun.hitsdb.client.exception.http.HttpClientSocketTimeoutException;
 import com.aliyun.hitsdb.client.exception.http.HttpServerErrorException;
 import com.aliyun.hitsdb.client.exception.http.HttpServerNotSupportException;
@@ -91,8 +91,15 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
                         String content = resultResponse.getContent();
                         detailsResult = JSON.parseObject(content, DetailsResult.class);
                     }
-
                     ((BatchPutDetailsCallback) batchPutCallback).response(this.address, pointList, detailsResult);
+                    return;
+                } else if (batchPutCallback instanceof BatchPutIgnoreErrorsCallback) {
+                    IgnoreErrorsResult ignoreErrorsResult = null;
+                    if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
+                        String content = resultResponse.getContent();
+                        ignoreErrorsResult = JSON.parseObject(content, IgnoreErrorsResult.class);
+                    }
+                    ((BatchPutIgnoreErrorsCallback) batchPutCallback).response(this.address, pointList, ignoreErrorsResult);
                     return;
                 }
             case ServerNotSupport: {

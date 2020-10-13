@@ -1,7 +1,6 @@
 package com.aliyun.hitsdb.client.callback;
 
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
-import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 
 import java.util.List;
