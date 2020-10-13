@@ -186,14 +186,12 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                 ex = new HttpClientSocketTimeoutException(ex);
             } else {
                 errorRetry();
-                return;
             }
         } else if (ex instanceof java.net.ConnectException) {
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientConnectionRefusedException(this.address, ex);
             } else {
                 errorRetry();
-                return;
             }
         }
 
@@ -203,7 +201,6 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         // 处理完毕，向逻辑层传递异常并处理。
         if (multiFieldBatchPutCallback == null) {
             LOGGER.error("multi field no callback logic exception.", ex);
-            return;
         } else {
             multiFieldBatchPutCallback.failed(this.address, pointList, ex);
         }
