@@ -278,10 +278,6 @@ public class Point extends AbstractPoint {
             throw new IllegalArgumentException("The value can't be all null");
         }
 
-        if (point.value instanceof String && ((String) point.value).isEmpty()) {
-            throw new IllegalArgumentException("The value can't be empty");
-        }
-
         if (point.value instanceof Number && point.value == (Number) Double.NaN) {
             throw new IllegalArgumentException("The value can't be NaN");
         }

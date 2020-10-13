@@ -220,10 +220,6 @@ public class MultiFieldPoint extends AbstractPoint {
                 throw new IllegalArgumentException("Field value can't be null or empty.");
             }
 
-            if (field.getValue() instanceof String && ((String) field.getValue()).isEmpty()) {
-                throw new IllegalArgumentException("String field value can't be empty");
-            }
-
             if (field.getValue() instanceof Number && field.getValue() == (Number) Double.NaN) {
                 throw new IllegalArgumentException("Number field value can't be NaN");
             }
