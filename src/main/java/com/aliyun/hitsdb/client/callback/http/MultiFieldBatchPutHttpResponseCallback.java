@@ -186,6 +186,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         if (ex instanceof SocketTimeoutException) {
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientSocketTimeoutException(ex);
+                this.hitsdbHttpClient.getSemaphoreManager().release(address);
             } else {
                 if (errorRetry()) {
                     return;
@@ -194,15 +195,13 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         } else if (ex instanceof java.net.ConnectException) {
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientConnectionRefusedException(this.address, ex);
+                this.hitsdbHttpClient.getSemaphoreManager().release(address);
             } else {
                 if (errorRetry()) {
                     return;
                 }
             }
         }
-
-        // 重试后释放semaphore许可
-        this.hitsdbHttpClient.getSemaphoreManager().release(address);
 
         // 处理完毕，向逻辑层传递异常并处理。
         if (multiFieldBatchPutCallback == null) {
