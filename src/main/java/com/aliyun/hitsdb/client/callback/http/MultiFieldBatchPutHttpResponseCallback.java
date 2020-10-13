@@ -169,7 +169,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
 
         FutureCallback<HttpResponse> retryCallback;
         if (multiFieldBatchPutCallback != null) {
-            retryCallback = httpResponseCallbackFactory.createMultiFieldBatchPutDataCallback(newAddress, this.multiFieldBatchPutCallback, this.pointList, this.config);
+            retryCallback = httpResponseCallbackFactory.createMultiFieldBatchPutDataCallback(newAddress, this.multiFieldBatchPutCallback, this.pointList, this.config, retryTimes);
         } else {
             retryCallback = httpResponseCallbackFactory.createMultiFieldNoLogicBatchPutHttpFutureCallback(newAddress, this.pointList, this.config, retryTimes);
         }
