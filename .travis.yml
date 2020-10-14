@@ -1,0 +1,9 @@
+language: java
+dist: trusty
+jdk:
+  - oraclejdk8
+script:
+  - mvn clean package -Dmaven.test.skip=true
+branches:
+  only:
+  - master
