@@ -186,8 +186,8 @@ public class MultiFieldBatchPutRunnable implements Runnable {
                             address,
                             this.multiFieldBatchPutCallback,
                             pointList,
-                            config
-                    );
+                            config,
+                            config.getBatchPutRetryCount());
 
             try {
                 tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, paramsMap, postHttpCallback);

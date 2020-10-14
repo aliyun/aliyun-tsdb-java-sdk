@@ -79,15 +79,15 @@ public class HttpResponseCallbackFactory {
             final String address,
             final AbstractMultiFieldBatchPutCallback<?> batchPutCallback,
             final List<MultiFieldPoint> pointList,
-            final Config config
-    ) {
+            final Config config,
+            final int retryTimes) {
         FutureCallback<HttpResponse> httpCallback = new MultiFieldBatchPutHttpResponseCallback(
                 address,
                 hitsdbHttpclient,
                 batchPutCallback,
                 pointList,
                 config,
-                config.getBatchPutRetryCount()
+                retryTimes
         );
         return httpCallback;
     }
