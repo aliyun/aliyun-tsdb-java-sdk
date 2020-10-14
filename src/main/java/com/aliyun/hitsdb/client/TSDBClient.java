@@ -1191,15 +1191,10 @@ public class TSDBClient implements TSDB {
         } else if (resultType.equals(SummaryResult.class)) {
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
-        } else if (resultType.equals(MultiFieldDetailsResult.class)) {
-            paramsMap = new HashMap<String, String>();
-            paramsMap.put("details", "true");
-            httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else if (resultType.equals(DetailsResult.class)) {
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
-        } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
-            paramsMap = new HashMap<String, String>();
+        } else if (resultType.equals(IgnoreErrorsResult.class)) {
             paramsMap.put("ignoreErrors", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else {
@@ -1218,10 +1213,10 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 if (resultType.equals(SummaryResult.class)) {
                     result = (T) JSON.parseObject(content, SummaryResult.class);
-                } else if (resultType.equals(MultiFieldDetailsResult.class)) {
-                    result = (T) JSON.parseObject(content, MultiFieldDetailsResult.class);
-                } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
-                    result = (T) JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
+                } else if (resultType.equals(DetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, DetailsResult.class);
+                } else if (resultType.equals(IgnoreErrorsResult.class)) {
+                    result = (T) JSON.parseObject(content, IgnoreErrorsResult.class);
                 }
 
                 return result;
@@ -1688,9 +1683,6 @@ public class TSDBClient implements TSDB {
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
         } else if (resultType.equals(MultiFieldDetailsResult.class)) {
-            paramsMap.put("details", "true");
-            httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
-        } else if (resultType.equals(DetailsResult.class)) {
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
         } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
