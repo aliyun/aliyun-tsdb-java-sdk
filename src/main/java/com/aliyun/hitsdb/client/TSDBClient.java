@@ -23,6 +23,8 @@ import com.aliyun.hitsdb.client.value.request.*;
 import com.aliyun.hitsdb.client.value.response.*;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.IgnoreErrorsResult;
+import com.aliyun.hitsdb.client.value.response.batch.MultiFieldDetailsResult;
+import com.aliyun.hitsdb.client.value.response.batch.MultiFieldIgnoreErrorsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
 import com.aliyun.hitsdb.client.value.type.Suggest;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
@@ -1016,11 +1018,11 @@ public class TSDBClient implements TSDB {
             Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
-        } else if (resultType.equals(DetailsResult.class)) {
+        } else if (resultType.equals(MultiFieldDetailsResult.class)) {
             Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
-        } else if (resultType.equals(IgnoreErrorsResult.class)) {
+        } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
             Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("ignoreErrors", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
@@ -1040,10 +1042,10 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 if (resultType.equals(SummaryResult.class)) {
                     result = (T) JSON.parseObject(content, SummaryResult.class);
-                } else if (resultType.equals(DetailsResult.class)) {
-                    result = (T) JSON.parseObject(content, DetailsResult.class);
-                } else if (resultType.equals(IgnoreErrorsResult.class)) {
-                    result = (T) JSON.parseObject(content, IgnoreErrorsResult.class);
+                } else if (resultType.equals(MultiFieldDetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, MultiFieldDetailsResult.class);
+                } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
+                    result = (T) JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
                 }
 
                 return result;
@@ -1516,11 +1518,11 @@ public class TSDBClient implements TSDB {
             Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
-        } else if (resultType.equals(DetailsResult.class)) {
+        } else if (resultType.equals(MultiFieldDetailsResult.class)) {
             Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
-        } else if (resultType.equals(IgnoreErrorsResult.class)) {
+        } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
             Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("ignoreErrors", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
@@ -1540,10 +1542,10 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 if (resultType.equals(SummaryResult.class)) {
                     result = (T) JSON.parseObject(content, SummaryResult.class);
-                } else if (resultType.equals(DetailsResult.class)) {
-                    result = (T) JSON.parseObject(content, DetailsResult.class);
-                } else if (resultType.equals(IgnoreErrorsResult.class)) {
-                    result = (T) JSON.parseObject(content, IgnoreErrorsResult.class);
+                } else if (resultType.equals(MultiFieldDetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, MultiFieldDetailsResult.class);
+                } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
+                    result = (T) JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
                 }
 
                 return result;
