@@ -187,8 +187,8 @@ public class BatchPutRunnable implements Runnable {
                             address,
                             this.batchPutCallback,
                             pointList,
-                            config
-                    );
+                            config,
+                            config.getBatchPutRetryCount());
 
             try {
                 tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);

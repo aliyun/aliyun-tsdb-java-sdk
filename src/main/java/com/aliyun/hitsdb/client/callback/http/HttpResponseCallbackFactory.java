@@ -41,15 +41,15 @@ public class HttpResponseCallbackFactory {
             final String address,
             final AbstractBatchPutCallback<?> batchPutCallback,
             final List<Point> pointList,
-            final Config config
-    ) {
+            final Config config,
+            final int retryTimes) {
         FutureCallback<HttpResponse> httpCallback = new BatchPutHttpResponseCallback(
                 address,
                 hitsdbHttpclient,
                 batchPutCallback,
                 pointList,
                 config,
-                config.getBatchPutRetryCount()
+                retryTimes
         );
         return httpCallback;
     }
