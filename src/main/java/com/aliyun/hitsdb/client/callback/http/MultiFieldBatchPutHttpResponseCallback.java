@@ -120,9 +120,9 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                 return;
             }
             default: {
+                this.hitsdbHttpClient.getSemaphoreManager().release(address);
                 HttpUnknowStatusException ex = new HttpUnknowStatusException(resultResponse);
                 this.failedWithResponse(ex);
-                return;
             }
         }
     }

@@ -297,7 +297,6 @@ public class BalTSDBClient implements TSDB {
                 // 判断这个host 是否在健康列表中，若在这直接返回
                 if (healthClientMap.containsKey(host)) {
                     LOG.info("the tsdb is work well : {}", host);
-                    return;
                 } else {
                     // 不健康的host已经正常了，则添加进正常client列表中
                     TSDB client = nonHealthClientMap.remove(host);

@@ -124,9 +124,9 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
                 return;
             }
             default: {
+                this.hitsdbHttpClient.getSemaphoreManager().release(address);
                 HttpUnknowStatusException ex = new HttpUnknowStatusException(resultResponse);
                 this.failedWithResponse(ex);
-                return;
             }
         }
     }
@@ -189,6 +189,7 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         if (ex instanceof SocketTimeoutException) {
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientSocketTimeoutException(ex);
+                this.hitsdbHttpClient.getSemaphoreManager().release(address);
             } else {
                 errorRetry();
                 return;
@@ -196,6 +197,7 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         } else if (ex instanceof java.net.ConnectException) {
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientConnectionRefusedException(this.address, ex);
+                this.hitsdbHttpClient.getSemaphoreManager().release(address);
             } else {
                 errorRetry();
                 return;
@@ -208,7 +210,6 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         // 处理完毕，向逻辑层传递异常并处理。
         if (batchPutCallback == null) {
             LOGGER.error("No callback logic exception.", ex);
-            return;
         } else {
             batchPutCallback.failed(this.address, pointList, ex);
         }

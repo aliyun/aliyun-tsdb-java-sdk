@@ -160,7 +160,6 @@ public class BatchPutRunnable implements Runnable {
 
         if (readyClose) {
             this.countDownLatch.countDown();
-            return;
         }
     }
 

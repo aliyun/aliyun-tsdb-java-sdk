@@ -42,7 +42,6 @@ public class DataPointQueue implements DataQueue {
                 pointQueue.put(point);
             } catch (InterruptedException e) {
                 LOGGER.error("Client Thread been Interrupted.", e);
-                return;
             }
         } else {
             try {
@@ -77,7 +76,6 @@ public class DataPointQueue implements DataQueue {
                 multiFieldPointQueue.put(point);
             } catch (InterruptedException e) {
                 LOGGER.error("Client Thread been Interrupted.", e);
-                return;
             }
         } else {
             try {

@@ -159,7 +159,6 @@ public class MultiFieldBatchPutRunnable implements Runnable {
 
         if (readyClose) {
             this.countDownLatch.countDown();
-            return;
         }
     }
 
