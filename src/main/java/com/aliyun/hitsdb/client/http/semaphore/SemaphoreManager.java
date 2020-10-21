@@ -1,12 +1,13 @@
 package com.aliyun.hitsdb.client.http.semaphore;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.TimeUnit;
 
 public class SemaphoreManager {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SemaphoreManager.class);
@@ -45,6 +46,10 @@ public class SemaphoreManager {
 	}
 
 	public boolean acquire(String address) {
+		return acquire(address, 3, 10, TimeUnit.MILLISECONDS);
+	}
+
+	public boolean acquire(String address, long retry, long timeout, TimeUnit unit) {
 		if (!this.putRequestLimitSwitch) {
 			return true;
 		}
@@ -55,10 +60,14 @@ public class SemaphoreManager {
 			return false;
 		}
 
-		for (int i = 0; i < 3; i++) {
-			boolean acquire = semaphore.tryAcquire();
+		for (int i = 0; i < retry; i++) {
+			boolean acquire = false;
+			try {
+				acquire = semaphore.tryAcquire(timeout, unit);
+			} catch (InterruptedException ignored) {
+			}
 			if (acquire) {
-				return acquire;
+				return true;
 			}
 		}
 
