@@ -191,7 +191,6 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         if (ex instanceof SocketTimeoutException) {
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientSocketTimeoutException(ex);
-                this.hitsdbHttpClient.getSemaphoreManager().release(address);
             } else {
                 if (errorRetry()) {
                     return;
@@ -200,7 +199,6 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         } else if (ex instanceof java.net.ConnectException) {
             if (this.batchPutRetryTimes == 0) {
                 ex = new HttpClientConnectionRefusedException(this.address, ex);
-                this.hitsdbHttpClient.getSemaphoreManager().release(address);
             } else {
                 if (errorRetry()) {
                     return;
