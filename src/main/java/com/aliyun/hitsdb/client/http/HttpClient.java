@@ -360,6 +360,13 @@ public class HttpClient {
         return execute(request, json);
     }
 
+    public HttpResponse get(String apiPath, String json, Map<String, String> params) throws HttpClientException {
+        String httpFullAPI = getUrl(apiPath);
+        URI uri = createURI(httpFullAPI, params);
+        final HttpGetWithEntity request = new HttpGetWithEntity(uri);
+        return execute(request, json);
+    }
+
     public void get(String apiPath, String json, FutureCallback<HttpResponse> httpCallback) {
         final HttpGetWithEntity request = new HttpGetWithEntity(getUrl(apiPath));
         executeCallback(request, json, httpCallback);
