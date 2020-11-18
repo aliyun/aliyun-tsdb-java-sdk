@@ -930,7 +930,9 @@ public class TSDBClient implements TSDB {
     @Override
     public int ttl() {
         //TODO: the GET method of HttpClient needs to support query parameters
-        HttpResponse httpResponse = httpclient.get(HttpAPI.TTL, null);
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.currentDatabase);
+
+        HttpResponse httpResponse = httpclient.get(HttpAPI.TTL, null, paramsMap);
         ResultResponse result = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = result.getHttpStatus();
         switch (httpStatus) {
