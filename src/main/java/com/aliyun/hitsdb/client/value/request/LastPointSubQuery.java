@@ -12,7 +12,6 @@ public class LastPointSubQuery extends HashMap<String, Object> {
 
     public static class Builder {
         private LastPointSubQuery query = new LastPointSubQuery();
-        private Map<String, Map<String, Integer>> hint;
 
         public Builder(String metric) {
             this.query.setMetric(metric);
@@ -34,12 +33,15 @@ public class LastPointSubQuery extends HashMap<String, Object> {
         }
 
         public Builder hint(Map<String, Map<String, Integer>> hint) {
-            this.hint = hint;
+            this.query.setHint(hint);
             return this;
         }
 
         public LastPointSubQuery build() {
-            this.query.setHint(this.hint);
+            // prevent an empty hint map
+            if ((this.query.getHint() != null) && (this.query.getHint().isEmpty())) {
+                throw new IllegalArgumentException("cannot specify an empty hint");
+            }
             return this.query;
         }
     }
@@ -68,7 +70,7 @@ public class LastPointSubQuery extends HashMap<String, Object> {
     private static final String FIELDS = "fields";
     private static final String TAGS = "tags";
     private static final String TSUIDS = "tsuids";
-    private Map<String, Map<String, Integer>> hint;
+    private static final String HINT   = "hint";
 
     public String getMetric() {
         return (String) this.get(METRIC);
@@ -109,10 +111,10 @@ public class LastPointSubQuery extends HashMap<String, Object> {
     }
 
     public Map<String, Map<String, Integer>> getHint() {
-        return hint;
+        return (Map<String, Map<String, Integer>>)this.get(HINT);
     }
 
     public void setHint(Map<String, Map<String, Integer>> hint) {
-        this.hint = hint;
+        this.put(HINT, hint);
     }
 }
