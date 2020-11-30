@@ -18,7 +18,7 @@ public class JSONValue {
     */
 
     public String toJSON() {
-        return JSON.toJSONString(this, SerializerFeature.DisableCircularReferenceDetect);
+        return JSON.toJSONString(this, SerializerFeature.DisableCircularReferenceDetect, SerializerFeature.SortField, SerializerFeature.SortField.MapSortField);
     }
 
     @Override

@@ -5,9 +5,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.aliyun.hitsdb.client.value.request.DeltaOptions;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.aliyun.hitsdb.client.value.request.Filter;
@@ -17,6 +20,19 @@ import com.aliyun.hitsdb.client.value.type.Aggregator;
 import com.aliyun.hitsdb.client.value.type.FilterType;
 
 public class TestQuery {
+    private static TimeZone defaultTz;
+
+    @BeforeClass
+    public static void setup() {
+        defaultTz = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT+8:00"));
+    }
+
+    @AfterClass
+    public static void finish() {
+        // reset
+        TimeZone.setDefault(defaultTz);
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void testEndTimeGreater() {
@@ -45,8 +61,7 @@ public class TestQuery {
                 .tag("tagk2", "tagv2").build();
 
         String json = subQuery.toJSON();
-        Assert.assertEquals(json,
-                "{\"aggregator\":\"avg\",\"downsample\":\"hello\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}");
+        Assert.assertEquals("{\"aggregator\":\"avg\",\"downsample\":\"hello\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}", json);
     }
     
     @Test
@@ -63,8 +78,7 @@ public class TestQuery {
         		.build();
 
         String json = subQuery.toJSON();
-        Assert.assertEquals(json,
-                "{\"aggregator\":\"avg\",\"downsample\":\"hello\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}");
+        Assert.assertEquals("{\"aggregator\":\"avg\",\"downsample\":\"hello\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}", json);
     }
     
     @Test
@@ -81,8 +95,7 @@ public class TestQuery {
                 .build();
 
         String json = subQuery.toJSON();
-        Assert.assertEquals(json,
-                "{\"aggregator\":\"avg\",\"downsample\":\"60m-avg\",\"filters\":[{\"filter\":\"web[0-9]+.lax.mysite.com\",\"groupBy\":true,\"tagk\":\"host\",\"type\":\"regexp\"},{\"filter\":\"web[0-9]+.lax.mysite.com\",\"groupBy\":true,\"tagk\":\"host2\",\"type\":\"literal_or\"}],\"index\":0,\"metric\":\"test-metric\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}");
+        Assert.assertEquals("{\"aggregator\":\"avg\",\"downsample\":\"60m-avg\",\"filters\":[{\"filter\":\"web[0-9]+.lax.mysite.com\",\"groupBy\":true,\"tagk\":\"host\",\"type\":\"regexp\"},{\"filter\":\"web[0-9]+.lax.mysite.com\",\"groupBy\":true,\"tagk\":\"host2\",\"type\":\"literal_or\"}],\"index\":0,\"metric\":\"test-metric\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}", json);
     }
 
 
@@ -101,8 +114,7 @@ public class TestQuery {
         Query query = Query.start(startTime).sub(subQuery1).sub(subQuery2).build();
         String json = query.toJSON();
         System.out.println(json);
-        Assert.assertEquals(json,
-                "{\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk2\":\"tagv2\",\"tagk1\":\"tagv1\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk2\":\"tagv2\",\"tagk1\":\"tagv1\"}}],\"start\":1501564455000}")
+        Assert.assertEquals("{\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501564455000}", json)
         ;
     }
 
@@ -122,8 +134,7 @@ public class TestQuery {
 
         Query query = Query.start(startTime).end(endTime).sub(subQuery1).sub(subQuery2).build();
         String json = query.toJSON();
-        Assert.assertEquals(json,
-                "{\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
+        Assert.assertEquals("{\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}", json);
     }
     
     @Test
@@ -145,8 +156,7 @@ public class TestQuery {
             .sub(subQuery1).sub(subQuery2).build();
         
         String json = query.toJSON();
-        Assert.assertEquals(json,
-                "{\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
+        Assert.assertEquals("{\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}", json);
     }
     
     @Test
@@ -191,8 +201,7 @@ public class TestQuery {
             .build();
         
         String json = query.toJSON();
-        Assert.assertEquals(json,
-                "{\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"explicitTags\":true,\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"explicitTags\":true,\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":2,\"metric\":\"test3\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
+        Assert.assertEquals("{\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"explicitTags\":true,\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"explicitTags\":true,\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":2,\"metric\":\"test3\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}", json);
     }
     
     @Test
@@ -205,8 +214,8 @@ public class TestQuery {
                 .build();
 
         String json = subQuery.toJSON();
-        Assert.assertEquals(json,
-                "{\"aggregator\":\"avg\",\"downsample\":\"none\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"realTimeSeconds\":100,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}");
+        Assert.assertEquals("{\"aggregator\":\"avg\",\"downsample\":\"none\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"realTimeSeconds\":100,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}",
+                json);
     }
     
     @Test
@@ -229,8 +238,8 @@ public class TestQuery {
         				.build();
         
         String json = query.toJSON();
-        Assert.assertEquals(json,
-                "{\"delete\":true,\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
+        Assert.assertEquals("{\"delete\":true,\"end\":1501564455,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}",
+                json);
     }
 
     @Test
@@ -253,8 +262,8 @@ public class TestQuery {
                 .sub(subQuery1).sub(subQuery2).build();
 
         String json = query.toJSON();
-        Assert.assertEquals(json,
-                "{\"end\":1501564455,\"msResolution\":true,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}");
+        Assert.assertEquals("{\"end\":1501564455,\"msResolution\":true,\"queries\":[{\"aggregator\":\"sum\",\"index\":0,\"metric\":\"test1\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}},{\"aggregator\":\"avg\",\"index\":1,\"metric\":\"test2\",\"rate\":true,\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\"}}],\"start\":1501560855}",
+                json);
     }
 
     @Test

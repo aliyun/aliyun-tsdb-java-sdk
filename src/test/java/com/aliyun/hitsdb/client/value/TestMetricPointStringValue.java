@@ -2,10 +2,9 @@ package com.aliyun.hitsdb.client.value;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import com.aliyun.hitsdb.client.value.request.Point;
 
@@ -13,6 +12,20 @@ public class TestMetricPointStringValue {
     
     private String metric;
     private long time;
+
+    private static TimeZone defaultTz;
+
+    @BeforeClass
+    public static void setup() {
+        defaultTz = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT+8:00"));
+    }
+
+    @AfterClass
+    public static void finish() {
+        // reset
+        TimeZone.setDefault(defaultTz);
+    }
     
     @Before
     public void init() throws ParseException {
@@ -33,11 +46,11 @@ public class TestMetricPointStringValue {
                 .build();
 
         String json = point.toJSON();
-        Assert.assertEquals(json,
-                "{\"metric\":\"test\",\"stringValue\":\"456789\",\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\",\"tagk3\":\"tagv3\"},\"timestamp\":1501564455,\"value\":12.3}");
+        Assert.assertEquals("{\"metric\":\"test\",\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\",\"tagk3\":\"tagv3\"},\"timestamp\":1501564455,\"value\":12.3}",
+                json);
     }
     
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testPoint1() {
         int timestamp = (int) (time / 1000);
         Point point = Point
@@ -45,9 +58,5 @@ public class TestMetricPointStringValue {
                 .tag("tagk1", "tagv1").tag("tagk2", "tagv2").tag("tagk3", "tagv3")
                 .timestamp(timestamp)
                 .build();
-
-        String json = point.toJSON();
-        Assert.assertEquals(json,
-                "{\"metric\":\"test\",\"stringValue\":\"456789\",\"tags\":{\"tagk1\":\"tagv1\",\"tagk2\":\"tagv2\",\"tagk3\":\"tagv3\"},\"timestamp\":1501564455}");
     }
 }
