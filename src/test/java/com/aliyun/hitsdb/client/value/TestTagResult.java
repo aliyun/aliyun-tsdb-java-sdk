@@ -1,12 +1,11 @@
 package com.aliyun.hitsdb.client.value;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.alibaba.fastjson.JSON;
@@ -15,6 +14,19 @@ import com.alibaba.fastjson.JSONObject;
 import com.aliyun.hitsdb.client.value.response.TagResult;
 
 public class TestTagResult {
+    private static TimeZone defaultTz;
+
+    @BeforeClass
+    public static void setup() {
+        defaultTz = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT+8:00"));
+    }
+
+    @AfterClass
+    public static void finish() {
+        // reset
+        TimeZone.setDefault(defaultTz);
+    }
 
     @Test
     public void testJSONToResult() {

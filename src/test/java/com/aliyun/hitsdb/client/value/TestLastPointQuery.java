@@ -2,10 +2,13 @@ package com.aliyun.hitsdb.client.value;
 
 import com.aliyun.hitsdb.client.value.request.LastPointQuery;
 import com.aliyun.hitsdb.client.value.request.LastPointSubQuery;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
 
@@ -14,6 +17,19 @@ import static org.junit.Assert.assertEquals;
  * Date: 2018/12/7
  */
 public class TestLastPointQuery {
+    private static TimeZone defaultTz;
+
+    @BeforeClass
+    public static void setup() {
+        defaultTz = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT+8:00"));
+    }
+
+    @AfterClass
+    public static void finish() {
+        // reset
+        TimeZone.setDefault(defaultTz);
+    }
 
     @Test
     public void testLastPointQuery() {
@@ -25,7 +41,7 @@ public class TestLastPointQuery {
                 .sub(LastPointSubQuery.builder("metric1",tag).build()).build();
         System.out.println(query.toJSON());
 
-        assertEquals(query.toJSON(),"{\"backScan\":0,\"msResolution\":false,\"queries\":[{\"tags\":{\"t1\":\"v1\"},\"metric\":\"metric1\"}],\"timestamp\":1544171825586}");
+        assertEquals("{\"backScan\":0,\"msResolution\":false,\"queries\":[{\"metric\":\"metric1\",\"tags\":{\"t1\":\"v1\"}}],\"timestamp\":1544171825586}", query.toJSON());
     }
 
     @Test
@@ -38,7 +54,7 @@ public class TestLastPointQuery {
                 .sub(LastPointSubQuery.builder("metric1",tag).build()).build();
         System.out.println(query.toJSON());
 
-        assertEquals(query.toJSON(),"{\"msResolution\":false,\"queries\":[{\"tags\":{\"t1\":\"v1\"},\"metric\":\"metric1\"}],\"timestamp\":1544171825461}");
+        assertEquals("{\"msResolution\":false,\"queries\":[{\"metric\":\"metric1\",\"tags\":{\"t1\":\"v1\"}}],\"timestamp\":1544171825461}", query.toJSON());
     }
 
     @Test
@@ -49,7 +65,7 @@ public class TestLastPointQuery {
                 .timestamp(1544171825585L)
                 .sub(LastPointSubQuery.builder("metric1",tag).build()).build();
         System.out.println(query.toJSON());
-        assertEquals(query.toJSON(),"{\"queries\":[{\"tags\":{\"t1\":\"v1\"},\"metric\":\"metric1\"}],\"timestamp\":1544171825585}");
+        assertEquals("{\"queries\":[{\"metric\":\"metric1\",\"tags\":{\"t1\":\"v1\"}}],\"timestamp\":1544171825585}", query.toJSON());
     }
 
     @Test
@@ -59,6 +75,6 @@ public class TestLastPointQuery {
         LastPointQuery query = LastPointQuery.builder()
                 .sub(LastPointSubQuery.builder("metric1",tag).build()).build();
         System.out.println(query.toJSON());
-        assertEquals(query.toJSON(),"{\"queries\":[{\"tags\":{\"t1\":\"v1\"},\"metric\":\"metric1\"}]}");
+        assertEquals("{\"queries\":[{\"metric\":\"metric1\",\"tags\":{\"t1\":\"v1\"}}]}", query.toJSON());
     }
 }

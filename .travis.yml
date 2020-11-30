@@ -2,8 +2,18 @@ language: java
 dist: trusty
 jdk:
   - oraclejdk8
-script:
-  - mvn clean package -Dmaven.test.skip=true
+
+stages:
+  - compile
+  - test
+
 branches:
   only:
   - master
+
+jobs:
+  include:
+    - stage: compile
+      script: mvn clean package -Dmaven.test.skip=true
+    - stage: test
+      script: mvn test -Dmaven.test.skip=false -Dtest=**/value/**.java
