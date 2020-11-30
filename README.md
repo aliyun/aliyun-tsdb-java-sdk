@@ -1,6 +1,7 @@
 
 # Aliyun TSDB SDK for Java
 
+[![Build Status](https://travis-ci.com/aliyun/aliyun-tsdb-java-sdk.svg?branch=master)](https://travis-ci.com/github/aliyun/aliyun-tsdb-java-sdk)
 
 The Aliyun TSDB SDK for Java enables Java developers to easily work with Aliyun TSDB, compatible OpenTSDB protocol. You can get started in minutes using ***Maven***. 
 
