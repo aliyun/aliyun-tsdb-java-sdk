@@ -180,4 +180,68 @@ public class TestHiTSDBClientQueryLimitAndDpValue {
             }
         }
     }
+
+    @Test
+    public void testQueryGlobalLimit() throws InterruptedException {
+
+        /** Query with limit and offset */
+        {
+            final String Metric = "testQueryGlobalLimit";
+            final String Tagk1 = "tagk1";
+            final String Tagk2 = "tagk2";
+            final String Tagv1 = "tagv1";
+            final String Tagv2 = "tagv2";
+            final int startTime = 1511927280;
+            final int endTime = 1511928280;
+
+
+            // 写入数据
+            List<Point> putlist_ts1 = new ArrayList<Point>();
+            List<Point> putlist_ts2 = new ArrayList<Point>();
+            List<Point> checklist1 = new ArrayList<Point>(); // Used for query results comparing
+            List<Point> checklist2 = new ArrayList<Point>(); // Used for query results comparing
+
+            for (int i = 0; i < 1000; i++) {
+                Point point = Point.metric(Metric).tag(Tagk1, Tagv1).timestamp(startTime + i)
+                        .value(i).build();
+                Point point2 = Point.metric(Metric).tag(Tagk2, Tagv2).timestamp(startTime + i)
+                        .value(i + 1000).build();
+                putlist_ts1.add(point);
+                putlist_ts2.add(point2);
+            }
+            tsdb.putSync(putlist_ts1);
+            tsdb.putSync(putlist_ts2);
+
+            // Query with Aggregator None with Limit with Offset with GlobalLimit
+            {
+                int limit = 100;
+                int offset = 100;
+                checklist1.clear();
+                checklist2.clear();
+
+                // Prepare query result checklist
+                for (int i = offset; i < offset + limit / 2; i++) {
+                    Point point1 = Point.metric(Metric).tag(Tagk1, Tagv1).timestamp(startTime + i)
+                            .value(i).build();
+                    Point point2 = Point.metric(Metric).tag(Tagk2, Tagv2).timestamp(startTime + i)
+                            .value(i + 1000).build();
+                    checklist1.add(point1);
+                    checklist2.add(point2);
+                }
+
+                Query query = Query.timeRange(startTime, endTime)
+                        .sub(SubQuery.metric(Metric)
+                                .aggregator(Aggregator.NONE)
+                                .limit(limit)
+                                .globalLimit(limit)
+                                .offset(offset).build()).build();
+
+                System.out.println("查询条件：" + query.toJSON());
+                List<QueryResult> queryResults = tsdb.query(query);
+                Assert.assertEquals(2, queryResults.size());
+                contentAssert(checklist1, (List<QueryResult>) queryResults.get(0));
+                contentAssert(checklist2, (List<QueryResult>) queryResults.get(1));
+            }
+        }
+    }
 }

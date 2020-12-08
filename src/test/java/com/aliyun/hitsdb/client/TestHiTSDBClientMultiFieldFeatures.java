@@ -311,4 +311,80 @@ public class TestHiTSDBClientMultiFieldFeatures {
             }
         }
     }
+
+    /**
+     * test the basic behavior of the limit and global interface of SDK
+     * @note it is required that the version of TSDB engine greater than v2.6.4
+     */
+    @Test
+    public void testMultiFieldQueryWithLimit() {
+        final String METRIC = "testMultiFieldQueryWithLimit", TAGK = "tagk";
+
+        try {
+            tsdb.deleteMeta(Timeline.metric(METRIC).build());
+            Thread.sleep(3000);
+        } catch (Exception e) {
+            System.out.println("Failed to delete time series during pre-testing stage. Continue.");
+        }
+
+        List<MultiFieldPoint> mpoints = new ArrayList<MultiFieldPoint>();
+        String [] strings = new String[]{"abc", "ABC", "11.11a"};
+
+        long startTime = 1514736000L;
+        // timeline1
+        for (int i = 0; i < 4; i++) {
+            mpoints.add(MultiFieldPoint.metric(METRIC)
+                    .tag(TAGK, "tagv1")
+                    .field("f1", 100 + i)
+                    .field("f2", 333.33)
+                    .field("f3", 300 - i * 100)
+                    .field("f4", strings[i % 3])
+                    .timestamp(startTime + i * 30).build());
+        }
+
+        // timeline2, no field3
+        mpoints.add(MultiFieldPoint.metric(METRIC)
+                .tag(TAGK, "tagv2")
+                .field("f1", 100)
+                .field("f2", 222.22)
+                .field("f4", strings[2 % 3])
+                .timestamp(startTime + 90).build());
+
+        // timeline2, no field4
+        mpoints.add(MultiFieldPoint.metric(METRIC)
+                .tag(TAGK, "tagv3")
+                .field("f1", 105)
+                .field("f2", 111.11)
+                .field("f3", 100)
+                .timestamp(startTime + 120).build());
+
+        tsdb.multiFieldPutSync(mpoints);
+
+        MultiFieldQuery mq = MultiFieldQuery.start(startTime)
+                .sub(MultiFieldSubQuery
+                        .metric(METRIC)
+                        .limit(2)
+                        .globalLimit(3)
+                        .fieldsInfo(MultiFieldSubQueryDetails
+                                .aggregator(Aggregator.NONE)
+                                .field("*")
+                                .build())
+                        .build())
+                .build();
+        List<MultiFieldQueryResult> results = tsdb.multiFieldQuery(mq);
+
+        Assert.assertEquals(2, results.size());
+
+        for (MultiFieldQueryResult r: results) {
+            Assert.assertEquals(5, r.getColumns().size());
+
+            if (r.getTags().get(TAGK).equals("tagv1")) {
+                Assert.assertEquals(2, r.getValues().size());
+            } else if (r.getTags().get(TAGK).equals("tagv2")) {
+                Assert.assertEquals(1, r.getValues().size());
+            } else {
+                Assert.fail("unexpected tag value retrieved: " + r.getTags().get(TAGK));
+            }
+        }
+    }
 }
