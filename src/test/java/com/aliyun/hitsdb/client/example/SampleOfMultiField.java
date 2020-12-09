@@ -1,6 +1,9 @@
-package com.aliyun.hitsdb.client;
+package com.aliyun.hitsdb.client.example;
 
 import com.alibaba.fastjson.JSON;
+import com.aliyun.hitsdb.client.TSDB;
+import com.aliyun.hitsdb.client.TSDBClientFactory;
+import com.aliyun.hitsdb.client.TSDBConfig;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.value.request.*;
 import com.aliyun.hitsdb.client.value.response.MultiFieldQueryLastResult;
@@ -13,7 +16,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.*;
 
-public class ExampleOfMultiField {
+public class SampleOfMultiField {
     TSDB tsdb;
 
     @Before
@@ -56,6 +59,7 @@ public class ExampleOfMultiField {
                 .tag("province", "zhejiang")
                 .timestamp(1537170208L)
                 .build();
+
         // 同步写入
         tsdb.multiFieldPutSync(multiFieldPoint);
 
