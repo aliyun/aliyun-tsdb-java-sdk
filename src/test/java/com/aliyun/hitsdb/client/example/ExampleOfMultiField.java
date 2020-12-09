@@ -16,7 +16,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.*;
 
-public class SampleOfMultiField {
+public class ExampleOfMultiField {
     TSDB tsdb;
 
     @Before
