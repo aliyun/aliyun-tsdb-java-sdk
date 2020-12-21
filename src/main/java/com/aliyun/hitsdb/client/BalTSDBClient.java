@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client;
 
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
+import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.exception.NotImplementedException;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
@@ -1247,5 +1248,15 @@ public class BalTSDBClient implements TSDB {
         } finally {
             SYNC.set(true);
         }
+    }
+
+    @Override
+    public void put(Collection<Point> points, AbstractBatchPutCallback batchPutCallback) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public void multiFieldPut(Collection<MultiFieldPoint> points, AbstractMultiFieldBatchPutCallback batchPutCallback) {
+        throw new NotImplementedException();
     }
 }

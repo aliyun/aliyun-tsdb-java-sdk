@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.aliyun.hitsdb.client.value.request.AbstractPoint;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
+import com.aliyun.hitsdb.client.value.request.PointsCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +16,20 @@ import com.aliyun.hitsdb.client.value.request.Point;
 
 public class DataPointQueue implements DataQueue {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointQueue.class);
+
+    /**
+     * each queue has a corresponding thread pool to consume the points
+     *   pointQueue            - BatchPutRunnable
+     *   multiFieldPointQueue  - MultiFieldBatchPutRunnable
+     *   pointsCollectionQueue - PointsCollectionPutRunnable
+     */
     private final BlockingQueue<Point> pointQueue;
     private final BlockingQueue<MultiFieldPoint> multiFieldPointQueue;
+
+    // pointsCollectionQueue is designed for the async put interfaces,
+    // which triggers a specified callback every time when a collection sent.
+    private final BlockingQueue<PointsCollection> pointsCollectionQueue;
+
     private final AtomicBoolean forbiddenWrite = new AtomicBoolean(false);
     private final int waitCloseTimeLimit;
     private final boolean backpressure;
@@ -30,6 +43,9 @@ public class DataPointQueue implements DataQueue {
         }
         this.pointQueue = new ArrayBlockingQueue<Point>(batchPutBufferSize);
         this.multiFieldPointQueue = new ArrayBlockingQueue<MultiFieldPoint>(multiFieldBatchPutBufferSize);
+
+        this.pointsCollectionQueue = new ArrayBlockingQueue(Math.max(batchPutBufferSize, multiFieldBatchPutBufferSize));
+
         this.waitCloseTimeLimit = waitCloseTimeLimit;
         this.backpressure = backpressure;
     }
@@ -94,6 +110,34 @@ public class DataPointQueue implements DataQueue {
     @Override
     public MultiFieldPoint receiveMultiFieldPoint(int timeout) throws InterruptedException {
         return multiFieldPointQueue.poll(timeout, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public void sendPoints(PointsCollection points) {
+        verifyWrite();
+        if (this.backpressure) {
+            try {
+                pointsCollectionQueue.put(points);
+            } catch (InterruptedException e) {
+                LOGGER.error("Client Thread been Interrupted.", e);
+            }
+        } else {
+            try {
+                pointsCollectionQueue.add(points);
+            } catch (IllegalStateException exception) {
+                throw new BufferQueueFullException("The buffer queue is full.", exception);
+            }
+        }
+    }
+
+    @Override
+    public PointsCollection receivePoints() throws InterruptedException {
+        return pointsCollectionQueue.take();
+    }
+
+    @Override
+    public PointsCollection receivePoints(int timeout) throws InterruptedException {
+        return pointsCollectionQueue.poll(timeout, TimeUnit.MILLISECONDS);
     }
 
     @Override

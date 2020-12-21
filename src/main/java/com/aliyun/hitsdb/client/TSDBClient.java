@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.aliyun.hitsdb.client.callback.QueryCallback;
+import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.consumer.Consumer;
 import com.aliyun.hitsdb.client.consumer.ConsumerFactory;
@@ -17,6 +17,7 @@ import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.queue.DataQueueFactory;
 import com.aliyun.hitsdb.client.util.LinkedHashMapUtils;
+import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.JSONValue;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.*;
@@ -1065,6 +1066,18 @@ public class TSDBClient implements TSDB {
         return putSync(points, Result.class);
     }
 
+    /**
+     * Synchronous put points with callback
+     *
+     * @param points
+     * @param batchPutCallback
+     */
+    @Override
+    public void put(Collection<Point> points, AbstractBatchPutCallback batchPutCallback) {
+        PointsCollection pc = new PointsCollection(points, batchPutCallback);
+        this.queue.sendPoints(pc);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Result> T putSync(Collection<Point> points, Class<T> resultType) {
@@ -1570,6 +1583,18 @@ public class TSDBClient implements TSDB {
         return multiFieldPutSync(points, Result.class);
     }
 
+    /**
+     * Synchronous put points with callback
+     *
+     * @param points
+     * @param batchPutCallback
+     */
+    @Override
+    public void multiFieldPut(Collection<MultiFieldPoint> points, AbstractMultiFieldBatchPutCallback batchPutCallback) {
+        PointsCollection pc = new PointsCollection(points, batchPutCallback);
+        this.queue.sendPoints(pc);
+    }
+
     @Override
     public void multiFieldPut(MultiFieldPoint point) {
         this.queue.sendMultiFieldPoint(point);
@@ -1756,6 +1781,7 @@ public class TSDBClient implements TSDB {
 
     @Override
     public void flush() {
+        //TODO: it flushes the single field point only, currently
         final Point[] points = this.queue.getPoints();
         if (points == null || points.length == 0) {
             return;

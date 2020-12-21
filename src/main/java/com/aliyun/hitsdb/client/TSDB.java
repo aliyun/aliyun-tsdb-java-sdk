@@ -1,6 +1,6 @@
 package com.aliyun.hitsdb.client;
 
-import com.aliyun.hitsdb.client.callback.QueryCallback;
+import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.*;
@@ -37,6 +37,17 @@ public interface TSDB extends Closeable {
      * @param points points
      */
     void put(Collection<Point> points);
+
+
+
+    /**
+     * Synchronous put points with a given callback
+     *
+     * @param points
+     * @param batchPutCallback
+     */
+    void put(Collection<Point> points, AbstractBatchPutCallback batchPutCallback);
+
 
     /**
      * Asynchronous multi-valued put point
@@ -580,6 +591,15 @@ public interface TSDB extends Closeable {
      * @param points points
      */
     void multiFieldPut(Collection<MultiFieldPoint> points);
+
+    /**
+     * Asynchronous put points with a given callback
+     *
+     * @param points
+     * @param batchPutCallback
+     */
+    void multiFieldPut(Collection<MultiFieldPoint> points, AbstractMultiFieldBatchPutCallback batchPutCallback);
+
 
     /**
      * /api/mquery endpoint

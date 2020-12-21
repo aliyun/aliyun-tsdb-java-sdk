@@ -27,65 +27,18 @@ import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 
-public class BatchPutRunnable implements Runnable {
+public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutRunnable.class);
-
-    /**
-     * 缓冲队列
-     */
-    private final DataQueue dataQueue;
-
-    /**
-     * Http客户端
-     */
-    private final HttpClient tsdbHttpClient;
 
     /**
      * 批量提交回调
      */
     private final AbstractBatchPutCallback<?> batchPutCallback;
 
-    /**
-     * 消费者队列控制器。
-     * 在优雅关闭中，若消费者队列尚未结束，则CountDownLatch用于阻塞close()方法。
-     */
-    private final CountDownLatch countDownLatch;
-
-    /**
-     * 每批次数据点个数
-     */
-    private int batchSize;
-
-    /**
-     * 批次提交间隔，单位：毫秒
-     */
-    private int batchPutTimeLimit;
-
-    /**
-     * 回调包装与构造工厂
-     */
-    private final HttpResponseCallbackFactory httpResponseCallbackFactory;
-
-    private final Config config;
-
-    private final SemaphoreManager semaphoreManager;
-
-    private final HttpAddressManager httpAddressManager;
-
-    private RateLimiter rateLimiter;
 
     public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
-        this.dataQueue = dataQueue;
-        this.tsdbHttpClient = httpclient;
-        this.semaphoreManager = tsdbHttpClient.getSemaphoreManager();
-        this.httpAddressManager = tsdbHttpClient.getHttpAddressManager();
+        super(dataQueue, httpclient, countDownLatch, config, rateLimiter);
         this.batchPutCallback = config.getBatchPutCallback();
-        this.batchSize = config.getBatchPutSize();
-        this.batchPutTimeLimit = config.getBatchPutTimeLimit();
-        this.config = config;
-        this.countDownLatch = countDownLatch;
-        this.rateLimiter = rateLimiter;
-        this.httpResponseCallbackFactory = tsdbHttpClient.getHttpResponseCallbackFactory();
     }
 
     @Override
@@ -161,20 +114,6 @@ public class BatchPutRunnable implements Runnable {
         if (readyClose) {
             this.countDownLatch.countDown();
         }
-    }
-
-    private String getAddressAndSemaphoreAcquire() {
-        String address;
-        while (true) {
-            address = httpAddressManager.getAddress();
-            boolean acquire = this.semaphoreManager.acquire(address);
-            if (!acquire) {
-                continue;
-            } else {
-                break;
-            }
-        }
-        return address;
     }
 
 
