@@ -18,8 +18,10 @@ public class DefaultBatchPutConsumer implements Consumer {
     private DataQueue dataQueue;
     private ExecutorService threadPool;
     private ExecutorService multiFieldThreadPool;
+    private ExecutorService pointsThreadPool;
     private int batchPutConsumerThreadCount;
     private int multiFieldBatchPutConsumerThreadCount;
+    private int pointsBatchPutConsumerThreadCount;
     private HttpClient httpclient;
     private Config config;
     private RateLimiter rateLimiter;
@@ -31,6 +33,8 @@ public class DefaultBatchPutConsumer implements Consumer {
         this.config = config;
         this.batchPutConsumerThreadCount = config.getBatchPutConsumerThreadCount();
         this.multiFieldBatchPutConsumerThreadCount = config.getMultiFieldBatchPutConsumerThreadCount();
+        this.pointsBatchPutConsumerThreadCount = Math.max(this.batchPutConsumerThreadCount, this.multiFieldBatchPutConsumerThreadCount);
+
         this.rateLimiter = rateLimiter;
         if (batchPutConsumerThreadCount > 0) {
             this.threadPool = Executors.newFixedThreadPool(batchPutConsumerThreadCount, new BatchPutThreadFactory("batch-put-thread"));
@@ -38,7 +42,12 @@ public class DefaultBatchPutConsumer implements Consumer {
         if (multiFieldBatchPutConsumerThreadCount > 0) {
             this.multiFieldThreadPool = Executors.newFixedThreadPool(multiFieldBatchPutConsumerThreadCount, new BatchPutThreadFactory("multi-field-batch-put-thread"));
         }
-        this.countDownLatch = new CountDownLatch(config.getBatchPutConsumerThreadCount() + config.getMultiFieldBatchPutConsumerThreadCount());
+
+        if (this.pointsBatchPutConsumerThreadCount > 0) {
+            this.pointsThreadPool = Executors.newFixedThreadPool(pointsBatchPutConsumerThreadCount, new BatchPutThreadFactory("points-batch-put-thread"));
+        }
+
+        this.countDownLatch = new CountDownLatch(config.getBatchPutConsumerThreadCount() + config.getMultiFieldBatchPutConsumerThreadCount() + this.pointsBatchPutConsumerThreadCount);
     }
 
     public void start() {
@@ -48,6 +57,10 @@ public class DefaultBatchPutConsumer implements Consumer {
 
         for (int i = 0; i < multiFieldBatchPutConsumerThreadCount; i++) {
             multiFieldThreadPool.submit(new MultiFieldBatchPutRunnable(this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
+        }
+
+        for (int i = 0; i < pointsBatchPutConsumerThreadCount; i++) {
+            pointsThreadPool.submit(new PointsCollectionPutRunnable(this.dataQueue, this.httpclient, this.countDownLatch, this.config, this.rateLimiter));
         }
     }
 
@@ -68,6 +81,10 @@ public class DefaultBatchPutConsumer implements Consumer {
                 multiFieldThreadPool.shutdownNow();
             }
 
+            if (pointsThreadPool != null) {
+                pointsThreadPool.shutdownNow();
+            }
+
         } else {
             if (threadPool != null) {
                 // 截断消费者线程。
@@ -80,6 +97,12 @@ public class DefaultBatchPutConsumer implements Consumer {
                 // 截断消费者线程。
                 while (!multiFieldThreadPool.isShutdown() || !multiFieldThreadPool.isTerminated()) {
                     multiFieldThreadPool.shutdownNow();
+                }
+            }
+
+            if (pointsThreadPool != null) {
+                while (!pointsThreadPool.isShutdown() || !pointsThreadPool.isTerminated()) {
+                    pointsThreadPool.shutdownNow();
                 }
             }
 
