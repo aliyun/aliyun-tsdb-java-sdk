@@ -38,16 +38,13 @@ public class MultiFieldSubQuery {
             this.metric = metric;
         }
 
+        @Deprecated
         public Builder limit() {
             this.limit = 0;
             return this;
         }
 
-        public Builder globalLimit() {
-            this.globalLimit = 0;
-            return this;
-        }
-
+        @Deprecated
         public Builder offset() {
             this.offset = 0;
             return this;

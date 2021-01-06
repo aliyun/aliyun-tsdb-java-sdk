@@ -88,26 +88,25 @@ public class SubQuery {
             return this;
         }
 
+        @Deprecated
         public Builder limit() {
             this.limit = 0;
             return this;
         }
 
-        public Builder globalLimit() {
-            this.globalLimit = 0;
-            return this;
-        }
-
+        @Deprecated
         public Builder offset() {
             this.offset = 0;
             return this;
         }
 
+        @Deprecated
         public Builder dpValue() {
             this.dpValue = null;
             return this;
         }
 
+        @Deprecated
         public Builder preDpValue() {
             this.preDpValue = null;
             return this;

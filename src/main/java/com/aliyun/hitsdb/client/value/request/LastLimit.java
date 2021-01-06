@@ -10,9 +10,7 @@ public class LastLimit {
     boolean global;
 
     public LastLimit(long from, int size) {
-        this.from = from;
-        this.size = size;
-        this.global = false;
+        this(from, size, false) ;
     }
 
     public LastLimit(long from, int size, boolean global) {
