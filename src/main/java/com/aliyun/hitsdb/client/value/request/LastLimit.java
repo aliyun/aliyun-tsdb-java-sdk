@@ -7,10 +7,16 @@ package com.aliyun.hitsdb.client.value.request;
 public class LastLimit {
     long from;
     int size;
+    boolean global;
 
     public LastLimit(long from, int size) {
+        this(from, size, false) ;
+    }
+
+    public LastLimit(long from, int size, boolean global) {
         this.from = from;
         this.size = size;
+        this.global = global;
     }
 
     public long getFrom() {
@@ -27,5 +33,13 @@ public class LastLimit {
 
     public void setSize(int size) {
         this.size = size;
+    }
+
+    public boolean isGlobal() {
+        return global;
+    }
+
+    public void setGlobal(boolean global) {
+        this.global = global;
     }
 }

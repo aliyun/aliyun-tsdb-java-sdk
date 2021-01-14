@@ -15,6 +15,7 @@ public class MultiFieldSubQuery {
     private List<Filter> filters;
     private List<MultiFieldSubQueryDetails> fields;
     private Integer limit;
+    private Integer globalLimit;
     private Integer offset;
     private int index;
     private Map<String, Map<String, Integer>> hint;
@@ -22,6 +23,7 @@ public class MultiFieldSubQuery {
     public static class Builder {
         private String metric;
         private Integer limit;
+        private Integer globalLimit;
         private Integer offset;
         private Map<String, String> tags = new HashMap<String, String>();
         private List<Filter> filters = new ArrayList<Filter>();
@@ -36,11 +38,13 @@ public class MultiFieldSubQuery {
             this.metric = metric;
         }
 
+        @Deprecated
         public Builder limit() {
             this.limit = 0;
             return this;
         }
 
+        @Deprecated
         public Builder offset() {
             this.offset = 0;
             return this;
@@ -52,6 +56,16 @@ public class MultiFieldSubQuery {
                     throw new IllegalArgumentException("Illegal limit value.");
                 }
                 this.limit = limit;
+            }
+            return this;
+        }
+
+        public Builder globalLimit(Integer globalLimit) {
+            if (globalLimit != null) {
+                if (globalLimit < 0 || globalLimit > Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("Illegal globalLimit value.");
+                }
+                this.globalLimit = globalLimit;
             }
             return this;
         }
@@ -156,6 +170,10 @@ public class MultiFieldSubQuery {
                 subQuery.limit = this.limit;
             }
 
+            if (this.globalLimit != null && this.globalLimit > 0) {
+                subQuery.globalLimit = this.globalLimit;
+            }
+
             if (this.offset != null && this.offset > 0) {
                 subQuery.offset = this.offset;
             }
@@ -202,6 +220,10 @@ public class MultiFieldSubQuery {
 
     public Integer getLimit() {
         return limit;
+    }
+
+    public Integer getGlobalLimit() {
+        return globalLimit;
     }
 
     public Integer getOffset() {

@@ -32,6 +32,7 @@ public class SubQuery {
     private Boolean explicitTags;
     private Integer realTimeSeconds;
     private Integer limit;
+    private Integer globalLimit;
     private Integer offset;
     private String dpValue;
     private String preDpValue;
@@ -47,6 +48,7 @@ public class SubQuery {
         private Boolean delta;
         private DeltaOptions deltaOptions;
         private Integer limit;
+        private Integer globalLimit;
         private Integer offset;
         private String dpValue;
         private String preDpValue;
@@ -86,21 +88,25 @@ public class SubQuery {
             return this;
         }
 
+        @Deprecated
         public Builder limit() {
             this.limit = 0;
             return this;
         }
 
+        @Deprecated
         public Builder offset() {
             this.offset = 0;
             return this;
         }
 
+        @Deprecated
         public Builder dpValue() {
             this.dpValue = null;
             return this;
         }
 
+        @Deprecated
         public Builder preDpValue() {
             this.preDpValue = null;
             return this;
@@ -228,6 +234,13 @@ public class SubQuery {
             return this;
         }
 
+        public Builder globalLimit(Integer globalLimit) {
+            if (limit != null) {
+                this.globalLimit = globalLimit;
+            }
+            return this;
+        }
+
         public Builder offset(Integer offset) {
             if (offset != null) {
                 this.offset = offset;
@@ -346,6 +359,10 @@ public class SubQuery {
 
             if (this.limit != null && this.limit > 0) {
                 subQuery.limit = this.limit;
+            }
+
+            if (this.globalLimit != null && this.globalLimit > 0) {
+                subQuery.globalLimit = this.globalLimit;
             }
 
             if (this.offset != null && this.offset > 0) {
@@ -471,6 +488,10 @@ public class SubQuery {
 
     public Integer getLimit() {
         return limit;
+    }
+
+    public Integer getGlobalLimit() {
+        return globalLimit;
     }
 
     public Integer getOffset() {
