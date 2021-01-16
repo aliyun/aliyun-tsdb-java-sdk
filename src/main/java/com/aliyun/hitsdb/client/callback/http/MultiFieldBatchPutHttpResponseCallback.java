@@ -107,10 +107,11 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                 return;
             }
             case ServerError: {
+                // 服务器返回5xx错误
+                // 正常释放Semaphor
+                this.hitsdbHttpClient.getSemaphoreManager().release(address);
+
                 if (this.batchPutRetryTimes == 0) {
-                    // 服务器返回5xx错误
-                    // 正常释放Semaphor
-                    this.hitsdbHttpClient.getSemaphoreManager().release(address);
                     HttpServerErrorException ex = new HttpServerErrorException(resultResponse);
                     this.failedWithResponse(ex);
                 } else {
