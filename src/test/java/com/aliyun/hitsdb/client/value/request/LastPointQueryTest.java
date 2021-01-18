@@ -1,4 +1,4 @@
-package com.aliyun.hitsdb.client;
+package com.aliyun.hitsdb.client.value.request;
 
 import com.aliyun.hitsdb.client.value.request.LastLimit;
 import com.aliyun.hitsdb.client.value.request.LastPointQuery;

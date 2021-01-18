@@ -1,7 +1,8 @@
-package com.aliyun.hitsdb.client;
+package com.aliyun.hitsdb.client.value;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.parser.Feature;
+import com.aliyun.hitsdb.client.TSDBClient;
 import com.aliyun.hitsdb.client.value.request.Query;
 import com.aliyun.hitsdb.client.value.response.QueryResult;
 import org.junit.Assert;
@@ -19,7 +20,7 @@ import java.util.List;
  * @author Benedict Jin
  * @since 2020/6/3
  */
-public class TSDBClientTest {
+public class TSDBDataTypeTest {
 
     @Before
     public void setup() {

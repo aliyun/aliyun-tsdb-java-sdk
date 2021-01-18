@@ -1,4 +1,4 @@
-package com.aliyun.hitsdb.client;
+package com.aliyun.hitsdb.client.value;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.value.request.Point;
