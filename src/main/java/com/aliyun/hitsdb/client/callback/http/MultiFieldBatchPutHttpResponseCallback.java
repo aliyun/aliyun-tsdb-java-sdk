@@ -157,6 +157,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         }
 
         if (retryTimes == 0) {
+            this.hitsdbHttpClient.getSemaphoreManager().release(address);
             return false;
         }
 

@@ -162,6 +162,7 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         }
 
         if (retryTimes == 0) {
+            this.hitsdbHttpClient.getSemaphoreManager().release(address);
             return false;
         }
 
