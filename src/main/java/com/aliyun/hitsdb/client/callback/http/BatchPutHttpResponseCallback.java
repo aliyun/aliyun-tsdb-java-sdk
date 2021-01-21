@@ -161,6 +161,10 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
             }
         }
 
+        if (retryTimes == 0) {
+            return false;
+        }
+
         // retry!
         LOGGER.warn("retry put data!");
         HttpResponseCallbackFactory httpResponseCallbackFactory = this.hitsdbHttpClient.getHttpResponseCallbackFactory();
