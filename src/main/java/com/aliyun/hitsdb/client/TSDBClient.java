@@ -98,6 +98,10 @@ public class TSDBClient implements TSDB {
             this.checkConnection();
         } catch (Exception e) {
             try {
+                if (asyncPut) {
+                    this.consumer.stop(true);
+                }
+
                 this.httpclient.close(true);
                 LOGGER.info("when connected to tsdb server failure, so the tsdb client has closed");
             } catch (IOException ex) {
