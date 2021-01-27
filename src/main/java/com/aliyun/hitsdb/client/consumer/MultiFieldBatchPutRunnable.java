@@ -3,10 +3,7 @@ package com.aliyun.hitsdb.client.consumer;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
-import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
-import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutCallback;
-import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutDetailsCallback;
-import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutSummaryCallback;
+import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpAddressManager;
@@ -96,6 +93,8 @@ public class MultiFieldBatchPutRunnable implements Runnable {
                 paramsMap.put("summary", "true");
             } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
                 paramsMap.put("details", "true");
+            } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutIgnoreErrorsCallback) {
+                paramsMap.put("ignoreErrors", "true");
             }
         }
 
