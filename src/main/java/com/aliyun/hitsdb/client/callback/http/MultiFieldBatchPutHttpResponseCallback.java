@@ -51,79 +51,76 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
 
     @Override
     public void completed(HttpResponse httpResponse) {
-        // 处理响应
-        if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
-            this.hitsdbHttpClient.setSslEnable(true);
-            if (errorRetry()) {
-                return;
-            }
-        }
-        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.compress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccess:
-            case ServerSuccessNoContent:
-                // 正常释放Semaphor
-                this.hitsdbHttpClient.getSemaphoreManager().release(address);
-
-                if (multiFieldBatchPutCallback == null) {
+        try {
+            // 处理响应
+            if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
+                this.hitsdbHttpClient.setSslEnable(true);
+                if (errorRetry()) {
                     return;
                 }
-
-                if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
-                    ((MultiFieldBatchPutCallback) multiFieldBatchPutCallback).response(this.address, pointList, new Result());
-                    return;
-                } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
-                    SummaryResult summaryResult = null;
-                    if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
-                        String content = resultResponse.getContent();
-                        summaryResult = JSON.parseObject(content, SummaryResult.class);
-                    }
-                    ((MultiFieldBatchPutSummaryCallback) multiFieldBatchPutCallback).response(this.address, pointList, summaryResult);
-                    return;
-                } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
-                    MultiFieldDetailsResult detailsResult = null;
-                    if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
-                        String content = resultResponse.getContent();
-                        detailsResult = JSON.parseObject(content, MultiFieldDetailsResult.class);
-                    }
-                    ((MultiFieldBatchPutDetailsCallback) multiFieldBatchPutCallback).response(this.address, pointList, detailsResult);
-                    return;
-                } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutIgnoreErrorsCallback) {
-                    MultiFieldIgnoreErrorsResult ignoreErrorsResult = null;
-                    if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
-                        String content = resultResponse.getContent();
-                        ignoreErrorsResult = JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
-                    }
-                    ((MultiFieldBatchPutIgnoreErrorsCallback) multiFieldBatchPutCallback).response(this.address, pointList, ignoreErrorsResult);
-                    return;
-                }
-            case ServerNotSupport: {
-                // 服务器返回4xx错误
-                // 正常释放Semaphor
-                this.hitsdbHttpClient.getSemaphoreManager().release(address);
-                HttpServerNotSupportException ex = new HttpServerNotSupportException(resultResponse);
-                this.failedWithResponse(ex);
-                return;
             }
-            case ServerError: {
-                if (this.batchPutRetryTimes == 0) {
-                    // 服务器返回5xx错误
-                    // 正常释放Semaphor
-                    this.hitsdbHttpClient.getSemaphoreManager().release(address);
-                    HttpServerErrorException ex = new HttpServerErrorException(resultResponse);
+            ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.compress);
+            HttpStatus httpStatus = resultResponse.getHttpStatus();
+            switch (httpStatus) {
+                case ServerSuccess:
+                case ServerSuccessNoContent:
+                    if (multiFieldBatchPutCallback == null) {
+                        return;
+                    }
+
+                    if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
+                        ((MultiFieldBatchPutCallback) multiFieldBatchPutCallback).response(this.address, pointList, new Result());
+                        return;
+                    } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
+                        SummaryResult summaryResult = null;
+                        if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
+                            String content = resultResponse.getContent();
+                            summaryResult = JSON.parseObject(content, SummaryResult.class);
+                        }
+                        ((MultiFieldBatchPutSummaryCallback) multiFieldBatchPutCallback).response(this.address, pointList, summaryResult);
+                        return;
+                    } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
+                        MultiFieldDetailsResult detailsResult = null;
+                        if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
+                            String content = resultResponse.getContent();
+                            detailsResult = JSON.parseObject(content, MultiFieldDetailsResult.class);
+                        }
+                        ((MultiFieldBatchPutDetailsCallback) multiFieldBatchPutCallback).response(this.address, pointList, detailsResult);
+                        return;
+                    } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutIgnoreErrorsCallback) {
+                        MultiFieldIgnoreErrorsResult ignoreErrorsResult = null;
+                        if (!httpStatus.equals(HttpStatus.ServerSuccessNoContent)) {
+                            String content = resultResponse.getContent();
+                            ignoreErrorsResult = JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
+                        }
+                        ((MultiFieldBatchPutIgnoreErrorsCallback) multiFieldBatchPutCallback).response(this.address, pointList, ignoreErrorsResult);
+                        return;
+                    }
+                case ServerNotSupport: {
+                    // 服务器返回4xx错误
+                    HttpServerNotSupportException ex = new HttpServerNotSupportException(resultResponse);
                     this.failedWithResponse(ex);
-                } else {
-                    errorRetry();
+                    return;
                 }
+                case ServerError: {
+                    // 服务器返回5xx错误
+                    if (this.batchPutRetryTimes == 0) {
+                        HttpServerErrorException ex = new HttpServerErrorException(resultResponse);
+                        this.failedWithResponse(ex);
+                    } else {
+                        errorRetry();
+                    }
 
-                return;
+                    return;
+                }
+                default: {
+                    HttpUnknowStatusException ex = new HttpUnknowStatusException(resultResponse);
+                    this.failedWithResponse(ex);
+                }
             }
-            default: {
-                this.hitsdbHttpClient.getSemaphoreManager().release(address);
-                HttpUnknowStatusException ex = new HttpUnknowStatusException(resultResponse);
-                this.failedWithResponse(ex);
-            }
+        } finally {
+            // 正常释放Semaphor
+            this.hitsdbHttpClient.getSemaphoreManager().release(address);
         }
     }
 
@@ -182,34 +179,35 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
 
     @Override
     public void failed(Exception ex) {
-        // 异常重试
-        if (ex instanceof SocketTimeoutException) {
-            if (this.batchPutRetryTimes == 0) {
-                ex = new HttpClientSocketTimeoutException(ex);
-            } else {
-                if (errorRetry()) {
-                    return;
+        try {
+            // 异常重试
+            if (ex instanceof SocketTimeoutException) {
+                if (this.batchPutRetryTimes == 0) {
+                    ex = new HttpClientSocketTimeoutException(ex);
+                } else {
+                    if (errorRetry()) {
+                        return;
+                    }
+                }
+            } else if (ex instanceof java.net.ConnectException) {
+                if (this.batchPutRetryTimes == 0) {
+                    ex = new HttpClientConnectionRefusedException(this.address, ex);
+                } else {
+                    if (errorRetry()) {
+                        return;
+                    }
                 }
             }
-        } else if (ex instanceof java.net.ConnectException) {
-            if (this.batchPutRetryTimes == 0) {
-                ex = new HttpClientConnectionRefusedException(this.address, ex);
+
+            // 处理完毕，向逻辑层传递异常并处理。
+            if (multiFieldBatchPutCallback == null) {
+                LOGGER.error("multi field no callback logic exception.", ex);
             } else {
-                if (errorRetry()) {
-                    return;
-                }
+                multiFieldBatchPutCallback.failed(this.address, pointList, ex);
             }
+        } finally {
+            this.hitsdbHttpClient.getSemaphoreManager().release(address);
         }
-
-        this.hitsdbHttpClient.getSemaphoreManager().release(address);
-
-        // 处理完毕，向逻辑层传递异常并处理。
-        if (multiFieldBatchPutCallback == null) {
-            LOGGER.error("multi field no callback logic exception.", ex);
-        } else {
-            multiFieldBatchPutCallback.failed(this.address, pointList, ex);
-        }
-
     }
 
     @Override
