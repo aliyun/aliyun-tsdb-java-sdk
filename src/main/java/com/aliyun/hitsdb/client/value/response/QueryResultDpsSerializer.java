@@ -7,6 +7,8 @@ import com.alibaba.fastjson.parser.deserializer.ObjectDeserializer;
 import com.alibaba.fastjson.serializer.JSONSerializer;
 import com.alibaba.fastjson.serializer.ObjectSerializer;
 import com.aliyun.hitsdb.client.value.request.ByteArrayValue;
+import com.aliyun.hitsdb.client.value.request.ComplexValue;
+import com.aliyun.hitsdb.client.value.request.GeoPointValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +35,16 @@ public class QueryResultDpsSerializer implements ObjectSerializer, ObjectDeseria
         for (Map.Entry<String, Object> entry : ((JSONObject) parse).entrySet()) {
             if (entry.getValue() instanceof JSONObject) {
                 JSONObject jsonObject = (JSONObject) entry.getValue();
-                if (ByteArrayValue.isJsonObjectTypeMatch(jsonObject)) {
-                    String valueType = jsonObject.getString(ByteArrayValue.TypeKey);
-                    if (ByteArrayValue.TypeValue.equals(valueType)) {
+                if (ComplexValue.isJsonObjectTypeMatch(jsonObject)) {
+                    if (ByteArrayValue.isJsonObjectTypeMatch(jsonObject)) {
                         ByteArrayValue bv = JSON.parseObject(jsonObject.toJSONString(), ByteArrayValue.class);
                         entry.setValue(bv.decode());
+                    } else if (GeoPointValue.isJsonObjectTypeMatch(jsonObject)) {
+                        GeoPointValue gp = JSON.parseObject(jsonObject.toJSONString(), GeoPointValue.class);
+                        entry.setValue(gp);
                     } else {
-                        log.error("Illegal value type {}", valueType);
-                        throw new IllegalArgumentException("Illegal value type " + valueType);
+                        log.error("Illegal value type {}", jsonObject);
+                        throw new IllegalArgumentException("Illegal value type " + jsonObject);
                     }
                 }
             }

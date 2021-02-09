@@ -108,7 +108,7 @@ public class MultiFieldSubQueryDetails {
          * @return
          */
         public Builder dpValue(String dpValue) {
-            if (dpValue != null && !dpValue.isEmpty() && validateDpValue(dpValue)) {
+            if (dpValue != null && !dpValue.isEmpty()) {
                 this.dpValue = dpValue;
             }
             return this;
@@ -132,7 +132,7 @@ public class MultiFieldSubQueryDetails {
          * @return
          */
         public Builder preDpValue(String preDpValue) {
-            if (preDpValue != null && !preDpValue.isEmpty() && validateDpValue(preDpValue)) {
+            if (preDpValue != null && !preDpValue.isEmpty()) {
                 this.preDpValue = preDpValue;
             }
             return this;
@@ -149,37 +149,6 @@ public class MultiFieldSubQueryDetails {
             }
             this.top = top;
             return this;
-        }
-
-        /**
-         * Validate dpValue input
-         * @param dpValue
-         * @return
-         */
-        private Boolean validateDpValue(final String dpValue) {
-            // Query value filtering field's length is minimum 2.
-            if (dpValue.length() == 1) {
-                return false;
-            }
-
-            int index = 0;
-            char[] value_array = dpValue.toCharArray();
-            for (index = 0; index < dpValue.length(); index++) {
-                // Find boundary between comparison operator and value.
-                if (value_array[index] != '<'
-                        && value_array[index] != '>'
-                        && value_array[index] != '!'
-                        && value_array[index] != '=') {
-                    break;
-                }
-            }
-
-            // field value does not contain valid comparison operator.
-            if (index == 0) {
-                return false;
-            }
-
-            return true;
         }
 
         public MultiFieldSubQueryDetails build() {

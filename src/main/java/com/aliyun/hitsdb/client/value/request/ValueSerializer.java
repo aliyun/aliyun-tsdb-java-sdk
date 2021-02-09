@@ -38,11 +38,14 @@ public class ValueSerializer implements ObjectSerializer, ObjectDeserializer {
         }
         if (parse instanceof JSONObject) {
             JSONObject jsonObject = (JSONObject) parse;
-            if (ByteArrayValue.isJsonObjectTypeMatch(jsonObject)) {
+            if (ComplexValue.isJsonObjectTypeMatch(jsonObject)) {
                 String valueType = jsonObject.getString(ByteArrayValue.TypeKey);
                 if (ByteArrayValue.TypeValue.equals(valueType)) {
                     ByteArrayValue bv = JSON.parseObject(jsonObject.toJSONString(), ByteArrayValue.class);
                     return bv.decode();
+                } else if (GeoPointValue.TypeValue.equals(valueType)) {
+                    GeoPointValue gp = JSON.parseObject(jsonObject.toJSONString(), GeoPointValue.class);
+                    return gp;
                 } else {
                     log.error("Illegal value type {}", valueType);
                     throw new IllegalArgumentException("Illegal value type " + valueType);
