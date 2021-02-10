@@ -84,4 +84,6 @@ public interface Config {
     Config copy(String host, int port);
 
     HAPolicy getHAPolicy();
+
+    boolean isDeduplicationEnable();
 }

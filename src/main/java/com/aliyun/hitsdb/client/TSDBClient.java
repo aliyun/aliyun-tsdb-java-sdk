@@ -17,7 +17,7 @@ import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.queue.DataQueueFactory;
 import com.aliyun.hitsdb.client.util.LinkedHashMapUtils;
-import com.aliyun.hitsdb.client.util.Objects;
+import com.aliyun.hitsdb.client.value.request.UniqueUtil;
 import com.aliyun.hitsdb.client.value.JSONValue;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.*;
@@ -1180,6 +1180,7 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public void put(Collection<Point> points, AbstractBatchPutCallback batchPutCallback) {
+        UniqueUtil.uniquePoints(points, config.isDeduplicationEnable());
         PointsCollection pc = new PointsCollection(points, batchPutCallback);
         this.queue.sendPoints(pc);
     }
@@ -1187,6 +1188,7 @@ public class TSDBClient implements TSDB {
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Result> T putSync(Collection<Point> points, Class<T> resultType) {
+        UniqueUtil.uniquePoints(points, config.isDeduplicationEnable());
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
 
         HttpResponse httpResponse;
@@ -1569,6 +1571,7 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public <T extends Result> T multiFieldPutSync(Collection<MultiFieldPoint> points, Class<T> resultType) {
+        UniqueUtil.uniqueMultiFieldPoints(points, config.isDeduplicationEnable());
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
 
         HttpResponse httpResponse;
@@ -1632,6 +1635,7 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public void multiFieldPut(Collection<MultiFieldPoint> points, AbstractMultiFieldBatchPutCallback batchPutCallback) {
+        UniqueUtil.uniqueMultiFieldPoints(points, config.isDeduplicationEnable());
         PointsCollection pc = new PointsCollection(points, batchPutCallback);
         this.queue.sendPoints(pc);
     }
