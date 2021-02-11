@@ -50,6 +50,7 @@ public class TSDBClient implements TSDB {
     private final HttpResponseCallbackFactory httpResponseCallbackFactory;
     private final boolean httpCompress;
     private final HttpClient httpclient;
+    private final HttpClient secondaryClient;
     private RateLimiter rateLimiter;
     private final Config config;
     private static Field queryDeleteField;
@@ -67,8 +68,18 @@ public class TSDBClient implements TSDB {
     }
 
     public TSDBClient(Config config) throws HttpClientInitException {
-        this.config = config;
-        this.httpclient = HttpClientFactory.createHttpClient(config);
+        if (config.getHAPolicy() == null) {
+            this.config = config;
+            this.httpclient = HttpClientFactory.createHttpClient(config);
+            this.secondaryClient = null;
+        } else {
+            // secondaryClient only used in query for HA, HiTSDBHAClient support write HA
+            this.config = config;
+            this.httpclient = HttpClientFactory.createHttpClient(config);
+            Config secondaryConfig = config.copy(config.getHAPolicy().getSecondaryHost(), config.getHAPolicy().getSecondaryPort());
+            this.secondaryClient = HttpClientFactory.createHttpClient(secondaryConfig);
+        }
+
         this.httpCompress = config.isHttpCompress();
         boolean asyncPut = config.isAsyncPut();
         int maxTPS = config.getMaxTPS();
@@ -92,6 +103,9 @@ public class TSDBClient implements TSDB {
         }
 
         this.httpclient.start();
+        if (this.secondaryClient != null) {
+            this.secondaryClient.start();
+        }
         LOGGER.info("The tsdb client has started.");
 
         try {
@@ -103,6 +117,9 @@ public class TSDBClient implements TSDB {
                 }
 
                 this.httpclient.close(true);
+                if (this.secondaryClient != null) {
+                    this.secondaryClient.close(true);
+                }
                 LOGGER.info("when connected to tsdb server failure, so the tsdb client has closed");
             } catch (IOException ex) {
             }
@@ -115,6 +132,9 @@ public class TSDBClient implements TSDB {
 
     private void checkConnection() {
         httpclient.post(VIP_API, EMPTY_HOLDER);
+        if (secondaryClient != null) {
+            secondaryClient.post(VIP_API, EMPTY_HOLDER);
+        }
     }
 
     @Override
@@ -137,6 +157,9 @@ public class TSDBClient implements TSDB {
 
         // 客户端关闭
         this.httpclient.close(true);
+        if (this.secondaryClient != null) {
+            this.secondaryClient.close(true);
+        }
     }
 
     /**
@@ -156,6 +179,9 @@ public class TSDBClient implements TSDB {
         }
         // 客户端关闭
         this.httpclient.close();
+        if (this.secondaryClient != null) {
+            this.secondaryClient.close();
+        }
     }
 
     @Override
@@ -213,6 +239,24 @@ public class TSDBClient implements TSDB {
                 throw new HttpServerErrorException(resultResponse);
             case ServerUnauthorized:
                 throw new HttpServerUnauthorizedException(resultResponse);
+            default:
+                throw new HttpUnknowStatusException(resultResponse);
+        }
+    }
+
+    private Object handleStatus(ResultResponse resultResponse) {
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerNotSupport:
+                throw new HttpServerNotSupportException(resultResponse);
+            case ServerError:
+                throw new HttpServerErrorException(resultResponse);
+            case ServerUnauthorized:
+                throw new HttpServerUnauthorizedException(resultResponse);
+            case ServerSuccessNoContent:
+                return null;
+            case ServerSuccess:
+                return null;
             default:
                 throw new HttpUnknowStatusException(resultResponse);
         }
@@ -327,14 +371,8 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 List<TagResult> tagResults = TagResult.parseList(content);
                 return tagResults;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (List<TagResult>) handleStatus(resultResponse);
         }
     }
 
@@ -348,14 +386,8 @@ public class TSDBClient implements TSDB {
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 return JSON.parseArray(content, String.class);
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (List<String>) handleStatus(resultResponse);
         }
     }
 
@@ -413,8 +445,6 @@ public class TSDBClient implements TSDB {
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 List<QueryResult> queryResultList;
@@ -433,14 +463,8 @@ public class TSDBClient implements TSDB {
                         multiValuedQuery.getQueries().get(0).getLimit(),
                         multiValuedQuery.getQueries().get(0).getOffset());
                 return tupleFormat;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (MultiValuedQueryResult) handleStatus(resultResponse);
         }
     }
 
@@ -762,28 +786,53 @@ public class TSDBClient implements TSDB {
         return tupleFormat;
     }
 
+    private void doQueryRetry(HAPolicy.QueryContext queryContext, Exception e) {
+        // including 5XX error, SocketTimeoutException, ConnectionException etc..
+        if (!queryContext.doQuery()) {
+            if (e instanceof HttpServerErrorException) {
+                throw (HttpServerErrorException)e;
+            } else if (e instanceof HttpClientException) {
+                throw (HttpClientException)e;
+            } else {
+                throw new RuntimeException("Unexpected exception!");
+            }
+        }
+        // TODO: add retry interval
+        queryContext.addRetryTimes();
+        LOGGER.error("Read failed in one client, try again!");
+    }
+
     @Override
     public List<QueryResult> query(Query query) {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON());
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return query(query, queryContext.getClient());
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return query(query, httpclient);
+        }
+    }
+
+    private List<QueryResult> query(Query query, HttpClient client) {
+        HttpResponse httpResponse = client.post(HttpAPI.QUERY, query.toJSON());
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 List<QueryResult> queryResultList;
                 queryResultList = JSON.parseArray(content, QueryResult.class);
                 setTypeIfNeeded(query, queryResultList);
                 return queryResultList;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (List<QueryResult>) handleStatus(resultResponse);
         }
     }
 
@@ -797,14 +846,8 @@ public class TSDBClient implements TSDB {
 			case ServerSuccess:
 				String content = resultResponse.getContent();
 				return JSON.parseObject(content, SQLResult.class);
-			case ServerNotSupport:
-				throw new HttpServerNotSupportException(resultResponse);
-			case ServerError:
-				throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
-			default:
-				throw new HttpUnknowStatusException(resultResponse);
+            default:
+                return (SQLResult) handleStatus(resultResponse);
 		}
 	}
 
@@ -835,14 +878,8 @@ public class TSDBClient implements TSDB {
 		        String content = resultResponse.getContent();
 		        List<String> list = JSON.parseArray(content, String.class);
 		        return list;
-		    case ServerNotSupport:
-		        throw new HttpServerNotSupportException(resultResponse);
-		    case ServerError:
-		        throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
-		    default:
-		        throw new HttpUnknowStatusException(resultResponse);
+            default:
+                return (List<String>) handleStatus(resultResponse);
 		}
 	}
 
@@ -869,37 +906,26 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 List<LookupResult> list = JSON.parseArray("[" + content + "]", LookupResult.class);
                 return list;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (List<LookupResult>) handleStatus(resultResponse);
         }
     }
 
     @Override
     public int ttl() {
         HttpResponse httpResponse = httpclient.get(HttpAPI.TTL, null);
-        ResultResponse result = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = result.getHttpStatus();
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
             case ServerSuccessNoContent:
                 return 0;
             case ServerSuccess:
-                String content = result.getContent();
+                String content = resultResponse.getContent();
                 TTLResult ttlResult = JSONValue.parseObject(content, TTLResult.class);
                 return ttlResult.getVal();
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(result);
-            case ServerError:
-                throw new HttpServerErrorException(result);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(result);
             default:
-                throw new HttpUnknowStatusException(result);
+                handleVoid(resultResponse);
+                return -1;
         }
     }
 
@@ -1054,14 +1080,8 @@ public class TSDBClient implements TSDB {
                 }
 
                 return result;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (T) handleStatus(resultResponse);
         }
     }
 
@@ -1125,14 +1145,8 @@ public class TSDBClient implements TSDB {
                 }
 
                 return result;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (T) handleStatus(resultResponse);
         }
     }
 
@@ -1169,21 +1183,13 @@ public class TSDBClient implements TSDB {
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 List<LastDataValue> queryResultList = JSON.parseArray(content, LastDataValue.class);
                 MultiValuedQueryLastResult result = convertQueryLastResultIntoTupleFormat(queryResultList, queryLastRequest.getMetric());
                 return result;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (MultiValuedQueryLastResult) handleStatus(resultResponse);
         }
     }
 
@@ -1308,24 +1314,37 @@ public class TSDBClient implements TSDB {
         JSONObject obj = new JSONObject();
         obj.put("queries", timelinesJSON);
         String jsonString = obj.toJSONString();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
+        return queryLastInner(jsonString);
+    }
+
+    private List<LastDataValue> queryLastInner(String jsonString) throws HttpUnknowStatusException {
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return queryLast(jsonString, queryContext.getClient());
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return queryLast(jsonString, httpclient);
+        }
+    }
+
+    private List<LastDataValue> queryLast(String jsonString, HttpClient client) throws HttpUnknowStatusException {
+        HttpResponse httpResponse = client.post(HttpAPI.QUERY_LAST, jsonString);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 List<LastDataValue> queryResultList = JSON.parseArray(content, LastDataValue.class);
                 return queryResultList;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (List<LastDataValue>) handleStatus(resultResponse);
         }
     }
 
@@ -1344,25 +1363,7 @@ public class TSDBClient implements TSDB {
         JSONObject obj = new JSONObject();
         obj.put("queries", tsuidsJSONObjList); /* Convert to "queries":[{"tsuid":["000001000001000001","000001000001000002,...]}] */
         String jsonString = obj.toJSONString();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
-        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
-            case ServerSuccess:
-                String content = resultResponse.getContent();
-                List<LastDataValue> queryResultList = JSON.parseArray(content, LastDataValue.class);
-                return queryResultList;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
+        return queryLastInner(jsonString);
     }
 
     @Override
@@ -1378,19 +1379,11 @@ public class TSDBClient implements TSDB {
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
             case ServerSuccess:
                 JSONObject result = JSONObject.parseObject(resultResponse.getContent());
                 return result.getString("version");
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (String) handleStatus(resultResponse);
         }
     }
 
@@ -1401,8 +1394,6 @@ public class TSDBClient implements TSDB {
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
             case ServerSuccess:
                 JSONObject result = JSONObject.parseObject(resultResponse.getContent());
                 Map<String, String> map = new HashMap<String, String>();
@@ -1410,14 +1401,8 @@ public class TSDBClient implements TSDB {
                     map.put(entry.getKey(), entry.getValue().toString());
                 }
                 return map;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (Map<String, String>) handleStatus(resultResponse);
         }
     }
 
@@ -1466,25 +1451,7 @@ public class TSDBClient implements TSDB {
                     "please use multiFieldQueryLast() instead.");
         }
         String jsonString = query.toJSON();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString);
-        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
-            case ServerSuccess:
-                String content = resultResponse.getContent();
-                List<LastDataValue> result = JSON.parseArray(content, LastDataValue.class);
-                return result;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
+        return queryLastInner(jsonString);
     }
 
     @Override
@@ -1497,14 +1464,8 @@ public class TSDBClient implements TSDB {
             case ServerSuccess:
                 LOGGER.info("truncate result: {}", resultResponse.getContent());
                 return true;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (Boolean) handleStatus(resultResponse);
         }
     }
 
@@ -1566,14 +1527,8 @@ public class TSDBClient implements TSDB {
                 }
 
                 return result;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (T) handleStatus(resultResponse);
         }
     }
 
@@ -1627,26 +1582,35 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public List<MultiFieldQueryResult> multiFieldQuery(MultiFieldQuery query) throws HttpUnknowStatusException {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.MQUERY, query.toJSON());
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return multiFieldQuery(query, queryContext.getClient());
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return multiFieldQuery(query, httpclient);
+        }
+    }
+
+    private List<MultiFieldQueryResult> multiFieldQuery(MultiFieldQuery query, HttpClient client) throws HttpUnknowStatusException {
+        HttpResponse httpResponse = client.post(HttpAPI.MQUERY, query.toJSON());
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 List<MultiFieldQueryResult> queryResultList;
                 queryResultList = JSON.parseArray(content, MultiFieldQueryResult.class);
                 setTypeIfNeeded4MultiField(query, queryResultList);
                 return queryResultList;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (List<MultiFieldQueryResult>) handleStatus(resultResponse);
         }
     }
 
@@ -1667,24 +1631,33 @@ public class TSDBClient implements TSDB {
         }
 
         String jsonString = lastPointQuery.toJSON();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_MLAST, jsonString);
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return multiFieldQueryLast(jsonString, queryContext.getClient());
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return multiFieldQueryLast(jsonString, httpclient);
+        }
+    }
+
+    private List<MultiFieldQueryLastResult> multiFieldQueryLast(String jsonString, HttpClient client) throws HttpUnknowStatusException {
+        HttpResponse httpResponse = client.post(HttpAPI.QUERY_MLAST, jsonString);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return null;
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 List<MultiFieldQueryLastResult> result = JSON.parseArray(content, MultiFieldQueryLastResult.class);
                 return result;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (List<MultiFieldQueryLastResult>) handleStatus(resultResponse);
         }
     }
 
@@ -1711,19 +1684,7 @@ public class TSDBClient implements TSDB {
         String jsonRequest = createRequest.toJSON();
         HttpResponse httpResponse = httpclient.post(HttpAPI.USER_AUTH, jsonRequest);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
+        handleVoid(resultResponse);
     }
 
     /**
@@ -1741,19 +1702,7 @@ public class TSDBClient implements TSDB {
 
         HttpResponse httpResponse = httpclient.delete(HttpAPI.USER_AUTH + "?u=" + username, null);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-        HttpStatus httpStatus = resultResponse.getHttpStatus();
-        switch (httpStatus) {
-            case ServerSuccessNoContent:
-                return;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
-            default:
-                throw new HttpUnknowStatusException(resultResponse);
-        }
+        handleVoid(resultResponse);
     }
 
     /**
@@ -1772,14 +1721,8 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 List<UserResult> result = JSON.parseArray(content, UserResult.class);
                 return result;
-            case ServerNotSupport:
-                throw new HttpServerNotSupportException(resultResponse);
-            case ServerError:
-                throw new HttpServerErrorException(resultResponse);
-            case ServerUnauthorized:
-                throw new HttpServerUnauthorizedException(resultResponse);
             default:
-                throw new HttpUnknowStatusException(resultResponse);
+                return (List<UserResult>) handleStatus(resultResponse);
         }
     }
 
