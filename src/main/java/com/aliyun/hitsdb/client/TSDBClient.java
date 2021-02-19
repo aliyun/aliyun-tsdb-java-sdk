@@ -344,7 +344,20 @@ public class TSDBClient implements TSDB {
     @Override
     public List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(tagkey, tagValuePrefix, max);
-        return doDumpMeta(dumpMetaValue);
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return doDumpMeta(dumpMetaValue);
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return doDumpMeta(dumpMetaValue);
+        }
     }
 
     /**
@@ -358,7 +371,20 @@ public class TSDBClient implements TSDB {
     @Override
     public List<TagResult> dumpMeta(String metric, String tagkey, String tagValuePrefix, int max) {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(metric, tagkey, tagValuePrefix, max);
-        return doDumpMeta(dumpMetaValue);
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return doDumpMeta(dumpMetaValue);
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return doDumpMeta(dumpMetaValue);
+        }
     }
 
 
@@ -379,6 +405,23 @@ public class TSDBClient implements TSDB {
     @Override
     public List<String> dumpMetric(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(tagkey, tagValuePrefix, max, true);
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return doDumpMetric(dumpMetaValue);
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return doDumpMetric(dumpMetaValue);
+        }
+    }
+
+    private List<String> doDumpMetric(DumpMetaValue dumpMetaValue) {
         HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON());
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
@@ -866,7 +909,20 @@ public class TSDBClient implements TSDB {
     @Override
     public List<String> suggest(Suggest type, String prefix, int max) {
         SuggestValue suggestValue = new SuggestValue(type.getName(), prefix, max);
-	    return suggest(suggestValue);
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return suggest(suggestValue);
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return suggest(suggestValue);
+        }
     }
 
 	private List<String> suggest(SuggestValue suggestValue) {
@@ -886,14 +942,40 @@ public class TSDBClient implements TSDB {
 	@Override
     public List<String> suggest(Suggest type, String metric, String prefix, int max) {
         SuggestValue suggestValue = new SuggestValue(type.getName(), metric, prefix, max);
-		return suggest(suggestValue);
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return suggest(suggestValue);
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return suggest(suggestValue);
+        }
 	}
 
 
     @Override
     public List<LookupResult> lookup(String metric, List<LookupTagFilter> tags, int max) {
         LookupRequest lookupRequest = new LookupRequest(metric, tags, max);
-        return lookup(lookupRequest);
+        if (config.getHAPolicy() != null) {
+            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            while (true) {
+                try {
+                    return lookup(lookupRequest);
+                } catch (HttpServerErrorException e) {
+                    doQueryRetry(queryContext, e);
+                } catch (HttpClientException e) {
+                    doQueryRetry(queryContext, e);
+                }
+            }
+        } else {
+            return lookup(lookupRequest);
+        }
     }
 
     @Override
