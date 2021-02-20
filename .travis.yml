@@ -16,7 +16,7 @@ jobs:
     - stage: compile
       script: mvn clean package -Dmaven.test.skip=true
     - stage: test
-      script: mvn cobertura:cobertura -Dmaven.test.skip=false -Dtest=**/value/**.java
+      script: mvn cobertura:cobertura -Dmaven.test.skip=false -Dtest=**/value/**/**.java
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
