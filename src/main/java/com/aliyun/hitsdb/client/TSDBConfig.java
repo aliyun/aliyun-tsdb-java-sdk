@@ -63,6 +63,7 @@ public class TSDBConfig extends AbstractConfig {
         private int ioThreadCount = 1;
         private boolean backpressure = true;
         private boolean asyncPut = true;
+        private HAPolicy haPolicy = null;
 
         private boolean sslEnable = false;
         private String authType;
@@ -188,6 +189,11 @@ public class TSDBConfig extends AbstractConfig {
 
         public Builder asyncPut(boolean asyncPut) {
             this.asyncPut = asyncPut;
+            return this;
+        }
+
+        public Builder addHAPolicy(HAPolicy policy) {
+            this.haPolicy = policy;
             return this;
         }
 
@@ -345,6 +351,14 @@ public class TSDBConfig extends AbstractConfig {
             config.tsdbUser = this.tsdbUser;
             config.basicPwd = this.basicPwd;
             config.certContent = this.certContent;
+            if (this.haPolicy != null) {
+                String secondaryHost = this.haPolicy.getSecondaryHost();
+                int secondaryPort = this.haPolicy.getSecondaryPort();
+                if (secondaryHost.equals(this.host) && secondaryPort == this.port) {
+                    throw new IllegalArgumentException("Primary cluster and secondary cluster should not have same host and port");
+                }
+            }
+            config.haPolicy = this.haPolicy;
 
             return config;
         }

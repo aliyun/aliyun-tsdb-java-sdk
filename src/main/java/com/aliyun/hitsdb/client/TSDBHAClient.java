@@ -15,6 +15,7 @@ import java.util.List;
  * User can connect two nodes in HA solution.
  * They can use this api to config 2 nodes into one client.
  */
+@Deprecated
 public class TSDBHAClient {
     private static final Logger logger = LoggerFactory.getLogger(TSDBHAClient.class);
 

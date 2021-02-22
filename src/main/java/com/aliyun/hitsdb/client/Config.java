@@ -82,4 +82,6 @@ public interface Config {
     int getMaxTPS();
 
     Config copy(String host, int port);
+
+    HAPolicy getHAPolicy();
 }
