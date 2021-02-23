@@ -78,6 +78,8 @@ public class TSDBConfig extends AbstractConfig {
 
         private Set<String> uniqueHost = new HashSet();
 
+        private boolean deduplicationEnable = false;
+
         public Builder(String host) {
             this.host = host;
             this.uniqueHost.add(host);
@@ -297,6 +299,11 @@ public class TSDBConfig extends AbstractConfig {
             return this;
         }
 
+        public Builder deduplicationEnable () {
+            this.deduplicationEnable = true;
+            return this;
+        }
+
         public  TSDBConfig config() {
             if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
                 throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
@@ -359,6 +366,7 @@ public class TSDBConfig extends AbstractConfig {
                 }
             }
             config.haPolicy = this.haPolicy;
+            config.deduplicationEnable = this.deduplicationEnable;
 
             return config;
         }

@@ -143,6 +143,8 @@ public abstract class AbstractConfig implements Config {
 
     protected byte[] certContent;
 
+    protected boolean deduplicationEnable;
+
     @Override
     public boolean isSslEnable() {
         return sslEnable;
@@ -313,6 +315,11 @@ public abstract class AbstractConfig implements Config {
         return this.haPolicy;
     }
 
+    @Override
+    public boolean isDeduplicationEnable() {
+        return this.deduplicationEnable;
+    }
+
     protected void copy(AbstractConfig config, String host, int port) {
         config.host = host;
         config.port = port;
@@ -342,5 +349,6 @@ public abstract class AbstractConfig implements Config {
         if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
             config.putRequestLimit = this.httpConnectionPool;
         }
+        config.deduplicationEnable = this.deduplicationEnable;
     }
 }

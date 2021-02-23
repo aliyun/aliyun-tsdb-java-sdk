@@ -4,12 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.callback.*;
-import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.http.HttpAPI;
-import com.aliyun.hitsdb.client.http.HttpAddressManager;
 import com.aliyun.hitsdb.client.http.HttpClient;
-import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
+import com.aliyun.hitsdb.client.value.request.UniqueUtil;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 import org.apache.http.HttpResponse;
@@ -100,6 +98,9 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
             if (pointList.size() == 0) {
                 continue;
             }
+
+            //去重
+            UniqueUtil.uniqueMultiFieldPoints(pointList, config.isDeduplicationEnable());
 
             // 序列化
             String strJson = serialize(pointList);
