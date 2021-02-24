@@ -152,7 +152,7 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
                         // not all the 400 error has summary information
                         LOGGER.warn("failed to deserialize {} into SummaryResult", responseContent);
                     }
-                    ((BatchPutSummaryCallback) batchPutCallback).failed(this.address, pointList, bdex, summaryResult);
+                    ((BatchPutSummaryCallback) batchPutCallback).partialFailed(this.address, pointList, bdex, summaryResult);
                     return;
                 } else if (batchPutCallback instanceof BatchPutDetailsCallback) {
                     DetailsResult detailsResult = null;
@@ -162,7 +162,7 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
                         // not all the 400 error has detailed information
                         LOGGER.warn("failed to deserialize {} into DetailsResult", responseContent);
                     }
-                    ((BatchPutDetailsCallback) batchPutCallback).failed(this.address, pointList, bdex, detailsResult);
+                    ((BatchPutDetailsCallback) batchPutCallback).partialFailed(this.address, pointList, bdex, detailsResult);
                     return;
                 }
             }

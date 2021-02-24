@@ -67,7 +67,7 @@ public class TestBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
+                public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
                     Assert.assertTrue(ex == bdex);
                     Assert.assertEquals(ex.getStatus(), 400);
 
@@ -103,7 +103,7 @@ public class TestBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
+                public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
                     Assert.assertTrue(ex == bdex);
                     Assert.assertEquals(ex.getStatus(), 400);
 
@@ -194,7 +194,7 @@ public class TestBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
+                public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
                     Assert.assertNull(result);
                     Assert.assertTrue(ex == bdex);
                 }
@@ -225,7 +225,7 @@ public class TestBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<Point> points, HttpServerBadRequestException ex, SummaryResult result) {
+                public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, SummaryResult result) {
                     Assert.assertEquals(jsonContent.getLong("success").longValue(), result.getSuccess());
                     Assert.assertEquals(jsonContent.getLong("failed").longValue(), result.getFailed());
                 }
@@ -256,7 +256,7 @@ public class TestBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<Point> points, HttpServerBadRequestException ex, SummaryResult result) {
+                public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, SummaryResult result) {
                     Assert.assertEquals(jsonContent.getLong("success").longValue(), result.getSuccess());
                     Assert.assertEquals(jsonContent.getLong("failed").longValue(), result.getFailed());
                 }
@@ -313,7 +313,7 @@ public class TestBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<Point> points, HttpServerBadRequestException ex, SummaryResult result) {
+                public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, SummaryResult result) {
                     Assert.fail("failed() whith summary called");
                 }
             };

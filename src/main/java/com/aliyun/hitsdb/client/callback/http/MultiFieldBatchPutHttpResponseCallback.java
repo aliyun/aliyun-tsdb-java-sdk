@@ -150,7 +150,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                         // not all the 400 error has summary information
                         LOGGER.warn("failed to deserialize {} into SummaryResult", responseContent);
                     }
-                    ((MultiFieldBatchPutSummaryCallback) multiFieldBatchPutCallback).failed(this.address, pointList, bdex, summaryResult);
+                    ((MultiFieldBatchPutSummaryCallback) multiFieldBatchPutCallback).partialFailed(this.address, pointList, bdex, summaryResult);
                     return;
                 } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
                     MultiFieldDetailsResult detailsResult = null;
@@ -160,7 +160,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                         // not all the 400 error has detailed information
                         LOGGER.warn("failed to deserialize {} into MultiFieldDetailsResult", responseContent);
                     }
-                    ((MultiFieldBatchPutDetailsCallback) multiFieldBatchPutCallback).failed(this.address, pointList, bdex, detailsResult);
+                    ((MultiFieldBatchPutDetailsCallback) multiFieldBatchPutCallback).partialFailed(this.address, pointList, bdex, detailsResult);
                     return;
                 }
             }

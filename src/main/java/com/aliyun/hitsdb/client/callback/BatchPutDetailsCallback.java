@@ -18,7 +18,7 @@ public abstract class BatchPutDetailsCallback extends AbstractBatchPutCallback<D
      *               NOTICE!! result might be NULL
      * @since 0.3.5
      */
-    public void failed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
+    public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
         // we CANNOT declare this method abstract because it would cause the application fail in the compile
         // once the application just updated the version of the dependency to the aliyun-tsdb-java-sdk
         //

@@ -18,7 +18,7 @@ public abstract class MultiFieldBatchPutDetailsCallback extends AbstractMultiFie
      *               NOTICE!! result might be NULL
      * @since 0.3.5
      */
-    public void failed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
+    public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
         // we CANNOT declare this method abstract because it would cause the application fail in the compile
         // once the application just updated the version of the dependency to the aliyun-tsdb-java-sdk
         //

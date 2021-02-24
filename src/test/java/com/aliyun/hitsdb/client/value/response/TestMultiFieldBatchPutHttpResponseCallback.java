@@ -70,7 +70,7 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
+                public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
                     Assert.assertTrue(ex == bdex);
                     Assert.assertEquals(ex.getStatus(), 400);
 
@@ -111,7 +111,7 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
+                public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
                     Assert.assertTrue(ex == bdex);
                     Assert.assertEquals(ex.getStatus(), 400);
 
@@ -205,7 +205,7 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
+                public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
                     Assert.assertNull(result);
                     Assert.assertTrue(ex == bdex);
                 }
@@ -236,7 +236,7 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, SummaryResult result) {
+                public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, SummaryResult result) {
                     Assert.assertEquals(jsonContent.getLong("success").longValue(), result.getSuccess());
                     Assert.assertEquals(jsonContent.getLong("failed").longValue(), result.getFailed());
                 }
@@ -267,7 +267,7 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, SummaryResult result) {
+                public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, SummaryResult result) {
                     Assert.assertEquals(jsonContent.getLong("success").longValue(), result.getSuccess());
                     Assert.assertEquals(jsonContent.getLong("failed").longValue(), result.getFailed());
                 }
@@ -324,7 +324,7 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
                 }
 
                 @Override
-                public void failed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, SummaryResult result) {
+                public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, SummaryResult result) {
                     Assert.fail("failed() whith summary called");
                 }
             };
