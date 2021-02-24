@@ -26,6 +26,10 @@ public class HttpUnknowStatusException extends RuntimeException {
         return status;
     }
 
+    /**
+     * get the response content despite the name "message" of variable
+     * @return the response content in string
+     */
     public String getMessage() {
         return message;
     }
