@@ -148,21 +148,23 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
                     SummaryResult summaryResult = null;
                     try {
                         summaryResult = JSON.parseObject(responseContent, SummaryResult.class);
+                        ((BatchPutSummaryCallback) batchPutCallback).partialFailed(this.address, pointList, bdex, summaryResult);
                     } catch (JSONException jex) {
                         // not all the 400 error has summary information
                         LOGGER.warn("failed to deserialize {} into SummaryResult", responseContent);
+                        batchPutCallback.failed(this.address, pointList, bdex);
                     }
-                    ((BatchPutSummaryCallback) batchPutCallback).partialFailed(this.address, pointList, bdex, summaryResult);
                     return;
                 } else if (batchPutCallback instanceof BatchPutDetailsCallback) {
                     DetailsResult detailsResult = null;
                     try {
                         detailsResult = JSON.parseObject(responseContent, DetailsResult.class);
+                        ((BatchPutDetailsCallback) batchPutCallback).partialFailed(this.address, pointList, bdex, detailsResult);
                     } catch (JSONException jex) {
                         // not all the 400 error has detailed information
                         LOGGER.warn("failed to deserialize {} into DetailsResult", responseContent);
+                        batchPutCallback.failed(this.address, pointList, bdex);
                     }
-                    ((BatchPutDetailsCallback) batchPutCallback).partialFailed(this.address, pointList, bdex, detailsResult);
                     return;
                 }
             }

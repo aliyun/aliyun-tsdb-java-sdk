@@ -185,6 +185,28 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
             callFailedWithResponse(createMultiFieldBatchPutHttpResponseCallback(cb), bdex);
         }
 
+        // bad request without details response
+        {
+            String content = "Invalid timestamp";
+
+            ResultResponse response = new ResultResponse(400, content);
+            final HttpServerBadRequestException bdex = new HttpServerBadRequestException(response);
+
+            AbstractMultiFieldBatchPutCallback cb = new MultiFieldBatchPutDetailsCallback() {
+                @Override
+                public void response(String address, List<MultiFieldPoint> points, MultiFieldDetailsResult result) {
+                    Assert.fail("response() called");
+                }
+
+                @Override
+                public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
+                    Assert.fail("partialFailed() called");
+                }
+            };
+
+            callFailedWithResponse(createMultiFieldBatchPutHttpResponseCallback(cb), bdex);
+        }
+
 
         // bad request without details response
         {
@@ -201,13 +223,12 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
 
                 @Override
                 public void failed(String address, List<MultiFieldPoint> input, Exception ex) {
-                    Assert.fail("failed() whithout details called");
+                    Assert.assertTrue(ex == bdex);
                 }
 
                 @Override
                 public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, MultiFieldDetailsResult result) {
-                    Assert.assertNull(result);
-                    Assert.assertTrue(ex == bdex);
+                    Assert.fail("partialFailed() with details called");
                 }
             };
 
@@ -296,6 +317,28 @@ public class TestMultiFieldBatchPutHttpResponseCallback {
                 @Override
                 public void failed(String address, List<MultiFieldPoint> input, Exception ex) {
                     Assert.assertTrue(ex == bdex);
+                }
+            };
+
+            callFailedWithResponse(createMultiFieldBatchPutHttpResponseCallback(cb), bdex);
+        }
+
+        // bad request with MultiFieldBatchPutSummaryCallback
+        {
+            String content = "Invalid timestamp";
+
+            ResultResponse response = new ResultResponse(400, content);
+            final HttpServerBadRequestException bdex = new HttpServerBadRequestException(response);
+
+            AbstractMultiFieldBatchPutCallback cb = new MultiFieldBatchPutSummaryCallback() {
+                @Override
+                public void response(String address, List<MultiFieldPoint> points, SummaryResult result) {
+                    Assert.fail("response() called");
+                }
+
+                @Override
+                public void partialFailed(String address, List<MultiFieldPoint> points, HttpServerBadRequestException ex, SummaryResult result) {
+                    Assert.fail("partialFailed() whith summary called");
                 }
             };
 

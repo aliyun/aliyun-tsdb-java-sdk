@@ -190,13 +190,34 @@ public class TestBatchPutHttpResponseCallback {
 
                 @Override
                 public void failed(String address, List<Point> input, Exception ex) {
-                    Assert.fail("failed() whithout details called");
+                    Assert.assertTrue(ex == bdex);
                 }
 
                 @Override
                 public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
-                    Assert.assertNull(result);
-                    Assert.assertTrue(ex == bdex);
+                    Assert.fail("partialFailed() whith details called");
+                }
+            };
+
+            callFailedWithResponse(createMultiFieldBatchPutHttpResponseCallback(cb), bdex);
+        }
+
+        // bad request without details response
+        {
+            String content = "Invalid timestamp";
+
+            ResultResponse response = new ResultResponse(400, content);
+            final HttpServerBadRequestException bdex = new HttpServerBadRequestException(response);
+
+            AbstractBatchPutCallback cb = new BatchPutDetailsCallback() {
+                @Override
+                public void response(String address, List<Point> points, DetailsResult result) {
+                    Assert.fail("response() called");
+                }
+
+                @Override
+                public void partialFailed(String address, List<Point> points, HttpServerBadRequestException ex, DetailsResult result) {
+                    Assert.fail("partialFailed() whith details called");
                 }
             };
 
@@ -285,6 +306,29 @@ public class TestBatchPutHttpResponseCallback {
                 @Override
                 public void failed(String address, List<Point> input, Exception ex) {
                     Assert.assertTrue(ex == bdex);
+                }
+            };
+
+            callFailedWithResponse(createMultiFieldBatchPutHttpResponseCallback(cb), bdex);
+        }
+
+        // bad request with BatchPutSummaryCallback
+        {
+            String content = "Invalid Timestamp";
+
+
+            ResultResponse response = new ResultResponse(400, content);
+            final HttpServerBadRequestException bdex = new HttpServerBadRequestException(response);
+
+            AbstractBatchPutCallback cb = new BatchPutSummaryCallback() {
+                @Override
+                public void response(String address, List<Point> points, SummaryResult result) {
+                    Assert.fail("response() called");
+                }
+
+                @Override
+                public void partialFailed(String address, List<Point> input, HttpServerBadRequestException ex, SummaryResult result) {
+                    Assert.fail("partialFailed() called");
                 }
             };
 
