@@ -145,6 +145,8 @@ public abstract class AbstractConfig implements Config {
 
     protected boolean deduplicationEnable;
 
+    protected boolean lastResultReverseEnable;
+
     @Override
     public boolean isSslEnable() {
         return sslEnable;
@@ -320,6 +322,11 @@ public abstract class AbstractConfig implements Config {
         return this.deduplicationEnable;
     }
 
+    @Override
+    public boolean isLastResultReverseEnable() {
+        return this.lastResultReverseEnable;
+    }
+
     protected void copy(AbstractConfig config, String host, int port) {
         config.host = host;
         config.port = port;
@@ -350,5 +357,6 @@ public abstract class AbstractConfig implements Config {
             config.putRequestLimit = this.httpConnectionPool;
         }
         config.deduplicationEnable = this.deduplicationEnable;
+        config.lastResultReverseEnable = this.lastResultReverseEnable;
     }
 }

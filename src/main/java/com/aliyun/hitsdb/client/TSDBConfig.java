@@ -80,6 +80,8 @@ public class TSDBConfig extends AbstractConfig {
 
         private boolean deduplicationEnable = false;
 
+        private boolean lastResultReverseEnable = false;
+
         public Builder(String host) {
             this.host = host;
             this.uniqueHost.add(host);
@@ -304,6 +306,11 @@ public class TSDBConfig extends AbstractConfig {
             return this;
         }
 
+        public Builder lastResultReverseEnable () {
+            this.lastResultReverseEnable = true;
+            return this;
+        }
+
         public  TSDBConfig config() {
             if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
                 throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
@@ -367,6 +374,7 @@ public class TSDBConfig extends AbstractConfig {
             }
             config.haPolicy = this.haPolicy;
             config.deduplicationEnable = this.deduplicationEnable;
+            config.lastResultReverseEnable = this.lastResultReverseEnable;
 
             return config;
         }
