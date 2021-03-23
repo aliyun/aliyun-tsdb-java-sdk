@@ -15,16 +15,20 @@ public class MultiFieldSubQuery {
     private List<Filter> filters;
     private List<MultiFieldSubQueryDetails> fields;
     private Integer limit;
-    private Integer globalLimit;
     private Integer offset;
+    private Integer rlimit;
+    private Integer roffset;
+    private Integer globalLimit;
     private int index;
     private Map<String, Map<String, Integer>> hint;
 
     public static class Builder {
         private String metric;
         private Integer limit;
-        private Integer globalLimit;
         private Integer offset;
+        private Integer rlimit;
+        private Integer roffset;
+        private Integer globalLimit;
         private Map<String, String> tags = new HashMap<String, String>();
         private List<Filter> filters = new ArrayList<Filter>();
         private List<MultiFieldSubQueryDetails> fieldsInfo = new ArrayList<MultiFieldSubQueryDetails>();
@@ -60,6 +64,27 @@ public class MultiFieldSubQuery {
             return this;
         }
 
+        public Builder rlimit(Integer rlimit) {
+            if (rlimit != null) {
+                if (rlimit < 0 || rlimit > Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("Illegal rlimit value.");
+                }
+                this.rlimit = rlimit;
+            }
+            return this;
+        }
+
+        public Builder roffset(Integer roffset) {
+            if (roffset != null) {
+                if (roffset < 0 || roffset > Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("Illegal roffset value.");
+                }
+                this.roffset = roffset;
+            }
+            return this;
+        }
+
+        @Deprecated
         public Builder globalLimit(Integer globalLimit) {
             if (globalLimit != null) {
                 if (globalLimit < 0 || globalLimit > Integer.MAX_VALUE) {
@@ -170,6 +195,14 @@ public class MultiFieldSubQuery {
                 subQuery.limit = this.limit;
             }
 
+            if (this.rlimit != null && this.rlimit > 0) {
+                subQuery.rlimit = this.rlimit;
+            }
+
+            if (this.roffset != null && this.roffset > 0) {
+                subQuery.roffset = this.roffset;
+            }
+
             if (this.globalLimit != null && this.globalLimit > 0) {
                 subQuery.globalLimit = this.globalLimit;
             }
@@ -220,6 +253,14 @@ public class MultiFieldSubQuery {
 
     public Integer getLimit() {
         return limit;
+    }
+
+    public Integer getRlimit() {
+        return rlimit;
+    }
+
+    public Integer getRoffset() {
+        return roffset;
     }
 
     public Integer getGlobalLimit() {

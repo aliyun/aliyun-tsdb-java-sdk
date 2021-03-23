@@ -64,4 +64,21 @@ public class LastPointQueryTest {
         String expected = "{\"limit\":{\"from\":1511927280,\"global\":true,\"size\":2},\"queries\":[{\"metric\":\"m1\",\"tags\":{\"k1\":\"v1\"}},{\"metric\":\"m2\",\"tags\":{\"k1\":\"v1\"}}]}";
         assertEquals(expected, lastPointQuery.toString());
     }
+
+    @Test
+    public void testLastRLimit() {
+        Map<String, String> tags = new HashMap<String, String>();
+        tags.put("k1", "v1");
+        LastLimit lastLimit = new LastLimit(1511927280, 2 , true);
+
+        LastPointQuery lastPointQuery = LastPointQuery
+                .builder()
+                .rlimit(2).roffset(2)
+                .limit(lastLimit)
+                .sub(LastPointSubQuery.builder("m1", tags).build())
+                .sub(LastPointSubQuery.builder("m2", tags).build()).build();
+
+        String expected = "{\"limit\":{\"from\":1511927280,\"global\":true,\"size\":2},\"queries\":[{\"metric\":\"m1\",\"tags\":{\"k1\":\"v1\"}},{\"metric\":\"m2\",\"tags\":{\"k1\":\"v1\"}}],\"rlimit\":2,\"roffset\":2}";
+        assertEquals(expected, lastPointQuery.toString());
+    }
 }
