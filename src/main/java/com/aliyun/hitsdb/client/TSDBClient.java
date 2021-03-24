@@ -1426,10 +1426,31 @@ public class TSDBClient implements TSDB {
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 List<LastDataValue> queryResultList = JSON.parseArray(content, LastDataValue.class);
+                if (config.isLastResultReverseEnable()) {
+                    reverseSingleValueTimestamp(queryResultList);
+                }
                 return queryResultList;
             default:
                 return (List<LastDataValue>) handleStatus(resultResponse);
         }
+    }
+
+    void reverseSingleValueTimestamp(List<LastDataValue> queryResultList) {
+        for (LastDataValue lastDataValue :queryResultList) {
+            reverseSingleValueTimestamp(lastDataValue);
+        }
+    }
+
+    static void reverseSingleValueTimestamp(LastDataValue lastDataValue) {
+        TreeMap<Long, Object> retMap = new TreeMap<Long, Object>(new Comparator<Long>() {
+            @Override
+            public int compare(Long o1, Long o2) {
+                return o2.compareTo(o1);
+            }
+        });
+        retMap.putAll(lastDataValue.getDps());
+        lastDataValue.getDps().clear();
+        lastDataValue.getDps().putAll(retMap);
     }
 
     @Override
@@ -1741,10 +1762,30 @@ public class TSDBClient implements TSDB {
             case ServerSuccess:
                 String content = resultResponse.getContent();
                 List<MultiFieldQueryLastResult> result = JSON.parseArray(content, MultiFieldQueryLastResult.class);
+                if(config.isLastResultReverseEnable()) {
+                    reverseMultiValueTimestamp(result);
+                }
                 return result;
             default:
                 return (List<MultiFieldQueryLastResult>) handleStatus(resultResponse);
         }
+    }
+
+    void reverseMultiValueTimestamp(List<MultiFieldQueryLastResult> result) {
+        for (MultiFieldQueryLastResult multiFieldQueryLastResult : result){
+            reverseMultiValueTimestamp(multiFieldQueryLastResult);
+        }
+    }
+
+    static void reverseMultiValueTimestamp(MultiFieldQueryLastResult multiFieldQueryLastResult) {
+        Collections.sort(multiFieldQueryLastResult.getValues(), new Comparator<List<Object>>() {
+            @Override
+            public int compare(List<Object> o1, List<Object> o2) {
+                Long t1 = (Long) o1.get(0);
+                Long t2 = (Long) o2.get(0);
+                return t2.compareTo(t1);
+            }
+        });
     }
 
     /**

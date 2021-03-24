@@ -86,4 +86,6 @@ public interface Config {
     HAPolicy getHAPolicy();
 
     boolean isDeduplicationEnable();
+
+    boolean isLastResultReverseEnable();
 }
