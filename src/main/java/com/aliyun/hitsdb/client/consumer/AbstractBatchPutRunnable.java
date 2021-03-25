@@ -1,19 +1,21 @@
 package com.aliyun.hitsdb.client.consumer;
 
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.TSDB;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.http.HttpAddressManager;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
-import com.aliyun.hitsdb.client.value.request.Point;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public abstract class AbstractBatchPutRunnable {
+    /**
+     * the reverse reference to the TSDB client context
+     */
+    protected final TSDB tsdb;
     /**
      * 缓冲队列
      */
@@ -44,7 +46,8 @@ public abstract class AbstractBatchPutRunnable {
     protected int batchPutTimeLimit;
     protected final RateLimiter rateLimiter;
 
-    public AbstractBatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
+    public AbstractBatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
+        this.tsdb = tsdb;
         this.dataQueue = dataQueue;
         this.tsdbHttpClient = httpclient;
         this.countDownLatch = countDownLatch;

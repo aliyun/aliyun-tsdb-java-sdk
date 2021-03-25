@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.TSDB;
 import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.value.request.UniqueUtil;
 import org.apache.http.HttpResponse;
@@ -22,6 +23,8 @@ import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 
+import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
+
 public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutRunnable.class);
 
@@ -31,14 +34,14 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
     private final AbstractBatchPutCallback<?> batchPutCallback;
 
 
-    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
-        super(dataQueue, httpclient, countDownLatch, config, rateLimiter);
+    public BatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
+        super(tsdb, dataQueue, httpclient, countDownLatch, config, rateLimiter);
         this.batchPutCallback = config.getBatchPutCallback();
     }
 
     @Override
     public void run() {
-        Map<String, String> paramsMap = new HashMap<String, String>();
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.tsdb.getCurrentDatabase());
         if (this.batchPutCallback != null) {
             if (batchPutCallback instanceof BatchPutCallback) {
             } else if (batchPutCallback instanceof BatchPutSummaryCallback) {
@@ -143,7 +146,7 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
                             config.getBatchPutRetryCount()
                     );
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, noLogicBatchPutHttpFutureCallback);
+                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, noLogicBatchPutHttpFutureCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
                 noLogicBatchPutHttpFutureCallback.failed(ex);

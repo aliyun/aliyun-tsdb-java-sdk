@@ -43,6 +43,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
+import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
+
 public class TSDBClient implements TSDB {
     private static final Logger LOGGER = LoggerFactory.getLogger(TSDBClient.class);
     private final DataQueue queue;
@@ -95,7 +97,7 @@ public class TSDBClient implements TSDB {
             int batchPutTimeLimit = config.getBatchPutTimeLimit();
             boolean backpressure = config.isBackpressure();
             this.queue = DataQueueFactory.createDataPointQueue(batchPutBufferSize, multiFieldBatchPutBufferSize, batchPutTimeLimit, backpressure);
-            this.consumer = ConsumerFactory.createConsumer(queue, httpclient, rateLimiter, config);
+            this.consumer = ConsumerFactory.createConsumer(this, queue, httpclient, rateLimiter, config);
             this.consumer.start();
         } else {
             this.httpResponseCallbackFactory = null;
@@ -196,19 +198,6 @@ public class TSDBClient implements TSDB {
             gracefulClose();
         }
         LOGGER.info("The tsdb client has closed.");
-    }
-
-    private static Map<String, String> wrapDatabaseRequestParam(String database) {
-        if ((database == null) || database.isEmpty()) {
-            throw new IllegalArgumentException("invalid database specified");
-        }
-
-        Map<String, String> paramsMap = new HashMap<String, String>();
-        if (!database.equals(TSDB.DEFAULT_DATABASE)) {
-            paramsMap.put("db", database);
-        }
-
-        return paramsMap;
     }
 
     @Override
@@ -2007,16 +1996,21 @@ public class TSDBClient implements TSDB {
 
         this.queue.pause();
 
-        final Point[] points = this.queue.getPoints();
-        final MultiFieldPoint[] mpoints = this.queue.getMultiFieldPoints();
+        flush();
 
         //switch to new database
         this.currentDatabase = database;
 
         this.queue.unpause();
+    }
 
-        //flush the retrieved points;
-        flushPoints(previousDatabase, points);
-        flushPoints(previousDatabase, mpoints);
+    /**
+     * get the current database in use
+     *
+     * @return the currently in use database name
+     */
+    @Override
+    public String getCurrentDatabase() {
+        return this.currentDatabase;
     }
 }

@@ -660,4 +660,10 @@ public interface TSDB extends Closeable {
      * so that the target database of the following query or write would be switched to the new one
      */
     void useDatabase(String database);
+
+    /**
+     * get the current database in use
+     * @return the currently in use database name
+     */
+    String getCurrentDatabase();
 }

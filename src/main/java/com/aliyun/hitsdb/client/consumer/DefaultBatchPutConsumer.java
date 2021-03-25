@@ -5,16 +5,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.TSDB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.aliyun.hitsdb.client.HiTSDBConfig;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 
 public class DefaultBatchPutConsumer implements Consumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultBatchPutConsumer.class);
+    // the reference to the TSDB client itself
+    private TSDB tsdb;
     private DataQueue dataQueue;
     private ExecutorService threadPool;
     private ExecutorService multiFieldThreadPool;
@@ -27,7 +29,8 @@ public class DefaultBatchPutConsumer implements Consumer {
     private RateLimiter rateLimiter;
     private CountDownLatch countDownLatch;
 
-    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, Config config) {
+    public DefaultBatchPutConsumer(TSDB tsdb, DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, Config config) {
+        this.tsdb = tsdb;
         this.dataQueue = buffer;
         this.httpclient = httpclient;
         this.config = config;
@@ -52,15 +55,15 @@ public class DefaultBatchPutConsumer implements Consumer {
 
     public void start() {
         for (int i = 0; i < batchPutConsumerThreadCount; i++) {
-            threadPool.submit(new BatchPutRunnable(this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
+            threadPool.submit(new BatchPutRunnable(this.tsdb, this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
         }
 
         for (int i = 0; i < multiFieldBatchPutConsumerThreadCount; i++) {
-            multiFieldThreadPool.submit(new MultiFieldBatchPutRunnable(this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
+            multiFieldThreadPool.submit(new MultiFieldBatchPutRunnable(this.tsdb, this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
         }
 
         for (int i = 0; i < pointsBatchPutConsumerThreadCount; i++) {
-            pointsThreadPool.submit(new PointsCollectionPutRunnable(this.dataQueue, this.httpclient, this.countDownLatch, this.config, this.rateLimiter));
+            pointsThreadPool.submit(new PointsCollectionPutRunnable(this.tsdb, this.dataQueue, this.httpclient, this.countDownLatch, this.config, this.rateLimiter));
         }
     }
 

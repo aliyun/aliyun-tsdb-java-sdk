@@ -1271,4 +1271,15 @@ public class BalTSDBClient implements TSDB {
         //TODO:
         throw new NotImplementedException();
     }
+
+    /**
+     * get the current database in use
+     *
+     * @return the currently in use database name
+     */
+    @Override
+    public String getCurrentDatabase() {
+        //TODO:
+        throw new NotImplementedException();
+    }
 }

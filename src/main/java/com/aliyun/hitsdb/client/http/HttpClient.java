@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.TSDB;
 import com.aliyun.hitsdb.client.TSDBConfig;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
@@ -465,6 +466,19 @@ public class HttpClient {
 
     public HttpAddressManager getHttpAddressManager() {
         return httpAddressManager;
+    }
+
+    public static Map<String, String> wrapDatabaseRequestParam(String database) {
+        if ((database == null) || database.isEmpty()) {
+            throw new IllegalArgumentException("invalid database specified");
+        }
+
+        Map<String, String> paramsMap = new HashMap<String, String>();
+        if (!database.equals(TSDB.DEFAULT_DATABASE)) {
+            paramsMap.put("db", database);
+        }
+
+        return paramsMap;
     }
 
 }

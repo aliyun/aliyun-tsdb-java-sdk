@@ -3,6 +3,7 @@ package com.aliyun.hitsdb.client.consumer;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.TSDB;
 import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -21,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
+
 public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiFieldBatchPutRunnable.class);
 
@@ -29,14 +32,14 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
      */
     private final AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
 
-    public MultiFieldBatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
-        super(dataQueue, httpclient, countDownLatch, config, rateLimiter);
+    public MultiFieldBatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
+        super(tsdb, dataQueue, httpclient, countDownLatch, config, rateLimiter);
         this.multiFieldBatchPutCallback = config.getMultiFieldBatchPutCallback();
     }
 
     @Override
     public void run() {
-        Map<String, String> paramsMap = new HashMap<String, String>();
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.tsdb.getCurrentDatabase());
         if (this.multiFieldBatchPutCallback != null) {
             if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
             } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
@@ -141,7 +144,7 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
                             config.getBatchPutRetryCount()
                     );
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, noLogicBatchPutHttpFutureCallback);
+                tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, paramsMap, noLogicBatchPutHttpFutureCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
                 noLogicBatchPutHttpFutureCallback.failed(ex);

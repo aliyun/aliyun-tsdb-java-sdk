@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client.consumer;
 
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.TSDB;
 import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -19,11 +20,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
+
 public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(PointsCollectionPutRunnable.class);
 
-    public PointsCollectionPutRunnable(DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
-        super(dataQueue, httpclient, countDownLatch, config, rateLimiter);
+    public PointsCollectionPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
+        super(tsdb, dataQueue, httpclient, countDownLatch, config, rateLimiter);
     }
 
     /**
@@ -84,7 +87,7 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
 
         String address = getAddressAndSemaphoreAcquire();
 
-        Map<String, String> paramsMap = new HashMap<String, String>();
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.tsdb.getCurrentDatabase());
         if (points.getSimplePointBatchCallbak() != null) {
             AbstractBatchPutCallback scallback = points.getSimplePointBatchCallbak();
 
