@@ -35,11 +35,7 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
     public MultiFieldBatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
         super(tsdb, dataQueue, httpclient, countDownLatch, config, rateLimiter);
         this.multiFieldBatchPutCallback = config.getMultiFieldBatchPutCallback();
-    }
 
-    @Override
-    public void run() {
-        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.tsdb.getCurrentDatabase());
         if (this.multiFieldBatchPutCallback != null) {
             if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
             } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
@@ -50,6 +46,10 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
                 paramsMap.put("ignoreErrors", "true");
             }
         }
+    }
+
+    @Override
+    public void run() {
 
         MultiFieldPoint waitPoint = null;
         boolean readyClose = false;

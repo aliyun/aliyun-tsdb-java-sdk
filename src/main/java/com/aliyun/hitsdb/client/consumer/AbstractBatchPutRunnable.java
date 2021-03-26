@@ -3,19 +3,21 @@ package com.aliyun.hitsdb.client.consumer;
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.TSDB;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
+import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedEvent;
+import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedListener;
 import com.aliyun.hitsdb.client.http.HttpAddressManager;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
+import static com.aliyun.hitsdb.client.http.HttpClient.updateDatabaseRequestParam;
+
 public abstract class AbstractBatchPutRunnable {
-    /**
-     * the reverse reference to the TSDB client context
-     */
-    protected final TSDB tsdb;
     /**
      * 缓冲队列
      */
@@ -46,8 +48,13 @@ public abstract class AbstractBatchPutRunnable {
     protected int batchPutTimeLimit;
     protected final RateLimiter rateLimiter;
 
+    /**
+     * the map containing query parameters for building the write HTTP request
+     * the possible query parameters might be: "db", "summary", "details" ...
+     */
+    protected Map<String, String> paramsMap;
+
     public AbstractBatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
-        this.tsdb = tsdb;
         this.dataQueue = dataQueue;
         this.tsdbHttpClient = httpclient;
         this.countDownLatch = countDownLatch;
@@ -58,6 +65,19 @@ public abstract class AbstractBatchPutRunnable {
         this.httpAddressManager = tsdbHttpClient.getHttpAddressManager();
         this.rateLimiter = rateLimiter;
         this.httpResponseCallbackFactory = tsdbHttpClient.getHttpResponseCallbackFactory();
+        this.paramsMap = wrapDatabaseRequestParam(tsdb.getCurrentDatabase());
+
+        // register the database changed event listener
+        tsdb.addDatabaseChangedListener(new TSDBDatabaseChangedListener() {
+            @Override
+            public void databaseChanged(TSDBDatabaseChangedEvent event) {
+                /**
+                 * every time the currently in use database changed,
+                 * it is necessary to update the "db" query parameter in real time
+                 */
+                updateDatabaseRequestParam(paramsMap, event.getCurrentDatabase());
+            }
+        });
     }
 
     protected String getAddressAndSemaphoreAcquire() {

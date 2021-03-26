@@ -83,11 +83,22 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
     private void sendHttpRequest(final PointsCollection points, String strJson) {
         if (points.isEmpty()) {
             LOGGER.warn("PointsCollection is empty, nothing to post");
+            return;
         }
 
         String address = getAddressAndSemaphoreAcquire();
 
-        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.tsdb.getCurrentDatabase());
+        /**
+         * every time ready to send the write request,
+         * it is necessary to get the current database in real time
+         */
+        String database = this.paramsMap.get("db");
+        Map<String, String> queryParamsMap;
+        if (database != null) {
+            queryParamsMap = wrapDatabaseRequestParam(database);
+        } else {
+            queryParamsMap = new HashMap<String, String>();
+        }
         if (points.getSimplePointBatchCallbak() != null) {
             AbstractBatchPutCallback scallback = points.getSimplePointBatchCallbak();
 
@@ -95,9 +106,9 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
             if (scallback != null) {
                 if (scallback instanceof BatchPutCallback) {
                 } else if (scallback instanceof BatchPutSummaryCallback) {
-                    paramsMap.put("summary", "true");
+                    queryParamsMap.put("summary", "true");
                 } else if (scallback instanceof BatchPutDetailsCallback) {
-                    paramsMap.put("details", "true");
+                    queryParamsMap.put("details", "true");
                 }
             }
 
@@ -111,7 +122,7 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
                     config.getBatchPutRetryCount());
 
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
+                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, queryParamsMap, postHttpCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
                 scallback.failed(address, slist, ex);
@@ -123,9 +134,9 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
             if (mcallback != null) {
                 if (mcallback instanceof MultiFieldBatchPutCallback) {
                 } else if (mcallback instanceof MultiFieldBatchPutSummaryCallback) {
-                    paramsMap.put("summary", "true");
+                    queryParamsMap.put("summary", "true");
                 } else if (mcallback instanceof MultiFieldBatchPutDetailsCallback) {
-                    paramsMap.put("details", "true");
+                    queryParamsMap.put("details", "true");
                 }
 
 
@@ -139,7 +150,7 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
                                 config.getBatchPutRetryCount());
 
                 try {
-                    tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, paramsMap, postHttpCallback);
+                    tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, queryParamsMap, postHttpCallback);
                 } catch (Exception ex) {
                     this.semaphoreManager.release(address);
                     mcallback.failed(address, mlist, ex);

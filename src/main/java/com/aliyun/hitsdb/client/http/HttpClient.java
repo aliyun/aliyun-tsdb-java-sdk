@@ -481,4 +481,12 @@ public class HttpClient {
         return paramsMap;
     }
 
+    public static void updateDatabaseRequestParam(Map<String, String> paramsMap, String database) {
+        if ((database == null) || database.isEmpty()) {
+            throw new IllegalArgumentException("invalid database specified");
+        }
+
+        paramsMap.put("db", database);
+    }
+
 }

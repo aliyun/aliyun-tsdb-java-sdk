@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client;
 
 import com.aliyun.hitsdb.client.callback.*;
+import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedListener;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.*;
@@ -666,4 +667,16 @@ public interface TSDB extends Closeable {
      * @return the currently in use database name
      */
     String getCurrentDatabase();
+
+    /**
+     * add the DatabaseChanged event listener
+     * @param listener
+     */
+    void addDatabaseChangedListener(TSDBDatabaseChangedListener listener);
+
+    /**
+     * remove the specified DatabaseChanged event listener
+     * @param listener
+     */
+    void removeDatabaseChangedListener(TSDBDatabaseChangedListener listener);
 }

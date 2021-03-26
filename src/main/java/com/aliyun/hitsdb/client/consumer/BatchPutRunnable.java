@@ -37,11 +37,7 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
     public BatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
         super(tsdb, dataQueue, httpclient, countDownLatch, config, rateLimiter);
         this.batchPutCallback = config.getBatchPutCallback();
-    }
 
-    @Override
-    public void run() {
-        Map<String, String> paramsMap = wrapDatabaseRequestParam(this.tsdb.getCurrentDatabase());
         if (this.batchPutCallback != null) {
             if (batchPutCallback instanceof BatchPutCallback) {
             } else if (batchPutCallback instanceof BatchPutSummaryCallback) {
@@ -52,6 +48,10 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
                 paramsMap.put("ignoreErrors", "true");
             }
         }
+    }
+
+    @Override
+    public void run() {
 
         Point waitPoint = null;
         boolean readyClose = false;
