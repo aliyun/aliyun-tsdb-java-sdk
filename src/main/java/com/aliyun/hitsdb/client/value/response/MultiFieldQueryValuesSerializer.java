@@ -6,10 +6,10 @@ import com.alibaba.fastjson.parser.DefaultJSONParser;
 import com.alibaba.fastjson.parser.deserializer.ObjectDeserializer;
 import com.alibaba.fastjson.serializer.JSONSerializer;
 import com.alibaba.fastjson.serializer.ObjectSerializer;
+import com.aliyun.hitsdb.client.util.Pair;
 import com.aliyun.hitsdb.client.value.request.ByteArrayValue;
 import com.aliyun.hitsdb.client.value.request.ComplexValue;
 import com.aliyun.hitsdb.client.value.request.GeoPointValue;
-import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

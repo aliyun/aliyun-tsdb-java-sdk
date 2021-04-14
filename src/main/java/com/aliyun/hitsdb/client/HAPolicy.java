@@ -1,7 +1,7 @@
 package com.aliyun.hitsdb.client;
 
 import com.aliyun.hitsdb.client.http.HttpClient;
-import javafx.util.Pair;
+import com.aliyun.hitsdb.client.util.Pair;
 
 /**
  * @author johnnyzou
