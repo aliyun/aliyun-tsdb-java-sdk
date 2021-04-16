@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client.value.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import com.aliyun.hitsdb.client.value.JSONValue;
+import com.aliyun.hitsdb.client.value.type.QueryType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +21,9 @@ public class MultiFieldQuery extends JSONValue {
     @JSONField(serialize = false)
     private List<Class<?>> types;
     private Map<String, Map<String, Integer>> hint;
+    // this field is only allowed for Lindorm TSDB
+    @JSONField(name = "type")
+    private String queryType;
 
     public static class Builder {
         private Long startTime;
@@ -29,6 +33,8 @@ public class MultiFieldQuery extends JSONValue {
         private boolean showType;
         private List<Class<?>> types;
         private Map<String, Map<String, Integer>> hint;
+        // this field is only allowed for Lindorm TSDB
+        private String queryType;
 
         /**
          * 1970-02-20 00:59:28
@@ -94,6 +100,15 @@ public class MultiFieldQuery extends JSONValue {
             return this;
         }
 
+        /**
+         * Set queryType is only allowed for Lindorm TSDB.
+         * Currently only support a few data type.
+         */
+        public Builder queryType(QueryType queryType) {
+            this.queryType = queryType.getName();
+            return this;
+        }
+
         public Builder sub(MultiFieldSubQuery... subQuerys) {
             for (MultiFieldSubQuery subQuery : subQuerys) {
                 subQueryList.add(subQuery);
@@ -137,6 +152,7 @@ public class MultiFieldQuery extends JSONValue {
             query.showType = this.showType;
             query.types = this.types;
             query.hint = this.hint;
+            query.queryType = this.queryType;
             return query;
         }
     }
@@ -220,5 +236,17 @@ public class MultiFieldQuery extends JSONValue {
 
     public void setHint(Map<String, Map<String, Integer>> hint) {
         this.hint = hint;
+    }
+
+    public String getQueryType() {
+        return queryType;
+    }
+
+    /**
+     * Set queryType is only allowed for Lindorm TSDB.
+     * Currently only support a few data type.
+     */
+    public void setQueryType(QueryType queryType) {
+        this.queryType = queryType.getName();
     }
 }

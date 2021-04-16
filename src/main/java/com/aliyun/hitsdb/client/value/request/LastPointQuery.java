@@ -1,6 +1,8 @@
 package com.aliyun.hitsdb.client.value.request;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.aliyun.hitsdb.client.value.JSONValue;
+import com.aliyun.hitsdb.client.value.type.QueryType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,9 @@ public class LastPointQuery extends JSONValue {
         private LastLimit limit;
 
         private Map<String, Map<String, Integer>> hint;
+
+        // this field is only allowed for Lindorm TSDB
+        private String queryType;
 
         public Builder timestamp(long timestamp) {
             this.timestamp = timestamp;
@@ -66,6 +71,15 @@ public class LastPointQuery extends JSONValue {
             return this;
         }
 
+        /**
+         * Set queryType is only allowed for Lindorm TSDB.
+         * Currently only support a few data type.
+         */
+        public Builder queryType(QueryType queryType) {
+            this.queryType = queryType.getName();
+            return this;
+        }
+
         public LastPointQuery build() {
             if (queries == null || queries.isEmpty()) {
                 throw new IllegalArgumentException("the LastPointSubQuery must be set");
@@ -78,6 +92,7 @@ public class LastPointQuery extends JSONValue {
             query.tupleFormat = tupleFormat;
             query.limit = limit;
             query.hint = hint;
+            query.queryType = queryType;
             return query;
         }
     }
@@ -104,6 +119,10 @@ public class LastPointQuery extends JSONValue {
     private List<LastPointSubQuery> queries;
 
     private Map<String, Map<String, Integer>> hint;
+
+    // this field is only allowed for Lindorm TSDB
+    @JSONField(name = "type")
+    private String queryType;
 
     public Boolean isMsResolution() {
         return msResolution;
@@ -159,5 +178,17 @@ public class LastPointQuery extends JSONValue {
 
     public void setHint(Map<String, Map<String, Integer>> hint) {
         this.hint = hint;
+    }
+
+    public String getQueryType() {
+        return queryType;
+    }
+
+    /**
+     * Set queryType is only allowed for Lindorm TSDB.
+     * Currently only support a few data type.
+     */
+    public void setQueryType(QueryType queryType) {
+        this.queryType = queryType.getName();
     }
 }
