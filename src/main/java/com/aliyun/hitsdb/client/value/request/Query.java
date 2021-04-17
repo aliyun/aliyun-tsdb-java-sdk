@@ -34,7 +34,7 @@ public class Query extends JSONValue {
 		/**
 		 * 1970-02-20 00:59:28
 		 */
-		private static final long MIN_START_TIME = 4284768;
+		private static final long MIN_START_TIME = 4294968;
 		/**
 		 * 2286-11-21 01:46:39.999
 		 */

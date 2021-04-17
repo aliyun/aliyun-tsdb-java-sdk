@@ -19,35 +19,35 @@ public class UniqueUtilTest {
         Map<String, String> tagMap1 = new HashMap<String, String>();
         tagMap1.put("key1", "value1");
         tagMap1.put("key2", "value2");
-        Point point1 = Point.metric("123").timestamp(4284768L).tag(tagMap1).value(1).build();
+        Point point1 = Point.metric("123").timestamp(4294968L).tag(tagMap1).value(1).build();
 
 
         Map<String, String> tagMap2 = new HashMap<String, String>();
         tagMap2.put("key2", "value2");
         tagMap2.put("key1", "value1");
-        Point point2 = Point.metric("123").timestamp(4284768L).tag(tagMap2).value(2).build();
+        Point point2 = Point.metric("123").timestamp(4294968L).tag(tagMap2).value(2).build();
 
         Assert.assertEquals(UniqueUtil.hash(point1), UniqueUtil.hash(point2));
 
         Assert.assertTrue(UniqueUtil.tagsSame(tagMap1, tagMap2));
 
         tagMap2.put("key1", "value11");
-        point2 = Point.metric("123").timestamp(4284768L).tag(tagMap2).value(2).build();
+        point2 = Point.metric("123").timestamp(4294968L).tag(tagMap2).value(2).build();
         Assert.assertNotEquals(UniqueUtil.hash(point1), UniqueUtil.hash(point2));
 
         tagMap2.put("key1", "value1");
-        point2 = Point.metric("123").timestamp(4284768L).tag(tagMap2).value(2).build();
+        point2 = Point.metric("123").timestamp(4294968L).tag(tagMap2).value(2).build();
         Assert.assertEquals(UniqueUtil.hash(point1), UniqueUtil.hash(point2));
 
         tagMap2.put("key3", "value3");
-        point2 = Point.metric("123").timestamp(4284768L).tag(tagMap2).value(2).build();
+        point2 = Point.metric("123").timestamp(4294968L).tag(tagMap2).value(2).build();
         Assert.assertNotEquals(UniqueUtil.hash(point1), UniqueUtil.hash(point2));
         tagMap2.remove("key3");
 
-        point2 = Point.metric("1234").timestamp(4284768L).tag(tagMap2).value(2).build();
+        point2 = Point.metric("1234").timestamp(4294968L).tag(tagMap2).value(2).build();
         Assert.assertNotEquals(UniqueUtil.hash(point1), UniqueUtil.hash(point2));
 
-        point2 = Point.metric("123").timestamp(14284768L).tag(tagMap2).value(2).build();
+        point2 = Point.metric("123").timestamp(14294968L).tag(tagMap2).value(2).build();
         Assert.assertNotEquals(UniqueUtil.hash(point1), UniqueUtil.hash(point2));
     }
 
@@ -61,7 +61,7 @@ public class UniqueUtilTest {
         fieldMap1.put("field1", 2);
         fieldMap1.put("field2", 2);
 
-        MultiFieldPoint multiFieldPoint1 = MultiFieldPoint.metric("123").tags(tagMap1).fields(fieldMap1).timestamp(4284768L).build();
+        MultiFieldPoint multiFieldPoint1 = MultiFieldPoint.metric("123").tags(tagMap1).fields(fieldMap1).timestamp(4294968L).build();
 
         Map<String, String> tagMap2 = new HashMap<String, String>();
         tagMap2.put("key1", "value1");
@@ -71,20 +71,20 @@ public class UniqueUtilTest {
         fieldMap2.put("field1", 1);
         fieldMap2.put("field3", 3);
 
-        MultiFieldPoint multiFieldPoint2 = MultiFieldPoint.metric("123").tags(tagMap2).fields(fieldMap2).timestamp(4284768L).build();
+        MultiFieldPoint multiFieldPoint2 = MultiFieldPoint.metric("123").tags(tagMap2).fields(fieldMap2).timestamp(4294968L).build();
 
         Assert.assertEquals(UniqueUtil.hash(multiFieldPoint1, "field1"), UniqueUtil.hash(multiFieldPoint2, "field1"));
         Assert.assertNotEquals(UniqueUtil.hash(multiFieldPoint1, "field1"), UniqueUtil.hash(multiFieldPoint2, "field2"));
 
-        multiFieldPoint2 = MultiFieldPoint.metric("1234").tags(tagMap2).fields(fieldMap2).timestamp(4284768L).build();
+        multiFieldPoint2 = MultiFieldPoint.metric("1234").tags(tagMap2).fields(fieldMap2).timestamp(4294968L).build();
         Assert.assertNotEquals(UniqueUtil.hash(multiFieldPoint1, "field1"), UniqueUtil.hash(multiFieldPoint2, "field1"));
 
         tagMap2.put("key3", "value3");
-        multiFieldPoint2 = MultiFieldPoint.metric("1234").tags(tagMap2).fields(fieldMap2).timestamp(4284768L).build();
+        multiFieldPoint2 = MultiFieldPoint.metric("1234").tags(tagMap2).fields(fieldMap2).timestamp(4294968L).build();
         Assert.assertNotEquals(UniqueUtil.hash(multiFieldPoint1, "field1"), UniqueUtil.hash(multiFieldPoint2, "field1"));
         tagMap2.remove("key3");
 
-        multiFieldPoint2 = MultiFieldPoint.metric("1234").tags(tagMap2).fields(fieldMap2).timestamp(14284768L).build();
+        multiFieldPoint2 = MultiFieldPoint.metric("1234").tags(tagMap2).fields(fieldMap2).timestamp(14294968L).build();
         Assert.assertNotEquals(UniqueUtil.hash(multiFieldPoint1, "field1"), UniqueUtil.hash(multiFieldPoint2, "field1"));
     }
 
@@ -93,13 +93,13 @@ public class UniqueUtilTest {
         Map<String, String> tagMap1 = new HashMap<String, String>();
         tagMap1.put("key1", "value1");
         tagMap1.put("key2", "value2");
-        Point point1 = Point.metric("123").timestamp(4284768L).tag(tagMap1).value(1).build();
+        Point point1 = Point.metric("123").timestamp(4294968L).tag(tagMap1).value(1).build();
 
 
         Map<String, String> tagMap2 = new HashMap<String, String>();
         tagMap2.put("key2", "value2");
         tagMap2.put("key1", "value1");
-        Point point2 = Point.metric("123").timestamp(4284768L).tag(tagMap2).value(2).build();
+        Point point2 = Point.metric("123").timestamp(4294968L).tag(tagMap2).value(2).build();
 
         List<Point> points = new ArrayList<Point>();
         points.add(point1);
@@ -123,7 +123,7 @@ public class UniqueUtilTest {
         fieldMap1.put("field1", 1);
         fieldMap1.put("field2", 2);
 
-        MultiFieldPoint multiFieldPoint1 = MultiFieldPoint.metric("123").tags(tagMap1).fields(fieldMap1).timestamp(4284768L).build();
+        MultiFieldPoint multiFieldPoint1 = MultiFieldPoint.metric("123").tags(tagMap1).fields(fieldMap1).timestamp(4294968L).build();
 
         Map<String, String> tagMap2 = new HashMap<String, String>();
         tagMap2.put("key1", "value1");
@@ -133,7 +133,7 @@ public class UniqueUtilTest {
         fieldMap2.put("field1", 2);
         fieldMap2.put("field3", 3);
 
-        MultiFieldPoint multiFieldPoint2 = MultiFieldPoint.metric("123").tags(tagMap2).fields(fieldMap2).timestamp(4284768L).build();
+        MultiFieldPoint multiFieldPoint2 = MultiFieldPoint.metric("123").tags(tagMap2).fields(fieldMap2).timestamp(4294968L).build();
 
         Assert.assertTrue(UniqueUtil.tagsSame(tagMap1, tagMap2));
         Assert.assertTrue(UniqueUtil.multiFieldPointSame(multiFieldPoint1, multiFieldPoint2, "field1"));
@@ -163,7 +163,7 @@ public class UniqueUtilTest {
         fieldMap1.put("field1", 1);
         fieldMap1.put("field2", 2);
 
-        MultiFieldPoint multiFieldPoint1 = MultiFieldPoint.metric("123").tags(tagMap1).fields(fieldMap1).timestamp(4284768L).build();
+        MultiFieldPoint multiFieldPoint1 = MultiFieldPoint.metric("123").tags(tagMap1).fields(fieldMap1).timestamp(4294968L).build();
 
         Map<String, String> tagMap2 = new HashMap<String, String>();
         tagMap2.put("key1", "value1");
@@ -173,7 +173,7 @@ public class UniqueUtilTest {
         fieldMap2.put("field1", 2);
         fieldMap2.put("field2", 3);
 
-        MultiFieldPoint multiFieldPoint2 = MultiFieldPoint.metric("123").tags(tagMap2).fields(fieldMap2).timestamp(4284768L).build();
+        MultiFieldPoint multiFieldPoint2 = MultiFieldPoint.metric("123").tags(tagMap2).fields(fieldMap2).timestamp(4294968L).build();
 
         List<MultiFieldPoint> multiFieldPointList = new ArrayList<MultiFieldPoint>();
         multiFieldPointList.add(multiFieldPoint1);
@@ -198,7 +198,7 @@ public class UniqueUtilTest {
         fieldMap1.put("field1", 1);
         fieldMap1.put("field2", 2);
 
-        MultiFieldPoint multiFieldPoint1 = MultiFieldPoint.metric("123").tags(tagMap1).fields(fieldMap1).timestamp(4284768L).build();
+        MultiFieldPoint multiFieldPoint1 = MultiFieldPoint.metric("123").tags(tagMap1).fields(fieldMap1).timestamp(4294968L).build();
 
         Map<String, String> tagMap2 = new HashMap<String, String>();
         tagMap2.put("key1", "value1");
@@ -208,7 +208,7 @@ public class UniqueUtilTest {
         fieldMap2.put("field1", 2);
         fieldMap2.put("field2", 3);
 
-        MultiFieldPoint multiFieldPoint2 = MultiFieldPoint.metric("123").tags(tagMap2).fields(fieldMap2).timestamp(4284768L).build();
+        MultiFieldPoint multiFieldPoint2 = MultiFieldPoint.metric("123").tags(tagMap2).fields(fieldMap2).timestamp(4294968L).build();
 
         List<MultiFieldPoint> multiFieldPointList = new ArrayList<MultiFieldPoint>();
         multiFieldPointList.add(multiFieldPoint1);
