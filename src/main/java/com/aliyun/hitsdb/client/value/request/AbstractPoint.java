@@ -52,13 +52,13 @@ public abstract class AbstractPoint extends JSONValue {
     }
 
 
-    private static final long MIN_TIME = 4284768L;
+    private static final long MIN_TIME = 4294968L;
 
     private static final long MAX_TIME = 9999999999999L;
 
     public static void checkTimestamp(long timestamp) {
         if (timestamp < MIN_TIME || timestamp > MAX_TIME) {
-            throw new IllegalArgumentException("The timestamp must be in range [4284768,9999999999999],but is " + timestamp);
+            throw new IllegalArgumentException("The timestamp must be in range [4294968,9999999999999],but is " + timestamp);
         }
     }
 }
