@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.aliyun.hitsdb.client.value.JSONValue;
 import com.alibaba.fastjson.annotation.JSONField;
+import com.aliyun.hitsdb.client.value.type.QueryType;
 
 public class Query extends JSONValue {
 	private Long start;
@@ -20,6 +21,9 @@ public class Query extends JSONValue {
 	@JSONField(serialize = false)
 	private Class<?> type;
 	private Map<String, Map<String, Integer>> hint;
+	// this field is only allowed for Lindorm TSDB
+	@JSONField(name = "type")
+	private String queryType;
 
 	public static class Builder {
 		private Long startTime;
@@ -29,6 +33,8 @@ public class Query extends JSONValue {
 		private List<SubQuery> subQueryList = new ArrayList<SubQuery>();
 		private boolean showType;
 		private Class<?> type;
+		// this field is only allowed for Lindorm TSDB
+		private String queryType;
 		private Map<String, Map<String, Integer>> hint;
 
 		/**
@@ -71,6 +77,15 @@ public class Query extends JSONValue {
 
 		public Builder msResolution() {
 			this.msResolution = true;
+			return this;
+		}
+
+		/**
+		 * Set queryType is only allowed for Lindorm TSDB.
+		 * Currently only support a few data type.
+		 */
+		public Builder queryType(QueryType queryType) {
+			this.queryType = queryType.getName();
 			return this;
 		}
 
@@ -162,6 +177,7 @@ public class Query extends JSONValue {
 			query.showType = this.showType;
 			query.type = this.type;
 			query.hint = this.hint;
+			query.queryType = queryType;
 			return query;
 		}
 
@@ -250,5 +266,17 @@ public class Query extends JSONValue {
 
 	public void setHint(Map<String, Map<String, Integer>> hint) {
 		this.hint = hint;
+	}
+
+	public String getQueryType() {
+		return queryType;
+	}
+
+	/**
+	 * Set queryType is only allowed for Lindorm TSDB.
+	 * Currently only support a few data type.
+	 */
+	public void setQueryType(QueryType queryType) {
+		this.queryType = queryType.getName();
 	}
 }

@@ -519,10 +519,10 @@ public class TSDBClient implements TSDB {
         if (query == null || !query.isShowType()) {
             return;
         }
-        final Class<?> queryType = query.getType();
+        final Class<?> showType = query.getType();
         for (QueryResult queryResult : queryResultList) {
-            if (queryType != null) {
-                queryResult.setType(queryType);
+            if (showType != null) {
+                queryResult.setType(showType);
                 continue;
             }
             final LinkedHashMap<Long, Object> dps = queryResult.getDps();

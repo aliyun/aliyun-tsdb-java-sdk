@@ -1,16 +1,39 @@
 package com.aliyun.hitsdb.client.value.request;
 
-import com.aliyun.hitsdb.client.value.request.LastLimit;
-import com.aliyun.hitsdb.client.value.request.LastPointQuery;
-import com.aliyun.hitsdb.client.value.request.LastPointSubQuery;
+import com.alibaba.fastjson.JSON;
+import com.aliyun.hitsdb.client.value.type.QueryType;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
 public class LastPointQueryTest {
+    @Test
+    public void testLastPointQuerySerialization() {
+        {
+            LastPointQuery query = LastPointQuery
+                    .builder()
+                    .msResolution(true)
+                    .tupleFormat(true)
+                    .queryType(QueryType.ALL)
+                    .sub(LastPointSubQuery.builder("wind1", new ArrayList<String>() {{add("*");}}, new HashMap<String, String>()).build()).build();
+            String serializedString = JSON.toJSONString(query);
+            Assert.assertEquals("{\"msResolution\":true,\"queries\":[{\"metric\":\"wind1\",\"fields\":[\"*\"],\"tags\":{}}],\"tupleFormat\":true,\"type\":\"ALL\"}", serializedString);
+        }
+        {
+            LastPointQuery query = LastPointQuery
+                    .builder()
+                    .msResolution(true)
+                    .tupleFormat(true)
+                    .sub(LastPointSubQuery.builder("wind1", new ArrayList<String>() {{add("*");}}, new HashMap<String, String>()).build()).build();
+            String serializedString = JSON.toJSONString(query);
+            Assert.assertEquals("{\"msResolution\":true,\"queries\":[{\"metric\":\"wind1\",\"fields\":[\"*\"],\"tags\":{}}],\"tupleFormat\":true}", serializedString);
+        }
+    }
 
     @Test
     public void testNotCircularReference() {
