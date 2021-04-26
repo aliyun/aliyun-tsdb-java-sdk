@@ -109,4 +109,22 @@ public class MultiFieldTest {
 		String expected = "{\"end\":1511937280,\"queries\":[{\"fields\":[{\"aggregator\":\"none\",\"aggregatorType\":\"NONE\",\"delta\":false,\"field\":\"*\",\"rate\":false,\"top\":0}],\"index\":0,\"limit\":4,\"metric\":\"test-test-test\",\"rlimit\":2,\"roffset\":3}],\"start\":1511927280}";
 		assertEquals(expected, mq.toString());
 	}
+
+	@Test
+	public void testQuerySLimit() {
+		long startTime = 1511927280;
+		long endTime = 1511937280;
+		String metric = "test-test-test";
+		Map<String, String> tags = new HashMap<String, String>();
+		tags.put("k1", "v1");
+
+		MultiFieldQuery mq = MultiFieldQuery.start(startTime).end(endTime).sub(
+				MultiFieldSubQuery.metric(metric).slimit(2).limit(4).fieldsInfo(
+						MultiFieldSubQueryDetails.aggregator(Aggregator.NONE).field("*").build()
+				).build()
+		).build();
+
+		String expected = "{\"end\":1511937280,\"queries\":[{\"fields\":[{\"aggregator\":\"none\",\"aggregatorType\":\"NONE\",\"delta\":false,\"field\":\"*\",\"rate\":false,\"top\":0}],\"index\":0,\"limit\":4,\"metric\":\"test-test-test\",\"slimit\":2}],\"start\":1511927280}";
+		assertEquals(expected, mq.toString());
+	}
 }

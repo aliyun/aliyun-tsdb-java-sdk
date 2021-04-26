@@ -57,5 +57,14 @@ public class QueryTest {
             String serializedString = JSON.toJSONString(query);
             Assert.assertEquals("{\"queries\":[{\"aggregator\":\"none\",\"index\":0,\"metric\":\"metric\"}],\"start\":4294968}", serializedString);
         }
+        {
+            Query query = Query
+                    .start(4294968)
+                    .showType()
+                    .sub(SubQuery.metric("metric").aggregator(Aggregator.NONE)
+                            .tag(new HashMap<String, String>()).slimit(2).build()).build();
+            String serializedString = JSON.toJSONString(query);
+            Assert.assertEquals("{\"queries\":[{\"aggregator\":\"none\",\"index\":0,\"metric\":\"metric\",\"slimit\":2}],\"start\":4294968}", serializedString);
+        }
     }
 }

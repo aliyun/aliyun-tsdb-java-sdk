@@ -18,6 +18,7 @@ public class MultiFieldSubQuery {
     private Integer offset;
     private Integer rlimit;
     private Integer roffset;
+    private Integer slimit;
     private Integer globalLimit;
     private int index;
     private Map<String, Map<String, Integer>> hint;
@@ -28,6 +29,7 @@ public class MultiFieldSubQuery {
         private Integer offset;
         private Integer rlimit;
         private Integer roffset;
+        private Integer slimit;
         private Integer globalLimit;
         private Map<String, String> tags = new HashMap<String, String>();
         private List<Filter> filters = new ArrayList<Filter>();
@@ -64,6 +66,9 @@ public class MultiFieldSubQuery {
             return this;
         }
 
+        /**
+         * only support for multi field model
+         */
         public Builder rlimit(Integer rlimit) {
             if (rlimit != null) {
                 if (rlimit < 0 || rlimit > Integer.MAX_VALUE) {
@@ -74,12 +79,28 @@ public class MultiFieldSubQuery {
             return this;
         }
 
+        /**
+         * only support for multi field model
+         */
         public Builder roffset(Integer roffset) {
             if (roffset != null) {
                 if (roffset < 0 || roffset > Integer.MAX_VALUE) {
                     throw new IllegalArgumentException("Illegal roffset value.");
                 }
                 this.roffset = roffset;
+            }
+            return this;
+        }
+
+        /**
+         * current only support for super tag model
+         */
+        public Builder slimit(Integer slimit) {
+            if (slimit != null) {
+                if (slimit < 0 || slimit > Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("Illegal slimit value.");
+                }
+                this.slimit = slimit;
             }
             return this;
         }
@@ -203,6 +224,10 @@ public class MultiFieldSubQuery {
                 subQuery.roffset = this.roffset;
             }
 
+            if (this.slimit != null && this.slimit > 0) {
+                subQuery.slimit = this.slimit;
+            }
+
             if (this.globalLimit != null && this.globalLimit > 0) {
                 subQuery.globalLimit = this.globalLimit;
             }
@@ -261,6 +286,10 @@ public class MultiFieldSubQuery {
 
     public Integer getRoffset() {
         return roffset;
+    }
+
+    public Integer getSlimit() {
+        return slimit;
     }
 
     public Integer getGlobalLimit() {
