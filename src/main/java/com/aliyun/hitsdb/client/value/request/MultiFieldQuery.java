@@ -24,6 +24,11 @@ public class MultiFieldQuery extends JSONValue {
     // this field is only allowed for Lindorm TSDB
     @JSONField(name = "type")
     private String queryType;
+    private Integer limit;
+    private Integer offset;
+    private Integer rlimit;
+    private Integer roffset;
+    private Integer slimit;
 
     public static class Builder {
         private Long startTime;
@@ -35,6 +40,11 @@ public class MultiFieldQuery extends JSONValue {
         private Map<String, Map<String, Integer>> hint;
         // this field is only allowed for Lindorm TSDB
         private String queryType;
+        private Integer limit;
+        private Integer offset;
+        private Integer rlimit;
+        private Integer roffset;
+        private Integer slimit;
 
         /**
          * 1970-02-20 00:59:28
@@ -109,6 +119,31 @@ public class MultiFieldQuery extends JSONValue {
             return this;
         }
 
+        public Builder limit(int limit) {
+            this.limit = limit;
+            return this;
+        }
+
+        public Builder offset(int offset) {
+            this.offset = offset;
+            return this;
+        }
+
+        public Builder rlimit(int rlimit) {
+            this.rlimit = rlimit;
+            return this;
+        }
+
+        public Builder roffset(int roffset) {
+            this.roffset = roffset;
+            return this;
+        }
+
+        public Builder slimit(int slimit) {
+            this.slimit = slimit;
+            return this;
+        }
+
         public Builder sub(MultiFieldSubQuery... subQuerys) {
             for (MultiFieldSubQuery subQuery : subQuerys) {
                 subQueryList.add(subQuery);
@@ -153,6 +188,11 @@ public class MultiFieldQuery extends JSONValue {
             query.types = this.types;
             query.hint = this.hint;
             query.queryType = this.queryType;
+            query.limit = this.limit;
+            query.offset = this.offset;
+            query.rlimit = this.rlimit;
+            query.roffset = this.roffset;
+            query.slimit = this.slimit;
             return query;
         }
     }
@@ -248,5 +288,26 @@ public class MultiFieldQuery extends JSONValue {
      */
     public void setQueryType(QueryType queryType) {
         this.queryType = queryType.getName();
+    }
+
+
+    public Integer getLimit() {
+        return limit;
+    }
+
+    public Integer getOffset() {
+        return offset;
+    }
+
+    public Integer getRlimit() {
+        return rlimit;
+    }
+
+    public Integer getRoffset() {
+        return roffset;
+    }
+
+    public Integer getSlimit() {
+        return slimit;
     }
 }

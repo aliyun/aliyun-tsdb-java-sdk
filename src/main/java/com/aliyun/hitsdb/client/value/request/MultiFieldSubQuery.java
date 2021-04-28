@@ -212,30 +212,16 @@ public class MultiFieldSubQuery {
             }
             subQuery.fields = this.fieldsInfo;
 
-            if (this.limit != null && this.limit > 0) {
-                subQuery.limit = this.limit;
-            }
-
-            if (this.rlimit != null && this.rlimit > 0) {
-                subQuery.rlimit = this.rlimit;
-            }
-
-            if (this.roffset != null && this.roffset > 0) {
-                subQuery.roffset = this.roffset;
-            }
-
-            if (this.slimit != null && this.slimit > 0) {
-                subQuery.slimit = this.slimit;
-            }
-
+            // TSDB Server will set limit, offset, rlimit, roffset, slimit for subquery
             if (this.globalLimit != null && this.globalLimit > 0) {
                 subQuery.globalLimit = this.globalLimit;
             }
 
-            if (this.offset != null && this.offset > 0) {
-                subQuery.offset = this.offset;
-            }
-
+            subQuery.limit = limit;
+            subQuery.offset = offset;
+            subQuery.slimit = slimit;
+            subQuery.rlimit = rlimit;
+            subQuery.roffset = roffset;
             subQuery.hint = this.hint;
 
             return subQuery;
