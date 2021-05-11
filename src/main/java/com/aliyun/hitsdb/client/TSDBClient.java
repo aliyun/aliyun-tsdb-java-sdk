@@ -1609,7 +1609,7 @@ public class TSDBClient implements TSDB {
         } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
             Map<String, String> paramsMap = new HashMap<String, String>();
             paramsMap.put("ignoreErrors", "true");
-            httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
+            httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
         } else {
             throw new HttpClientException("This result type is not supported");
         }
