@@ -3,6 +3,7 @@ package com.aliyun.hitsdb.client;
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
+import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedListener;
 import com.aliyun.hitsdb.client.exception.NotImplementedException;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.http.Host;
@@ -1257,6 +1258,51 @@ public class BalTSDBClient implements TSDB {
 
     @Override
     public void multiFieldPut(Collection<MultiFieldPoint> points, AbstractMultiFieldBatchPutCallback batchPutCallback) {
+        throw new NotImplementedException();
+    }
+
+    /**
+     * switch the current database in use,
+     * so that the target database of the following query or write would be switched to the new one
+     *
+     * @param database
+     */
+    @Override
+    public void useDatabase(String database) {
+        //TODO:
+        throw new NotImplementedException();
+    }
+
+    /**
+     * get the current database in use
+     *
+     * @return the currently in use database name
+     */
+    @Override
+    public String getCurrentDatabase() {
+        //TODO:
+        throw new NotImplementedException();
+    }
+
+    /**
+     * add the DatabaseChanged event listener
+     *
+     * @param listener
+     */
+    @Override
+    public void addDatabaseChangedListener(TSDBDatabaseChangedListener listener) {
+        //TODO:
+        throw new NotImplementedException();
+    }
+
+    /**
+     * remove the specified DatabaseChanged event listener
+     *
+     * @param listener
+     */
+    @Override
+    public void removeDatabaseChangedListener(TSDBDatabaseChangedListener listener) {
+        //TODO:
         throw new NotImplementedException();
     }
 }

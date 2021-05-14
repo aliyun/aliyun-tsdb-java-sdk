@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client;
 
 import com.aliyun.hitsdb.client.callback.*;
+import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedListener;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.*;
@@ -17,6 +18,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public interface TSDB extends Closeable {
+
+    String DEFAULT_DATABASE = "default";
+
     /**
      * Asynchronous put point
      *
@@ -84,9 +88,9 @@ public interface TSDB extends Closeable {
     /**
      * Synchronous put method
      *
+     * @param <T>        Result.class, SummaryResult.class, DetailsResult.class
      * @param points     points
      * @param resultType resultType
-     * @param <T>        Result.class, SummaryResult.class, DetailsResult.class
      * @return Result
      */
     <T extends Result> T putSync(Collection<Point> points, Class<T> resultType);
@@ -651,4 +655,28 @@ public interface TSDB extends Closeable {
      * Flush data points in queue.
      */
     void flush();
+
+    /**
+     * switch the current database in use,
+     * so that the target database of the following query or write would be switched to the new one
+     */
+    void useDatabase(String database);
+
+    /**
+     * get the current database in use
+     * @return the currently in use database name
+     */
+    String getCurrentDatabase();
+
+    /**
+     * add the DatabaseChanged event listener
+     * @param listener
+     */
+    void addDatabaseChangedListener(TSDBDatabaseChangedListener listener);
+
+    /**
+     * remove the specified DatabaseChanged event listener
+     * @param listener
+     */
+    void removeDatabaseChangedListener(TSDBDatabaseChangedListener listener);
 }

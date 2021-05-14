@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.TSDB;
 import com.aliyun.hitsdb.client.TSDBConfig;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
@@ -360,6 +361,13 @@ public class HttpClient {
         return execute(request, json);
     }
 
+    public HttpResponse get(String apiPath, String json, Map<String, String> params) throws HttpClientException {
+        String httpFullAPI = getUrl(apiPath);
+        URI uri = createURI(httpFullAPI, params);
+        final HttpGetWithEntity request = new HttpGetWithEntity(uri);
+        return execute(request, json);
+    }
+
     public void get(String apiPath, String json, FutureCallback<HttpResponse> httpCallback) {
         final HttpGetWithEntity request = new HttpGetWithEntity(getUrl(apiPath));
         executeCallback(request, json, httpCallback);
@@ -458,6 +466,27 @@ public class HttpClient {
 
     public HttpAddressManager getHttpAddressManager() {
         return httpAddressManager;
+    }
+
+    public static Map<String, String> wrapDatabaseRequestParam(String database) {
+        if ((database == null) || database.isEmpty()) {
+            throw new IllegalArgumentException("invalid database specified");
+        }
+
+        Map<String, String> paramsMap = new HashMap<String, String>();
+        if (!database.equals(TSDB.DEFAULT_DATABASE)) {
+            paramsMap.put("db", database);
+        }
+
+        return paramsMap;
+    }
+
+    public static void updateDatabaseRequestParam(Map<String, String> paramsMap, String database) {
+        if ((database == null) || database.isEmpty()) {
+            throw new IllegalArgumentException("invalid database specified");
+        }
+
+        paramsMap.put("db", database);
     }
 
 }
