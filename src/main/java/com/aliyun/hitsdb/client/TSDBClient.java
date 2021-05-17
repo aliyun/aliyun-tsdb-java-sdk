@@ -49,8 +49,8 @@ public class TSDBClient implements TSDB {
     private final Consumer consumer;
     private final HttpResponseCallbackFactory httpResponseCallbackFactory;
     private final boolean httpCompress;
-    private final HttpClient httpclient;
-    private final HttpClient secondaryClient;
+    protected final HttpClient httpclient;
+    protected final HttpClient secondaryClient;
     private RateLimiter rateLimiter;
     private final Config config;
     private static Field queryDeleteField;
