@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -29,6 +30,8 @@ import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.impl.nio.reactor.ExceptionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +96,11 @@ public class HttpClient {
     private ScheduledExecutorService connectionGcService;
 
     /**
+     * 保持到IoReactor的引用用以追踪异常
+     */
+    private DefaultConnectingIOReactor ioReactor;
+
+    /**
      * is https enable
      */
     private boolean sslEnable;
@@ -106,7 +114,8 @@ public class HttpClient {
         this.sslEnable = sslEnable;
     }
 
-    HttpClient(Config config, CloseableHttpAsyncClient httpclient, SemaphoreManager semaphoreManager, ScheduledExecutorService connectionGcService)
+    HttpClient(Config config, CloseableHttpAsyncClient httpclient, SemaphoreManager semaphoreManager,
+               ScheduledExecutorService connectionGcService, DefaultConnectingIOReactor connectingIOReactor)
             throws HttpClientInitException {
         this.host = config.getHost();
         this.port = config.getPort();
@@ -123,6 +132,7 @@ public class HttpClient {
         this.tsdbUser = config.getTsdbUser();
         this.basicPwd = config.getBasicPwd();
         this.certContent = config.getCertContent();
+        this.ioReactor = connectingIOReactor;
     }
 
     public void setHeaderParamsMap(Map<String, String> headerParamsMap) {
@@ -349,7 +359,25 @@ public class HttpClient {
             responseCallback = this.httpResponseCallbackFactory.wrapUpBaseHttpFutureCallback(httpCallback);
         }
 
-        httpclient.execute(request, responseCallback);
+        try {
+            httpclient.execute(request, responseCallback);
+        } catch (IllegalStateException ex) {
+            // if unexpected exception occurred in the callback's implementation
+            // the status of IoReactor might be changed. and it might affect the following execution
+            // print the exception inside the io reactor for debugging the root cause
+            List<ExceptionEvent> innerException = this.ioReactor.getAuditLog();
+
+            // use string builder to make sure all the error information can be printed as a whole log
+            StringBuilder sb = new StringBuilder();
+            sb.append("[Critical] unexpected error caused the status changing in IoReactor: \n");
+            for (ExceptionEvent e: innerException) {
+                sb.append(e.toString() + "\n");
+            }
+            LOGGER.error(sb.toString());
+
+            // re-throw it as it's supposed to do
+            throw ex;
+        }
     }
 
     private StringEntity generateStringEntity(String json) {
