@@ -32,4 +32,9 @@ public interface HttpAPI {
     String USER_AUTH = "/api/users";
 
     String SQL = "/api/sqlquery";
+
+    String TAGS_ADD = "/api/tags/add";
+    String TAGS_SHOW = "/api/tags/show";
+    String TAGS_REMOVE = "/api/tags/remove";
+
 }

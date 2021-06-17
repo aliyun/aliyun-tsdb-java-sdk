@@ -4,6 +4,7 @@ import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.QueryCallback;
 import com.aliyun.hitsdb.client.exception.NotImplementedException;
+import com.aliyun.hitsdb.client.exception.http.HttpClientException;
 import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.http.Host;
 import com.aliyun.hitsdb.client.util.*;
@@ -168,7 +169,7 @@ public class BalTSDBClient implements TSDB {
     }
 
 
-    private void doHandle(File file){
+    private void doHandle(File file) {
         LOG.info("the config file {} has been modified, so reload it", file.getName());
         TSDBConfig newConfig = null;
         try {
@@ -231,7 +232,7 @@ public class BalTSDBClient implements TSDB {
                 for (TSDB tsdb : nonHealthClientMap.values()) {
                     tsdb.close();
                 }
-            } catch (IOException ex){
+            } catch (IOException ex) {
                 LOG.error("closed the new tsdb client instance error", ex);
             }
             clients.clear();
@@ -445,7 +446,7 @@ public class BalTSDBClient implements TSDB {
             try {
                 return client().putSync(points);
             } catch (Exception e) {
-                for(Point point : points){
+                for (Point point : points) {
 
                 }
                 exception = e;
@@ -908,14 +909,13 @@ public class BalTSDBClient implements TSDB {
     }
 
     /**
-     *
-     * @param metric metric
-     * @param tagkey tagkey
+     * @param metric         metric
+     * @param tagkey         tagkey
      * @param tagValuePrefix the prefix of the tagvalue
-     * @param max max
+     * @param max            max
      * @return
-     * @deprecated
      * @throws HttpUnknowStatusException
+     * @deprecated
      */
     @Override
     public List<TagResult> dumpMeta(String metric, String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException {
@@ -1011,7 +1011,7 @@ public class BalTSDBClient implements TSDB {
 
     @Override
     public boolean truncate() throws HttpUnknowStatusException {
-       return client().truncate();
+        return client().truncate();
     }
 
     @Override
@@ -1199,7 +1199,7 @@ public class BalTSDBClient implements TSDB {
         Exception exception = null;
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
-                result =  client().listUsers();
+                result = client().listUsers();
                 return result;
             } catch (Exception e) {
                 exception = e;

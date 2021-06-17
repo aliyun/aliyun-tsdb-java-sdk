@@ -8,6 +8,7 @@ import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.consumer.Consumer;
 import com.aliyun.hitsdb.client.consumer.ConsumerFactory;
+import com.aliyun.hitsdb.client.exception.NotImplementedException;
 import com.aliyun.hitsdb.client.exception.http.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -48,8 +49,8 @@ public class TSDBClient implements TSDB {
     private final DataQueue queue;
     private final Consumer consumer;
     private final HttpResponseCallbackFactory httpResponseCallbackFactory;
-    private final boolean httpCompress;
-    private final HttpClient httpclient;
+    protected final boolean httpCompress;
+    protected final HttpClient httpclient;
     private final HttpClient secondaryClient;
     private RateLimiter rateLimiter;
     private final Config config;
@@ -226,7 +227,7 @@ public class TSDBClient implements TSDB {
         handleVoid(resultResponse);
     }
 
-    private void handleVoid(ResultResponse resultResponse) {
+    protected void handleVoid(ResultResponse resultResponse) {
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
             case ServerSuccessNoContent:
@@ -244,7 +245,7 @@ public class TSDBClient implements TSDB {
         }
     }
 
-    private Object handleStatus(ResultResponse resultResponse) {
+    protected Object handleStatus(ResultResponse resultResponse) {
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
             case ServerNotSupport:
