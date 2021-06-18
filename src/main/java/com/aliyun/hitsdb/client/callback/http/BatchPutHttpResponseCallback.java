@@ -1,10 +1,13 @@
 package com.aliyun.hitsdb.client.callback.http;
 
 import java.net.SocketTimeoutException;
+import java.util.Collections;
 import java.util.List;
 
+import com.alibaba.fastjson.JSONException;
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.callback.BatchPutIgnoreErrorsCallback;
+import com.aliyun.hitsdb.client.exception.http.*;
 import com.aliyun.hitsdb.client.value.response.batch.IgnoreErrorsResult;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
@@ -16,11 +19,6 @@ import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutDetailsCallback;
 import com.aliyun.hitsdb.client.callback.BatchPutSummaryCallback;
-import com.aliyun.hitsdb.client.exception.http.HttpClientConnectionRefusedException;
-import com.aliyun.hitsdb.client.exception.http.HttpClientSocketTimeoutException;
-import com.aliyun.hitsdb.client.exception.http.HttpServerErrorException;
-import com.aliyun.hitsdb.client.exception.http.HttpServerNotSupportException;
-import com.aliyun.hitsdb.client.exception.http.HttpUnknowStatusException;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpAddressManager;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -101,6 +99,10 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
                         ((BatchPutIgnoreErrorsCallback) batchPutCallback).response(this.address, pointList, ignoreErrorsResult);
                         return;
                     }
+                case ServerBadRequest:
+                    HttpServerBadRequestException bdex = new HttpServerBadRequestException(resultResponse);
+                    this.failedWithResponse(bdex);
+                    return;
                 case ServerNotSupport: {
                     // 服务器返回4xx错误
                     HttpServerNotSupportException ex = new HttpServerNotSupportException(resultResponse);
@@ -133,11 +135,39 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
      * 有响应的异常处理。
      *
      * @param ex
+     * @note  visible for testing only
      */
-    private void failedWithResponse(Exception ex) {
+    void failedWithResponse(Exception ex) {
         if (batchPutCallback == null) { // 无回调逻辑，则失败打印日志。
             LOGGER.error("No callback logic exception. address:" + this.address, ex);
         } else {
+            String responseContent = ex.getMessage();
+            if ((ex instanceof HttpServerBadRequestException) && (responseContent != null) && (!responseContent.isEmpty())) {
+                HttpServerBadRequestException bdex = (HttpServerBadRequestException)ex;
+                if (batchPutCallback instanceof BatchPutSummaryCallback) {
+                    SummaryResult summaryResult = null;
+                    try {
+                        summaryResult = JSON.parseObject(responseContent, SummaryResult.class);
+                        ((BatchPutSummaryCallback) batchPutCallback).partialFailed(this.address, pointList, bdex, summaryResult);
+                    } catch (JSONException jex) {
+                        // not all the 400 error has summary information
+                        LOGGER.warn("failed to deserialize {} into SummaryResult", responseContent);
+                        batchPutCallback.failed(this.address, pointList, bdex);
+                    }
+                    return;
+                } else if (batchPutCallback instanceof BatchPutDetailsCallback) {
+                    DetailsResult detailsResult = null;
+                    try {
+                        detailsResult = JSON.parseObject(responseContent, DetailsResult.class);
+                        ((BatchPutDetailsCallback) batchPutCallback).partialFailed(this.address, pointList, bdex, detailsResult);
+                    } catch (JSONException jex) {
+                        // not all the 400 error has detailed information
+                        LOGGER.warn("failed to deserialize {} into DetailsResult", responseContent);
+                        batchPutCallback.failed(this.address, pointList, bdex);
+                    }
+                    return;
+                }
+            }
             batchPutCallback.failed(this.address, pointList, ex);
         }
     }

@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client.callback.http;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONException;
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutCallback;
@@ -96,6 +97,10 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                         ((MultiFieldBatchPutIgnoreErrorsCallback) multiFieldBatchPutCallback).response(this.address, pointList, ignoreErrorsResult);
                         return;
                     }
+                case ServerBadRequest:
+                    HttpServerBadRequestException bdex = new HttpServerBadRequestException(resultResponse);
+                    this.failedWithResponse(bdex);
+                    return;
                 case ServerNotSupport: {
                     // 服务器返回4xx错误
                     HttpServerNotSupportException ex = new HttpServerNotSupportException(resultResponse);
@@ -128,11 +133,39 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
      * 有响应的异常处理。
      *
      * @param ex
+     * @note  visible just for testing
      */
-    private void failedWithResponse(Exception ex) {
+    void failedWithResponse(Exception ex) {
         if (multiFieldBatchPutCallback == null) { // 无回调逻辑，则失败打印日志。
             LOGGER.error("multi field no callback logic exception. address:" + this.address, ex);
         } else {
+            String responseContent = ex.getMessage();
+            if ((ex instanceof HttpServerBadRequestException) && (responseContent != null) && (!responseContent.isEmpty())) {
+                HttpServerBadRequestException bdex = (HttpServerBadRequestException)ex;
+                if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
+                    SummaryResult summaryResult = null;
+                    try {
+                        summaryResult = JSON.parseObject(responseContent, SummaryResult.class);
+                        ((MultiFieldBatchPutSummaryCallback) multiFieldBatchPutCallback).partialFailed(this.address, pointList, bdex, summaryResult);
+                    } catch (JSONException jex) {
+                        // not all the 400 error has summary information
+                        LOGGER.warn("failed to deserialize {} into SummaryResult", responseContent);
+                        multiFieldBatchPutCallback.failed(this.address, pointList, bdex);
+                    }
+                    return;
+                } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
+                    MultiFieldDetailsResult detailsResult = null;
+                    try {
+                        detailsResult = JSON.parseObject(responseContent, MultiFieldDetailsResult.class);
+                        ((MultiFieldBatchPutDetailsCallback) multiFieldBatchPutCallback).partialFailed(this.address, pointList, bdex, detailsResult);
+                    } catch (JSONException jex) {
+                        // not all the 400 error has detailed information
+                        LOGGER.warn("failed to deserialize {} into MultiFieldDetailsResult", responseContent);
+                        multiFieldBatchPutCallback.failed(this.address, pointList, bdex);
+                    }
+                    return;
+                }
+            }
             multiFieldBatchPutCallback.failed(this.address, pointList, ex);
         }
     }

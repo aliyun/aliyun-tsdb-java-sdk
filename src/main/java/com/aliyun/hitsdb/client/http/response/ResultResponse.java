@@ -29,7 +29,9 @@ public class ResultResponse {
             } else {
                 this.httpStatus = HttpStatus.ServerSuccess;
             }
-        } else if (statusCode >= 400 && statusCode < 500) {
+        } else if (statusCode == 400) {
+            this.httpStatus = HttpStatus.ServerBadRequest;
+        } else if (statusCode > 400 && statusCode < 500) {
             if (statusCode == 401) {
                 this.httpStatus = HttpStatus.ServerUnauthorized;
             } else {

@@ -24,7 +24,13 @@ public class TSDBDataTypeTest {
 
     @Before
     public void setup() {
-        JSON.DEFAULT_PARSER_FEATURE &= ~Feature.UseBigDecimal.getMask();
+        try {
+            // call the static constructor of TSDBClient by force
+            // so that the setting of the default double deserialization behavior of fastjson would be applied
+            Class.forName("com.aliyun.hitsdb.client.TSDBClient");
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+        }
     }
 
     @Test
