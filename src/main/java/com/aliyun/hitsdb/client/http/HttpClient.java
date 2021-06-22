@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -15,7 +16,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
 import com.aliyun.hitsdb.client.Config;
-import com.aliyun.hitsdb.client.TSDBConfig;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -44,6 +44,7 @@ public class HttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpClient.class);
     public static final Charset DEFAULT_CHARSET = Charset.forName("UTF-8");
     private static final String version = "0.1";
+    private Map<String, String> headerParamsMap;
 
     private String host;
     private int port;
@@ -124,6 +125,14 @@ public class HttpClient {
         this.certContent = config.getCertContent();
     }
 
+    public void setHeaderParamsMap(Map<String, String> headerParamsMap) {
+        this.headerParamsMap = headerParamsMap;
+    }
+
+    public Map<String, String> getHeaderParamsMap() {
+        return this.headerParamsMap;
+    }
+
     public void close() throws IOException {
         this.close(false);
     }
@@ -178,6 +187,15 @@ public class HttpClient {
             } else {
                 request.addHeader("Accept-Encoding", "gzip, deflate");
                 request.setEntity(generateGZIPCompressEntity(json));
+            }
+        }
+
+        if (this.headerParamsMap != null && !this.headerParamsMap.isEmpty()) {
+            Iterator paramItr = this.headerParamsMap.entrySet().iterator();
+
+            while(paramItr.hasNext()) {
+                Entry<String, String> entry = (Entry)paramItr.next();
+                request.setHeader((String)entry.getKey(), (String)entry.getValue());
             }
         }
 
@@ -309,6 +327,15 @@ public class HttpClient {
             } else {
                 request.addHeader("Accept-Encoding", "gzip, deflate");
                 request.setEntity(generateGZIPCompressEntity(json));
+            }
+        }
+
+        if (this.headerParamsMap != null && !this.headerParamsMap.isEmpty()) {
+            Iterator paramItr = this.headerParamsMap.entrySet().iterator();
+
+            while(paramItr.hasNext()) {
+                Entry<String, String> entry = (Entry)paramItr.next();
+                request.setHeader((String)entry.getKey(), (String)entry.getValue());
             }
         }
 
