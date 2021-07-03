@@ -158,7 +158,8 @@ public class DataPointQueue implements DataQueue {
             while (true) {
                 boolean empty = pointQueue.isEmpty();
                 boolean multiEmpty = multiFieldPointQueue.isEmpty();
-                if (empty && multiEmpty) {
+                boolean asyncQueueEmpty = pointsCollectionQueue.isEmpty();
+                if (empty && multiEmpty && asyncQueueEmpty) {
                     return;
                 } else {
                     try {
@@ -176,7 +177,7 @@ public class DataPointQueue implements DataQueue {
 
     @Override
     public boolean isEmpty() {
-        return pointQueue.isEmpty() && multiFieldPointQueue.isEmpty();
+        return pointQueue.isEmpty() && multiFieldPointQueue.isEmpty() && pointsCollectionQueue.isEmpty();
     }
 
     @Override
