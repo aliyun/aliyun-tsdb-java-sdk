@@ -1,7 +1,9 @@
 package com.aliyun.hitsdb.client.callback.http;
 
 import java.net.SocketTimeoutException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.callback.BatchPutIgnoreErrorsCallback;
@@ -30,6 +32,8 @@ import com.aliyun.hitsdb.client.value.Result;
 import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.value.response.batch.DetailsResult;
 import com.aliyun.hitsdb.client.value.response.batch.SummaryResult;
+
+import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
 
 public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse> {
     private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutHttpResponseCallback.class);
@@ -178,7 +182,8 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         }
 
         String jsonString = JSON.toJSONString(pointList);
-        this.hitsdbHttpClient.post(HttpAPI.PUT, jsonString, retryCallback);
+        Map<String, String> params = wrapDatabaseRequestParam(this.hitsdbHttpClient.getCurrentDatabase());
+        this.hitsdbHttpClient.post(HttpAPI.PUT, jsonString, params, retryCallback);
         return true;
     }
 

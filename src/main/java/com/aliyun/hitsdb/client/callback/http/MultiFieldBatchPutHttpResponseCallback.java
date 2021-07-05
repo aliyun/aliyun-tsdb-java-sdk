@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 
 import java.net.SocketTimeoutException;
 import java.util.List;
+import java.util.Map;
+
+import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
 
 public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<HttpResponse> {
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiFieldBatchPutHttpResponseCallback.class);
@@ -173,7 +176,8 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         }
 
         String jsonString = JSON.toJSONString(pointList);
-        this.hitsdbHttpClient.post(HttpAPI.MPUT, jsonString, retryCallback);
+        Map<String, String> params = wrapDatabaseRequestParam(this.hitsdbHttpClient.getCurrentDatabase());
+        this.hitsdbHttpClient.post(HttpAPI.MPUT, jsonString, params, retryCallback);
         return true;
     }
 
