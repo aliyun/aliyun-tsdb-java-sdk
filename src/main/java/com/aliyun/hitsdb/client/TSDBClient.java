@@ -1189,15 +1189,10 @@ public class TSDBClient implements TSDB {
         } else if (resultType.equals(SummaryResult.class)) {
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
-        } else if (resultType.equals(MultiFieldDetailsResult.class)) {
-            paramsMap = new HashMap<String, String>();
-            paramsMap.put("details", "true");
-            httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else if (resultType.equals(DetailsResult.class)) {
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
-        } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
-            paramsMap = new HashMap<String, String>();
+        } else if (resultType.equals(IgnoreErrorsResult.class)) {
             paramsMap.put("ignoreErrors", "true");
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else {
@@ -1216,10 +1211,10 @@ public class TSDBClient implements TSDB {
                 String content = resultResponse.getContent();
                 if (resultType.equals(SummaryResult.class)) {
                     result = (T) JSON.parseObject(content, SummaryResult.class);
-                } else if (resultType.equals(MultiFieldDetailsResult.class)) {
-                    result = (T) JSON.parseObject(content, MultiFieldDetailsResult.class);
-                } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
-                    result = (T) JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
+                } else if (resultType.equals(DetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, DetailsResult.class);
+                } else if (resultType.equals(IgnoreErrorsResult.class)) {
+                    result = (T) JSON.parseObject(content, IgnoreErrorsResult.class);
                 }
 
                 return result;
@@ -1250,11 +1245,14 @@ public class TSDBClient implements TSDB {
     @Override
     public <T extends Result> T putSync(Collection<Point> points, Class<T> resultType) {
         UniqueUtil.uniquePoints(points, config.isDeduplicationEnable());
-        return putSyncInternal(getCurrentDatabase(), points, resultType);
+        return putSync(getCurrentDatabase(), points, resultType);
     }
 
 
-    <T extends Result> T putSyncInternal(String database, Collection<Point> points, Class<T> resultType) {
+    /**
+     * @note non-interface method
+     */
+    public <T extends Result> T putSync(String database, Collection<Point> points, Class<T> resultType) {
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(database);
@@ -1670,11 +1668,14 @@ public class TSDBClient implements TSDB {
     @Override
     public <T extends Result> T multiFieldPutSync(Collection<MultiFieldPoint> points, Class<T> resultType) {
         UniqueUtil.uniqueMultiFieldPoints(points, config.isDeduplicationEnable());
-        return multiFieldPutSyncInternal(getCurrentDatabase(), points, resultType);
+        return multiFieldPutSync(getCurrentDatabase(), points, resultType);
     }
 
 
-    <T extends Result> T multiFieldPutSyncInternal(String database, Collection<MultiFieldPoint> points, Class<T> resultType) {
+    /**
+     * @note non-interface method
+     */
+    public <T extends Result> T multiFieldPutSync(String database, Collection<MultiFieldPoint> points, Class<T> resultType) {
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(database);
@@ -1686,9 +1687,6 @@ public class TSDBClient implements TSDB {
             paramsMap.put("summary", "true");
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
         } else if (resultType.equals(MultiFieldDetailsResult.class)) {
-            paramsMap.put("details", "true");
-            httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
-        } else if (resultType.equals(DetailsResult.class)) {
             paramsMap.put("details", "true");
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString, paramsMap);
         } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
@@ -1974,10 +1972,10 @@ public class TSDBClient implements TSDB {
             final List<T> sub = pointList.subList(i, endBound);
             if (singleValue) {
                 List<Point> subPoints = (List<Point>)sub;
-                this.putSyncInternal(database, subPoints, Result.class);
+                this.putSync(database, subPoints, Result.class);
             } else {
                 List<MultiFieldPoint> subPoints = (List<MultiFieldPoint>)sub;
-                this.multiFieldPutSyncInternal(database, subPoints, Result.class);
+                this.multiFieldPutSync(database, subPoints, Result.class);
             }
         }
     }
