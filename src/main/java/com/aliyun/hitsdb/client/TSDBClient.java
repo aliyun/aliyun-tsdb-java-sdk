@@ -60,7 +60,6 @@ public class TSDBClient implements TSDB {
     private final Config config;
     private static Field queryDeleteField;
 
-    private AtomicReference<String> currentDatabase;
     private List<TSDBDatabaseChangedListener> listeners;
 
     static {
@@ -95,9 +94,6 @@ public class TSDBClient implements TSDB {
             this.rateLimiter = RateLimiter.create(maxTPS);
         }
 
-        // set the default database
-        // the database related properties should be set earlier because the AbstractBatchPutRunnable needs them
-        this.currentDatabase = new AtomicReference<String>(TSDB.DEFAULT_DATABASE);
         this.listeners = new ArrayList<TSDBDatabaseChangedListener>();
 
         if (asyncPut) {
@@ -651,7 +647,9 @@ public class TSDBClient implements TSDB {
             return Double.class;
         } else if (value instanceof Double) {
             return Double.class;
-        } else return getOtherClass(value);
+        } else {
+            return getOtherClass(value);
+        }
     }
 
     /**
@@ -2002,7 +2000,7 @@ public class TSDBClient implements TSDB {
         }
 
         //switch to new database
-        this.currentDatabase.set(database);
+        this.httpclient.setCurrentDatabase(database);
 
         notifyDatabaseChanged(previousDatabase, database);
     }
@@ -2026,7 +2024,7 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public String getCurrentDatabase() {
-        return this.currentDatabase.get();
+        return this.httpclient.getCurrentDatabase();
     }
 
     /**

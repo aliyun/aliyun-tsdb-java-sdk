@@ -12,11 +12,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
 
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.TSDB;
-import com.aliyun.hitsdb.client.TSDBConfig;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -101,6 +101,18 @@ public class HttpClient {
     private String tsdbUser;
     private String basicPwd;
     private byte[] certContent;
+    private AtomicReference<String> currentDatabase;
+
+    public String getCurrentDatabase() {
+        return currentDatabase.get();
+    }
+
+    public void setCurrentDatabase(String database) {
+        if (database == null || database.isEmpty()) {
+            throw new HttpClientException("database is invalid.");
+        }
+        currentDatabase.set(database);
+    }
 
     public void setSslEnable(boolean sslEnable) {
         this.sslEnable = sslEnable;
@@ -123,6 +135,10 @@ public class HttpClient {
         this.tsdbUser = config.getTsdbUser();
         this.basicPwd = config.getBasicPwd();
         this.certContent = config.getCertContent();
+
+        // set the default database
+        // the database related properties should be set earlier because the AbstractBatchPutRunnable needs them
+        this.currentDatabase = new AtomicReference<String>(TSDB.DEFAULT_DATABASE);
     }
 
     public void close() throws IOException {
@@ -485,7 +501,6 @@ public class HttpClient {
         if ((database == null) || database.isEmpty()) {
             throw new IllegalArgumentException("invalid database specified");
         }
-
         paramsMap.put("db", database);
     }
 
