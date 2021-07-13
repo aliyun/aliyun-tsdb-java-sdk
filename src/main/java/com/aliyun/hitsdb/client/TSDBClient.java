@@ -1190,6 +1190,14 @@ public class TSDBClient implements TSDB {
     @Override
     public <T extends Result> T putSync(Collection<Point> points, Class<T> resultType) {
         UniqueUtil.uniquePoints(points, config.isDeduplicationEnable());
+        return putSync("default", points, resultType);
+    }
+
+
+    /**
+     * @note non-interface method
+     */
+    public <T extends Result> T putSync(String database, Collection<Point> points, Class<T> resultType) {
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
 
         HttpResponse httpResponse;
@@ -1594,6 +1602,14 @@ public class TSDBClient implements TSDB {
     @Override
     public <T extends Result> T multiFieldPutSync(Collection<MultiFieldPoint> points, Class<T> resultType) {
         UniqueUtil.uniqueMultiFieldPoints(points, config.isDeduplicationEnable());
+        return multiFieldPutSync("default", points, resultType);
+    }
+
+
+    /**
+     * @note non-interface method
+     */
+    public <T extends Result> T multiFieldPutSync(String database, Collection<MultiFieldPoint> points, Class<T> resultType) {
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
 
         HttpResponse httpResponse;
