@@ -108,7 +108,11 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                         HttpServerErrorException ex = new HttpServerErrorException(resultResponse);
                         this.failedWithResponse(ex);
                     } else {
-                        errorRetry();
+                        if (!errorRetry()) {
+                            LOGGER.warn("batch put retry limit {} reached", this.batchPutRetryTimes);
+                            HttpServerErrorException ex = new HttpServerErrorException(resultResponse);
+                            this.failedWithResponse(ex);
+                        }
                     }
 
                     return;
@@ -143,6 +147,10 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         return newAddress;
     }
 
+    /**
+     * execute the retry logic when writing failed
+     * @return true if retry actually executed; false if retry limit reached
+     */
     private boolean errorRetry() {
         String newAddress;
         boolean acquire;
