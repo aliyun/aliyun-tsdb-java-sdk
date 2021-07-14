@@ -1,7 +1,7 @@
 
 # Aliyun TSDB SDK for Java
 
-[![Build Status](https://travis-ci.com/aliyun/aliyun-tsdb-java-sdk.svg?branch=master)](https://travis-ci.com/github/aliyun/aliyun-tsdb-java-sdk)
+![Master Build](https://github.com/aliyun/aliyun-tsdb-java-sdk/actions/workflows/build.yml/badge.svg?branch=master)
 [![codecov](https://codecov.io/gh/aliyun/aliyun-tsdb-java-sdk/branch/master/graph/badge.svg?token=EOGQWWFDDT)](https://codecov.io/gh/aliyun/aliyun-tsdb-java-sdk)
 [![Maven Central](https://img.shields.io/maven-central/v/com.aliyun/hitsdb-client.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.aliyun%22%20AND%20a:%22hitsdb-client%22)
 
