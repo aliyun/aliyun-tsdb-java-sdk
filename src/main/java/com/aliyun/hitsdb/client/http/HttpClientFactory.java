@@ -1,5 +1,6 @@
 package com.aliyun.hitsdb.client.http;
 
+import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.Executors;
@@ -33,8 +34,8 @@ import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.conn.NoopIOSessionStrategy;
 import org.apache.http.nio.conn.SchemeIOSessionStrategy;
 import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
+import org.apache.http.nio.reactor.IOReactorExceptionHandler;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class HttpClientFactory {
         Objects.requireNonNull(config);
 
         // 创建 ConnectingIOReactor
-        ConnectingIOReactor ioReactor = initIOReactorConfig(config);
+        DefaultConnectingIOReactor ioReactor = initIOReactorConfig(config);
 
         // 创建链接管理器
         PoolingNHttpClientConnectionManager cm;
@@ -147,7 +148,7 @@ public class HttpClientFactory {
         ScheduledExecutorService connectionGcService = initFixedCycleCloseConnection(cm);
 
         // 组合生产HttpClientImpl
-        HttpClient httpClientImpl = new HttpClient(config, httpAsyncClient, semaphoreManager, connectionGcService);
+        HttpClient httpClientImpl = new HttpClient(config, httpAsyncClient, semaphoreManager, connectionGcService, ioReactor);
 
         return httpClientImpl;
     }
@@ -173,12 +174,29 @@ public class HttpClientFactory {
         return requestConfigBuilder.build();
     }
 
-    private static ConnectingIOReactor initIOReactorConfig(Config config) {
+    private static DefaultConnectingIOReactor initIOReactorConfig(Config config) {
         int ioThreadCount = config.getIoThreadCount();
         IOReactorConfig ioReactorConfig = IOReactorConfig.custom().setIoThreadCount(ioThreadCount).build();
-        ConnectingIOReactor ioReactor;
+        DefaultConnectingIOReactor ioReactor;
         try {
             ioReactor = new DefaultConnectingIOReactor(ioReactorConfig);
+
+            ioReactor.setExceptionHandler(new IOReactorExceptionHandler() {
+                @Override
+                public boolean handle(IOException ex) {
+                    LOGGER.error("[Critical] unexpected IOException might cause IoReactor unstable: ", ex);
+
+                    return false;
+                }
+
+                @Override
+                public boolean handle(RuntimeException ex) {
+                    LOGGER.error("[Critical] unexpected RuntimeException might cause IoReactor unstable: ", ex);
+
+                    return false;
+                }
+            });
+
             return ioReactor;
         } catch (IOReactorException e) {
             throw new HttpClientInitException();
