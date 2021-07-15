@@ -33,6 +33,41 @@ public class LastPointQueryTest {
             String serializedString = JSON.toJSONString(query);
             Assert.assertEquals("{\"msResolution\":true,\"queries\":[{\"metric\":\"wind1\",\"fields\":[\"*\"],\"tags\":{}}],\"tupleFormat\":true}", serializedString);
         }
+        {
+            LastPointQuery query = LastPointQuery
+                    .builder()
+                    .msResolution(true)
+                    .tupleFormat(true)
+                    .slimit(1)
+                    .limit(new LastLimit(1, 2))
+                    .roffset(3)
+                    .rlimit(4)
+                    .sub(LastPointSubQuery.builder("wind1", new ArrayList<String>() {{add("*");}}, new HashMap<String, String>()).build()).build();
+            String serializedString = JSON.toJSONString(query);
+            Assert.assertEquals("{\"limit\":{\"from\":1,\"global\":false,\"size\":2},\"msResolution\":true,\"queries\":[{\"metric\":\"wind1\",\"fields\":[\"*\"],\"tags\":{}}],\"rlimit\":4,\"roffset\":3,\"slimit\":1,\"tupleFormat\":true}", serializedString);
+        }
+
+        {
+            LastPointQuery query = LastPointQuery
+                    .builder()
+                    .msResolution(true)
+                    .tupleFormat(true)
+                    .slimit(1)
+                    .limit(new LastLimit(1, 2))
+                    .roffset(3)
+                    .rlimit(4)
+                    .sub(LastPointSubQuery
+                            .builder("wind1", new ArrayList<String>() {{add("*");}}, new HashMap<String, String>())
+                            .slimit(5)
+                            .limit(new LastLimit(1, 6))
+                            .roffset(7)
+                            .rlimit(8)
+                            .build())
+                    .build();
+            String serializedString = JSON.toJSONString(query);
+            Assert.assertEquals("{\"limit\":{\"from\":1,\"global\":false,\"size\":2},\"msResolution\":true,\"queries\":[{\"rlimit\":8,\"metric\":\"wind1\",\"slimit\":5,\"limit\":{\"from\":1,\"global\":false,\"size\":6},\"roffset\":7,\"fields\":[\"*\"],\"tags\":{}}],\"rlimit\":4,\"roffset\":3,\"slimit\":1,\"tupleFormat\":true}", serializedString);
+        }
+
     }
 
     @Test
@@ -62,6 +97,40 @@ public class LastPointQueryTest {
                 .sub(LastPointSubQuery.builder("m2", tags).build()).build();
 
         String expected = "{\"limit\":{\"from\":1511927280,\"global\":true,\"size\":2},\"queries\":[{\"metric\":\"m1\",\"tags\":{\"k1\":\"v1\"}},{\"metric\":\"m2\",\"tags\":{\"k1\":\"v1\"}}]}";
+        assertEquals(expected, lastPointQuery.toString());
+    }
+
+    @Test
+    public void testLastRLimit() {
+        Map<String, String> tags = new HashMap<String, String>();
+        tags.put("k1", "v1");
+        LastLimit lastLimit = new LastLimit(1511927280, 2 , true);
+
+        LastPointQuery lastPointQuery = LastPointQuery
+                .builder()
+                .rlimit(2).roffset(2)
+                .limit(lastLimit)
+                .sub(LastPointSubQuery.builder("m1", tags).build())
+                .sub(LastPointSubQuery.builder("m2", tags).build()).build();
+
+        String expected = "{\"limit\":{\"from\":1511927280,\"global\":true,\"size\":2},\"queries\":[{\"metric\":\"m1\",\"tags\":{\"k1\":\"v1\"}},{\"metric\":\"m2\",\"tags\":{\"k1\":\"v1\"}}],\"rlimit\":2,\"roffset\":2}";
+        assertEquals(expected, lastPointQuery.toString());
+    }
+
+    @Test
+    public void testLastSLimit() {
+        Map<String, String> tags = new HashMap<String, String>();
+        tags.put("k1", "v1");
+        LastLimit lastLimit = new LastLimit(1511927280, 2 , true);
+
+        LastPointQuery lastPointQuery = LastPointQuery
+                .builder()
+                .slimit(2)
+                .limit(lastLimit)
+                .sub(LastPointSubQuery.builder("m1", tags).build())
+                .sub(LastPointSubQuery.builder("m2", tags).build()).build();
+
+        String expected = "{\"limit\":{\"from\":1511927280,\"global\":true,\"size\":2},\"queries\":[{\"metric\":\"m1\",\"tags\":{\"k1\":\"v1\"}},{\"metric\":\"m2\",\"tags\":{\"k1\":\"v1\"}}],\"slimit\":2}";
         assertEquals(expected, lastPointQuery.toString());
     }
 }

@@ -237,10 +237,17 @@ public class TestHiTSDBClientQueryLimitAndDpValue {
                                 .offset(offset).build()).build();
 
                 System.out.println("查询条件：" + query.toJSON());
-                List<QueryResult> queryResults = tsdb.query(query);
+                final List<QueryResult> queryResults = tsdb.query(query);
                 Assert.assertEquals(2, queryResults.size());
-                contentAssert(checklist1, (List<QueryResult>) queryResults.get(0));
-                contentAssert(checklist2, (List<QueryResult>) queryResults.get(1));
+                List<QueryResult> resultList1 = new ArrayList<QueryResult>() {{add(queryResults.get(0));}};
+                List<QueryResult> resultList2 = new ArrayList<QueryResult>() {{add(queryResults.get(1));}};
+                if (resultList1.get(0).getTags().containsKey("tagk1")) {
+                    contentAssert(checklist1, resultList1);
+                    contentAssert(checklist2, resultList2);
+                } else {
+                    contentAssert(checklist1, resultList2);
+                    contentAssert(checklist2, resultList1);
+                }
             }
         }
     }

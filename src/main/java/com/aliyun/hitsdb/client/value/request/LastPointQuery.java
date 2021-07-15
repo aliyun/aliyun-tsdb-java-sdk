@@ -28,6 +28,12 @@ public class LastPointQuery extends JSONValue {
 
         private LastLimit limit;
 
+        private Integer rlimit;
+
+        private Integer roffset;
+
+        private Integer slimit;
+
         private Map<String, Map<String, Integer>> hint;
 
         // this field is only allowed for Lindorm TSDB
@@ -80,6 +86,30 @@ public class LastPointQuery extends JSONValue {
             return this;
         }
 
+        /**
+         * only support for multi field model
+         */
+        public Builder rlimit(Integer rlimit) {
+            this.rlimit = rlimit;
+            return this;
+        }
+
+        /**
+         * only support for multi field model
+         */
+        public Builder roffset(Integer roffset) {
+            this.roffset = roffset;
+            return this;
+        }
+
+        /**
+         * current only support for super tag model
+         */
+        public Builder slimit(Integer slimit) {
+            this.slimit = slimit;
+            return this;
+        }
+
         public LastPointQuery build() {
             if (queries == null || queries.isEmpty()) {
                 throw new IllegalArgumentException("the LastPointSubQuery must be set");
@@ -91,6 +121,9 @@ public class LastPointQuery extends JSONValue {
             query.setQueries(queries);
             query.tupleFormat = tupleFormat;
             query.limit = limit;
+            query.rlimit = rlimit;
+            query.roffset = roffset;
+            query.slimit = slimit;
             query.hint = hint;
             query.queryType = queryType;
             return query;
@@ -109,6 +142,12 @@ public class LastPointQuery extends JSONValue {
     private Long timestamp;
 
     private LastLimit limit;
+
+    private Integer rlimit;
+
+    private Integer roffset;
+
+    private Integer slimit;
 
     /**
      * Optional tupleFormat parameter.
@@ -170,6 +209,30 @@ public class LastPointQuery extends JSONValue {
 
     public void setLimit(LastLimit limit) {
         this.limit = limit;
+    }
+
+    public Integer getRlimit() {
+        return rlimit;
+    }
+
+    public void setRLimit(int rlimit) {
+        this.rlimit = rlimit;
+    }
+
+    public Integer getRoffset() {
+        return roffset;
+    }
+
+    public void setRoffset(int roffset) {
+        this.roffset = roffset;
+    }
+
+    public Integer getSlimit() {
+        return slimit;
+    }
+
+    public void setSLimit(int slimit) {
+        this.slimit = slimit;
     }
 
     public Map<String, Map<String, Integer>> getHint() {

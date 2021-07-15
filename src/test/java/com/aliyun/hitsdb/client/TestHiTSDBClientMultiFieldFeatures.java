@@ -3,6 +3,7 @@ package com.aliyun.hitsdb.client;
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.value.request.*;
+import com.aliyun.hitsdb.client.value.response.LastDataValue;
 import com.aliyun.hitsdb.client.value.response.MultiFieldQueryLastResult;
 import com.aliyun.hitsdb.client.value.response.MultiFieldQueryResult;
 import com.aliyun.hitsdb.client.value.type.Aggregator;
@@ -314,10 +315,12 @@ public class TestHiTSDBClientMultiFieldFeatures {
 
     /**
      * test the basic behavior of the limit and global interface of SDK
-     * @note it is required that the version of TSDB engine greater than v2.6.4
+     * @note it is required that the version of TSDB engine greater than v2.6.13
+     * Q1: MQuery + rlimit + roffset    Q2: MLast + limit + rlimit + roffset
+     * Q3: MLast + limit + rlimit    Q4: MLast + limit + roffset
      */
     @Test
-    public void testMultiFieldQueryWithLimit() {
+    public void testMultiFieldQueryWithRLimitAndRoffset() {
         final String METRIC = "testMultiFieldQueryWithLimit", TAGK = "tagk";
 
         try {
@@ -343,28 +346,23 @@ public class TestHiTSDBClientMultiFieldFeatures {
         }
 
         // timeline2, no field3
-        mpoints.add(MultiFieldPoint.metric(METRIC)
-                .tag(TAGK, "tagv2")
-                .field("f1", 100)
-                .field("f2", 222.22)
-                .field("f4", strings[2 % 3])
-                .timestamp(startTime + 90).build());
-
-        // timeline2, no field4
-        mpoints.add(MultiFieldPoint.metric(METRIC)
-                .tag(TAGK, "tagv3")
-                .field("f1", 105)
-                .field("f2", 111.11)
-                .field("f3", 100)
-                .timestamp(startTime + 120).build());
+        for (int i = 0; i < 4; i++) {
+            mpoints.add(MultiFieldPoint.metric(METRIC)
+                    .tag(TAGK, "tagv2")
+                    .field("f1", 100 + i)
+                    .field("f2", 333.33)
+                    .field("f3", 300 - i * 100)
+                    .timestamp(startTime + i * 30).build());
+        }
 
         tsdb.multiFieldPutSync(mpoints);
-
+        // Q1: MQuery + rlimit + roffset
         MultiFieldQuery mq = MultiFieldQuery.start(startTime)
                 .sub(MultiFieldSubQuery
                         .metric(METRIC)
-                        .limit(2)
-                        .globalLimit(3)
+                        .limit(3)
+                        .rlimit(1)
+                        .roffset(1)
                         .fieldsInfo(MultiFieldSubQueryDetails
                                 .aggregator(Aggregator.NONE)
                                 .field("*")
@@ -379,11 +377,65 @@ public class TestHiTSDBClientMultiFieldFeatures {
             Assert.assertEquals(5, r.getColumns().size());
 
             if (r.getTags().get(TAGK).equals("tagv1")) {
-                Assert.assertEquals(2, r.getValues().size());
+                Assert.assertEquals(1, r.getValues().size());
+                Assert.assertEquals("[[1514736030, 101.0, 333.33, 200.0, ABC]]", r.getValues().toString());
             } else if (r.getTags().get(TAGK).equals("tagv2")) {
                 Assert.assertEquals(1, r.getValues().size());
+                Assert.assertEquals("[[1514736030, 101.0, 333.33, 200.0, null]]", r.getValues().toString());
             } else {
                 Assert.fail("unexpected tag value retrieved: " + r.getTags().get(TAGK));
+            }
+        }
+
+        // Q2: MLast + rlimit + roffset
+        LastPointQuery lastPointQuery = LastPointQuery.builder()
+                .limit(new LastLimit(startTime, 3))
+                .rlimit(1)
+                .roffset(1)
+                .sub(LastPointSubQuery.builder(METRIC, Collections.singletonList("*"), Collections.<String, String>emptyMap()).build())
+                .tupleFormat(true).build();
+        List<MultiFieldQueryLastResult> lastResults = tsdb.multiFieldQueryLast(lastPointQuery);
+        Assert.assertEquals(2, lastResults.size());
+        for (MultiFieldQueryLastResult multiFieldQueryLastResult : lastResults) {
+            Assert.assertEquals(1, multiFieldQueryLastResult.getValues().size());
+            if (multiFieldQueryLastResult.getTags().get("tagk").equals("tagv1")) {
+                Assert.assertEquals("[1514736060000, 102.0, 333.33, 100.0, 11.11a]", multiFieldQueryLastResult.getValues().get(0).toString());
+            } else {
+                Assert.assertEquals("[1514736060000, 102.0, 333.33, 100.0]", multiFieldQueryLastResult.getValues().get(0).toString());
+            }
+        }
+
+        // Q3: MLast + limit + rlimit
+        lastPointQuery = LastPointQuery.builder()
+                .limit(new LastLimit(startTime, 3))
+                .rlimit(1)
+                .sub(LastPointSubQuery.builder(METRIC, Collections.singletonList("*"), Collections.<String, String>emptyMap()).build())
+                .tupleFormat(true).build();
+        lastResults = tsdb.multiFieldQueryLast(lastPointQuery);
+        Assert.assertEquals(2, lastResults.size());
+        for (MultiFieldQueryLastResult multiFieldQueryLastResult : lastResults) {
+            Assert.assertEquals(1, multiFieldQueryLastResult.getValues().size());
+            if (multiFieldQueryLastResult.getTags().get("tagk").equals("tagv1")) {
+                Assert.assertEquals("[1514736030000, 101.0, 333.33, 200.0, ABC]", multiFieldQueryLastResult.getValues().get(0).toString());
+            } else {
+                Assert.assertEquals("[1514736030000, 101.0, 333.33, 200.0]", multiFieldQueryLastResult.getValues().get(0).toString());
+            }
+        }
+
+        // Q3: MLast + limit + roffset
+        lastPointQuery = LastPointQuery.builder()
+                .limit(new LastLimit(startTime, 3))
+                .roffset(1)
+                .sub(LastPointSubQuery.builder(METRIC, Collections.singletonList("*"), Collections.<String, String>emptyMap()).build())
+                .tupleFormat(true).build();
+        lastResults = tsdb.multiFieldQueryLast(lastPointQuery);
+        Assert.assertEquals(2, lastResults.size());
+        for (MultiFieldQueryLastResult multiFieldQueryLastResult : lastResults) {
+            Assert.assertEquals(2, multiFieldQueryLastResult.getValues().size());
+            if (multiFieldQueryLastResult.getTags().get("tagk").equals("tagv1")) {
+                Assert.assertEquals("[1514736060000, 102.0, 333.33, 100.0, 11.11a]", multiFieldQueryLastResult.getValues().get(0).toString());
+            } else {
+                Assert.assertEquals("[1514736060000, 102.0, 333.33, 100.0]", multiFieldQueryLastResult.getValues().get(0).toString());
             }
         }
     }

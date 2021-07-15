@@ -32,6 +32,7 @@ public class SubQuery {
     private Boolean explicitTags;
     private Integer realTimeSeconds;
     private Integer limit;
+    private Integer slimit;
     private Integer globalLimit;
     private Integer offset;
     private String dpValue;
@@ -48,6 +49,7 @@ public class SubQuery {
         private Boolean delta;
         private DeltaOptions deltaOptions;
         private Integer limit;
+        private Integer slimit;
         private Integer globalLimit;
         private Integer offset;
         private String dpValue;
@@ -209,6 +211,14 @@ public class SubQuery {
             return this;
         }
 
+        /**
+         * current only support for super tag model
+         */
+        public Builder slimit(Integer slimit) {
+            this.slimit = slimit;
+            return this;
+        }
+
         public Builder globalLimit(Integer globalLimit) {
             if (limit != null) {
                 this.globalLimit = globalLimit;
@@ -334,6 +344,10 @@ public class SubQuery {
 
             if (this.limit != null && this.limit > 0) {
                 subQuery.limit = this.limit;
+            }
+
+            if (this.slimit != null && this.slimit > 0) {
+                subQuery.slimit = this.slimit;
             }
 
             if (this.globalLimit != null && this.globalLimit > 0) {
@@ -463,6 +477,10 @@ public class SubQuery {
 
     public Integer getLimit() {
         return limit;
+    }
+
+    public Integer getSlimit() {
+        return slimit;
     }
 
     public Integer getGlobalLimit() {
