@@ -4,6 +4,8 @@ import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -12,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 public class TSDBConfig extends AbstractConfig {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(TSDBConfig.class);
 
     public static Builder address(String host) {
         return new Builder(host);
@@ -369,7 +371,7 @@ public class TSDBConfig extends AbstractConfig {
                 String secondaryHost = this.haPolicy.getSecondaryHost();
                 int secondaryPort = this.haPolicy.getSecondaryPort();
                 if (secondaryHost.equals(this.host) && secondaryPort == this.port) {
-                    throw new IllegalArgumentException("Primary cluster and secondary cluster should not have same host and port");
+                    LOGGER.warn("Primary cluster and secondary cluster should not have same host and port");
                 }
             }
             config.haPolicy = this.haPolicy;
