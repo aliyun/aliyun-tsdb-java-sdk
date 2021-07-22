@@ -200,4 +200,56 @@ public class TestClientQueryHA {
         }
         Assert.assertTrue(failed);
     }
+
+    @Test
+    public void testHAtoSameInstance() throws InterruptedException {
+        String readHost = "127.0.0.1", writeHost = "127.0.0.1";
+        int readPort = 8242, writePort = 8242;
+        String writerUsername = "testuser", tsdbWritePassword = "asdf1234";
+
+        HAPolicy policy = HAPolicy.addSecondaryCluster(readHost, readPort)
+                .setRetryRule(HAPolicy.RetryRule.SecondaryPreferred)
+                .setRetryTimes(0)
+                .build();
+
+        TSDBConfig config = TSDBConfig
+                .address(writeHost, writePort)
+                .basicAuth(writerUsername, tsdbWritePassword)
+                .httpConnectionLiveTime(1800)
+                .batchPutSize(50)
+                .batchPutRetryCount(3)
+                .multiFieldBatchPutConsumerThreadCount(2)
+                .addHAPolicy(policy)
+                .config();
+
+        TSDBClient client = new TSDBClient(config);
+        long timestamp = 1626926400L;
+
+        String metric = "testHAtoSameInstance";
+
+        List<MultiFieldPoint> points = new ArrayList<MultiFieldPoint>();
+        for (int i = 0; i < 10; i++) {
+            MultiFieldPoint point = MultiFieldPoint.metric(metric)
+                    .field("field1", "stringValue"+i)
+                    .field("field2", 10.0 + i)
+                    .field("field3", true)
+                    .tag("tagkey1", "tagvalue1")
+                    .tag("tagkey2", "tagvalue2")
+                    .timestamp(timestamp+i).build(true);
+            points.add(point);
+        }
+        client.multiFieldPutSync(points);
+
+        Thread.sleep(2000);
+
+        // Query Data
+
+        MultiFieldQuery query1 = MultiFieldQuery.start(timestamp).end(timestamp+10)
+                .sub(MultiFieldSubQuery.metric(metric).fieldsInfo(MultiFieldSubQueryDetails.field("field1").aggregator(Aggregator.NONE).build())
+                .build()).msResolution(false).build();
+
+        System.out.println(query1.toJSON());
+        List<MultiFieldQueryResult> results = client.multiFieldQuery(query1);
+        System.out.println(results.toString());
+    }
 }

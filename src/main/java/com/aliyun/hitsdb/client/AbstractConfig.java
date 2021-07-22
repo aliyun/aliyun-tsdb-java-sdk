@@ -352,6 +352,12 @@ public abstract class AbstractConfig implements Config {
         config.httpKeepaliveTime = this.httpKeepaliveTime;
         config.maxTPS = this.maxTPS;
         config.asyncPut = this.asyncPut;
+
+        // copy of authentication credential
+        config.authType = this.authType;
+        config.tsdbUser = this.tsdbUser;
+        config.basicPwd = this.basicPwd;
+
         config.haPolicy = this.haPolicy;
         if (this.putRequestLimitSwitch && this.putRequestLimit <= 0) {
             config.putRequestLimit = this.httpConnectionPool;
