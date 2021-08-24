@@ -190,5 +190,4 @@ public class TestHiTSDBClientQuery {
             assertEquals(v1, v, 0.0000000000001);
         }
     }
-
 }

@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONType;
 import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.type.Aggregator;
+import com.aliyun.hitsdb.client.value.type.DownsampleDataSource;
 import com.aliyun.hitsdb.client.value.type.FilterType;
 import com.aliyun.hitsdb.client.value.type.Granularity;
 
@@ -38,6 +39,7 @@ public class SubQuery {
     private String preDpValue;
     private List<Filter> filters;
     private Map<String, Map<String, Integer>> hint;
+    private DownsampleDataSource downsampleDataSource;
 
     public static class Builder {
         private Aggregator aggregatorType;
@@ -58,6 +60,7 @@ public class SubQuery {
         private Integer realTimeSeconds;
         private List<Filter> filters;
         private Map<String, Map<String, Integer>> hint;
+        private DownsampleDataSource downsampleDataSource;
 
         public Builder(String metric, Aggregator aggregator) {
             Objects.requireNonNull(metric, "metric");
@@ -309,6 +312,11 @@ public class SubQuery {
             return this;
         }
 
+        public Builder downsampleDataSource(DownsampleDataSource downsampleDataSource) {
+            this.downsampleDataSource = downsampleDataSource;
+            return this;
+        }
+
         public SubQuery build() {
             SubQuery subQuery = new SubQuery();
             subQuery.aggregatorType = this.aggregatorType;
@@ -360,6 +368,10 @@ public class SubQuery {
                 subQuery.tags = null;
             }
             subQuery.hint = this.hint;
+
+            if (this.downsampleDataSource != null) {
+                subQuery.downsampleDataSource = this.downsampleDataSource;
+            }
             return subQuery;
         }
     }
@@ -495,5 +507,9 @@ public class SubQuery {
 
     public void setHint(Map<String, Map<String, Integer>> hint) {
         this.hint = hint;
+    }
+
+    public DownsampleDataSource getDownsampleDataSource() {
+        return downsampleDataSource;
     }
 }

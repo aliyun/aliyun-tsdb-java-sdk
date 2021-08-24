@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client.value.request;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.util.Objects;
+import com.aliyun.hitsdb.client.value.type.DownsampleDataSource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ public class MultiFieldSubQuery {
     private Integer offset;
     private int index;
     private Map<String, Map<String, Integer>> hint;
+    private DownsampleDataSource downsampleDataSource;
 
     public static class Builder {
         private String metric;
@@ -29,6 +31,7 @@ public class MultiFieldSubQuery {
         private List<Filter> filters = new ArrayList<Filter>();
         private List<MultiFieldSubQueryDetails> fieldsInfo = new ArrayList<MultiFieldSubQueryDetails>();
         private Map<String, Map<String, Integer>> hint;
+        private DownsampleDataSource downsampleDataSource;
 
         public Builder(final String metric) {
             Objects.requireNonNull(metric, "metric name");
@@ -147,6 +150,11 @@ public class MultiFieldSubQuery {
             return this;
         }
 
+        public Builder downsampleDataSource(DownsampleDataSource downsampleDataSource) {
+            this.downsampleDataSource = downsampleDataSource;
+            return this;
+        }
+
         public MultiFieldSubQuery build() {
             MultiFieldSubQuery subQuery = new MultiFieldSubQuery();
             subQuery.metric = this.metric;
@@ -179,6 +187,10 @@ public class MultiFieldSubQuery {
             }
 
             subQuery.hint = this.hint;
+
+            if (this.downsampleDataSource != null) {
+                subQuery.downsampleDataSource = this.downsampleDataSource;
+            }
 
             return subQuery;
         }
@@ -240,5 +252,9 @@ public class MultiFieldSubQuery {
 
     public void setHint(Map<String, Map<String, Integer>> hint) {
         this.hint = hint;
+    }
+
+    public DownsampleDataSource getDownsampleDataSource() {
+        return downsampleDataSource;
     }
 }
