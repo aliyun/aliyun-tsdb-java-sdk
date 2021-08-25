@@ -4,6 +4,7 @@ import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
+import com.aliyun.hitsdb.client.value.type.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +84,7 @@ public class TSDBConfig extends AbstractConfig {
         private boolean deduplicationEnable = false;
 
         private boolean lastResultReverseEnable = false;
+        private Precision precision = Precision.Millisecond;
 
         public Builder(String host) {
             this.host = host;
@@ -313,6 +315,11 @@ public class TSDBConfig extends AbstractConfig {
             return this;
         }
 
+        public Builder precision (Precision precision) {
+            this.precision = precision;
+            return this;
+        }
+
         public  TSDBConfig config() {
             if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
                 throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
@@ -377,6 +384,7 @@ public class TSDBConfig extends AbstractConfig {
             config.haPolicy = this.haPolicy;
             config.deduplicationEnable = this.deduplicationEnable;
             config.lastResultReverseEnable = this.lastResultReverseEnable;
+            config.precision = this.precision;
 
             return config;
         }
