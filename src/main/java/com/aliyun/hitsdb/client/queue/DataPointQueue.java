@@ -184,4 +184,9 @@ public class DataPointQueue implements DataQueue {
     public Point[] getPoints() {
         return pointQueue.toArray(new Point[0]);
     }
+
+    @Override
+    public MultiFieldPoint[] getMultiFieldPoints() {
+        return multiFieldPointQueue.toArray(new MultiFieldPoint[0]);
+    }
 }

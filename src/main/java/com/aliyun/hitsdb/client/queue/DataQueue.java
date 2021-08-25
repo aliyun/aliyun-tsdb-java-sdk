@@ -31,4 +31,6 @@ public interface DataQueue {
     boolean isEmpty();
 
     Point[] getPoints();
+
+    MultiFieldPoint[] getMultiFieldPoints();
 }
