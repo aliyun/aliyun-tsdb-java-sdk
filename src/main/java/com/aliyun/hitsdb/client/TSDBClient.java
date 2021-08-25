@@ -1959,7 +1959,7 @@ public class TSDBClient implements TSDB {
         Collections.addAll(pointList, points);
 
         boolean singleValue = true;
-        if (points.length > 1) {
+        if (points.length > 0) {
             if (points[0] instanceof MultiFieldPoint) {
                 singleValue = false;
             } else if (!(points[0] instanceof Point)) {
