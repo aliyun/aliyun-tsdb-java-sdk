@@ -1874,16 +1874,40 @@ public class TSDBClient implements TSDB {
     public void flush() {
         //TODO: it flushes the single field point only, currently
         final Point[] points = this.queue.getPoints();
-        if (points == null || points.length == 0) {
-            return;
+        final MultiFieldPoint[] mpoints = this.queue.getMultiFieldPoints();
+        if ((points != null) && (points.length > 0)) {
+            flushPoints(points);
         }
+
+        if ((mpoints != null) && (mpoints.length > 0)) {
+            flushPoints(mpoints);
+        }
+    }
+
+    private <T extends AbstractPoint> void flushPoints(T[] points) {
         final int batchPutSize = this.config.getBatchPutSize();
-        final ArrayList<Point> pointList = new ArrayList<Point>(points.length);
+        final ArrayList<T> pointList = new ArrayList<T>(points.length);
         Collections.addAll(pointList, points);
+
+        boolean singleValue = true;
+        if (points.length > 0) {
+            if (points[0] instanceof MultiFieldPoint) {
+                singleValue = false;
+            } else if (!(points[0] instanceof Point)) {
+                throw new IllegalArgumentException(String.format("unrecognised implementation of AbstractPoint: %s", points[0].getClass().getName()));
+            }
+        }
+
         for (int i = 0; i <= points.length - 1; i += batchPutSize) {
             final int endBound = Math.min(points.length, i + batchPutSize);
-            final List<Point> sub = pointList.subList(i, endBound);
-            this.putSync(sub);
+            final List<T> sub = pointList.subList(i, endBound);
+            if (singleValue) {
+                List<Point> subPoints = (List<Point>)sub;
+                this.putSync(subPoints, Result.class);
+            } else {
+                List<MultiFieldPoint> subPoints = (List<MultiFieldPoint>)sub;
+                this.multiFieldPutSync(subPoints, Result.class);
+            }
         }
     }
 }
