@@ -4,6 +4,7 @@ import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
+import com.aliyun.hitsdb.client.value.type.Precision;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -88,4 +89,5 @@ public interface Config {
     boolean isDeduplicationEnable();
 
     boolean isLastResultReverseEnable();
+    Precision getPrecision();
 }

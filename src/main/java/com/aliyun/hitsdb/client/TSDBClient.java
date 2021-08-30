@@ -8,7 +8,6 @@ import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.consumer.Consumer;
 import com.aliyun.hitsdb.client.consumer.ConsumerFactory;
-import com.aliyun.hitsdb.client.exception.NotImplementedException;
 import com.aliyun.hitsdb.client.exception.http.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -55,6 +54,7 @@ public class TSDBClient implements TSDB {
     private RateLimiter rateLimiter;
     private final Config config;
     private static Field queryDeleteField;
+    private Map<String, String> commonQueryParams;
 
     static {
         try {
@@ -87,6 +87,9 @@ public class TSDBClient implements TSDB {
         if (maxTPS > 0) {
             this.rateLimiter = RateLimiter.create(maxTPS);
         }
+
+        this.commonQueryParams = new HashMap<String, String>();
+        this.commonQueryParams.put("precision", config.getPrecision().toString());
 
         if (asyncPut) {
             this.httpResponseCallbackFactory = httpclient.getHttpResponseCallbackFactory();
@@ -865,7 +868,7 @@ public class TSDBClient implements TSDB {
     }
 
     private List<QueryResult> query(Query query, HttpClient client) {
-        HttpResponse httpResponse = client.post(HttpAPI.QUERY, query.toJSON());
+        HttpResponse httpResponse = client.post(HttpAPI.QUERY, query.toJSON(), this.commonQueryParams);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1428,7 +1431,7 @@ public class TSDBClient implements TSDB {
     }
 
     private List<LastDataValue> queryLast(String jsonString, HttpClient client) throws HttpUnknowStatusException {
-        HttpResponse httpResponse = client.post(HttpAPI.QUERY_LAST, jsonString);
+        HttpResponse httpResponse = client.post(HttpAPI.QUERY_LAST, jsonString, this.commonQueryParams);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1611,7 +1614,6 @@ public class TSDBClient implements TSDB {
      */
     public <T extends Result> T multiFieldPutSync(String database, Collection<MultiFieldPoint> points, Class<T> resultType) {
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
-
         HttpResponse httpResponse;
         if (resultType.equals(Result.class)) {
             httpResponse = httpclient.post(HttpAPI.MPUT, jsonString);
@@ -1723,7 +1725,7 @@ public class TSDBClient implements TSDB {
     }
 
     private List<MultiFieldQueryResult> multiFieldQuery(MultiFieldQuery query, HttpClient client) throws HttpUnknowStatusException {
-        HttpResponse httpResponse = client.post(HttpAPI.MQUERY, query.toJSON());
+        HttpResponse httpResponse = client.post(HttpAPI.MQUERY, query.toJSON(), this.commonQueryParams);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1772,7 +1774,7 @@ public class TSDBClient implements TSDB {
     }
 
     private List<MultiFieldQueryLastResult> multiFieldQueryLast(String jsonString, HttpClient client) throws HttpUnknowStatusException {
-        HttpResponse httpResponse = client.post(HttpAPI.QUERY_MLAST, jsonString);
+        HttpResponse httpResponse = client.post(HttpAPI.QUERY_MLAST, jsonString, this.commonQueryParams);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {

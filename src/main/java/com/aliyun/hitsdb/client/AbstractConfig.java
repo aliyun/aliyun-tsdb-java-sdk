@@ -3,6 +3,7 @@ package com.aliyun.hitsdb.client;
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.http.Host;
+import com.aliyun.hitsdb.client.value.type.Precision;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,6 +147,8 @@ public abstract class AbstractConfig implements Config {
     protected boolean deduplicationEnable;
 
     protected boolean lastResultReverseEnable;
+
+    protected Precision precision = Precision.Millisecond;
 
     @Override
     public boolean isSslEnable() {
@@ -327,6 +330,11 @@ public abstract class AbstractConfig implements Config {
         return this.lastResultReverseEnable;
     }
 
+    @Override
+    public Precision getPrecision() {
+        return this.precision;
+    }
+
     protected void copy(AbstractConfig config, String host, int port) {
         config.host = host;
         config.port = port;
@@ -364,5 +372,6 @@ public abstract class AbstractConfig implements Config {
         }
         config.deduplicationEnable = this.deduplicationEnable;
         config.lastResultReverseEnable = this.lastResultReverseEnable;
+        config.precision = this.precision;
     }
 }
