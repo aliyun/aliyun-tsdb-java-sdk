@@ -388,38 +388,4 @@ public class TestHiTSDBClientMultiFieldFeatures {
             }
         }
     }
-
-    @Test
-    public void testMultiFieldQueryWithDownsampleDataSource() {
-        long startTimestamp = 1537170208;
-        final String metric = "wind";
-        final String field = "speed";
-
-        final int SIZE = 5;
-        for(int i = 0; i < SIZE; i++) {
-            MultiFieldPoint multiFieldPoint = MultiFieldPoint.metric(metric)
-                    .field(field, 1)
-                    .timestamp(startTimestamp + 1)
-                    .build();
-            tsdb.multiFieldPutSync(multiFieldPoint);
-        }
-
-        MultiFieldSubQueryDetails fieldSubQueryDetails = MultiFieldSubQueryDetails.field(field).aggregator(Aggregator.NONE)
-                .downsample("5s-sum")
-                .build();
-        MultiFieldSubQuery subQuery = MultiFieldSubQuery.metric(metric)
-                .fieldsInfo(fieldSubQueryDetails)
-                .downsampleDataSource(DownsampleDataSource.DOWNSAMPLE)
-                .build();
-        MultiFieldQuery query = MultiFieldQuery.start(startTimestamp).end(startTimestamp + SIZE).sub(subQuery).build();
-        List<MultiFieldQueryResult> result = tsdb.multiFieldQuery(query);
-        if (result != null) {
-            System.out.println("##### Multi-field Query Result : " + JSON.toJSONString(result));
-            if (result.size() > 0) {
-                System.out.println("##### Multi-field Query Result asMap : " + JSON.toJSONString(result.get(0).asMap()));
-            }
-        } else {
-            System.out.println("##### Empty reply from HiTSDB server. ######");
-        }
-    }
 }
