@@ -407,35 +407,6 @@ public class BalTSDBClient implements TSDB {
         throw new RuntimeException(exception);
     }
 
-    @Deprecated
-    @Override
-    public void multiValuedPut(MultiValuedPoint point) {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                client().multiValuedPut(point);
-                return;
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
-
-    @Deprecated
-    @Override
-    public void multiValuedPut(MultiValuedPoint... points) {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                client().multiValuedPut(points);
-                return;
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
 
     private static int MAX_RETRY_SIZE = 3;
 
@@ -507,75 +478,6 @@ public class BalTSDBClient implements TSDB {
         throw new RuntimeException(exception);
     }
 
-    @Deprecated
-    @Override
-    public Result multiValuedPutSync(Collection<MultiValuedPoint> points) {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                return client().multiValuedPutSync(points);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
-
-    @Deprecated
-    @Override
-    public Result multiValuedPutSync(MultiValuedPoint... points) {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                return client().multiValuedPutSync(points);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
-
-    @Deprecated
-    @Override
-    public <T extends Result> T multiValuedPutSync(Collection<MultiValuedPoint> points, Class<T> resultType) {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                return client().multiValuedPutSync(points, resultType);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
-
-    @Deprecated
-    @Override
-    public <T extends Result> T multiValuedPutSync(Class<T> resultType, Collection<MultiValuedPoint> points) {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                return client().multiValuedPutSync(resultType, points);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
-
-    @Deprecated
-    @Override
-    public <T extends Result> T multiValuedPutSync(Class<T> resultType, MultiValuedPoint... points) {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                return client().multiValuedPutSync(resultType, points);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
 
     @Override
     public void query(Query query, QueryCallback callback) {
@@ -617,19 +519,6 @@ public class BalTSDBClient implements TSDB {
         throw new RuntimeException(exception);
     }
 
-    @Deprecated
-    @Override
-    public MultiValuedQueryResult multiValuedQuery(MultiValuedQuery query) throws HttpUnknowStatusException {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                return client().multiValuedQuery(query);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
 
     @Override
     public List<QueryResult> last(Query query, int num) throws HttpUnknowStatusException {
@@ -936,20 +825,6 @@ public class BalTSDBClient implements TSDB {
         for (int i = 0; i < MAX_RETRY_SIZE; i++) {
             try {
                 return client().dumpMetric(tagkey, tagValuePrefix, max);
-            } catch (Exception e) {
-                exception = e;
-            }
-        }
-        throw new RuntimeException(exception);
-    }
-
-    @Deprecated
-    @Override
-    public MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException {
-        Exception exception = null;
-        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
-            try {
-                return client().multiValuedQueryLast(queryLastRequest);
             } catch (Exception e) {
                 exception = e;
             }
