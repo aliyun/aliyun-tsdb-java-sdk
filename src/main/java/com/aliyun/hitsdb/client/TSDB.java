@@ -48,23 +48,6 @@ public interface TSDB extends Closeable {
      */
     void put(Collection<Point> points, AbstractBatchPutCallback batchPutCallback);
 
-
-    /**
-     * Asynchronous multi-valued put point
-     *
-     * @param point point
-     */
-    @Deprecated
-    void multiValuedPut(MultiValuedPoint point);
-
-    /**
-     * Asynchronous multi-valued put points
-     *
-     * @param points points
-     */
-    @Deprecated
-    void multiValuedPut(MultiValuedPoint... points);
-
     /**
      * Synchronous put method
      *
@@ -111,61 +94,6 @@ public interface TSDB extends Closeable {
      */
     <T extends Result> T putSync(Class<T> resultType, Point... points);
 
-    /**
-     * Synchronous multi-valued put method
-     *
-     * @param points points
-     * @return Result
-     * @deprecated please use multiFieldPutSync
-     */
-    @Deprecated
-    Result multiValuedPutSync(Collection<MultiValuedPoint> points);
-
-    /**
-     * Synchronous multi-valued put method
-     *
-     * @param points points
-     * @return Result
-     * @deprecated please use multiFieldPutSync
-     */
-    @Deprecated
-    Result multiValuedPutSync(MultiValuedPoint... points);
-
-    /**
-     * Synchronous multi-valued put method
-     *
-     * @param points     points
-     * @param resultType resultType
-     * @param <T>        Result.class, SummaryResult.class, DetailsResult.class
-     * @return Result
-     * @deprecated please use multiFieldPutSync
-     */
-    @Deprecated
-    <T extends Result> T multiValuedPutSync(Collection<MultiValuedPoint> points, Class<T> resultType);
-
-    /**
-     * Synchronous multi-valued put method
-     *
-     * @param resultType resultType
-     * @param points     points
-     * @param <T>        Result.class, SummaryResult.class, DetailsResult.class
-     * @return Result
-     * @deprecated please use multiFieldPutSync
-     */
-    @Deprecated
-    <T extends Result> T multiValuedPutSync(Class<T> resultType, Collection<MultiValuedPoint> points);
-
-    /**
-     * Synchronous multi-valued put method
-     *
-     * @param resultType resultType
-     * @param points     points
-     * @param <T>        Result.class, SummaryResult.class, DetailsResult.class
-     * @return Result
-     * @deprecated please use multiFieldPutSync
-     */
-    @Deprecated
-    <T extends Result> T multiValuedPutSync(Class<T> resultType, MultiValuedPoint... points);
 
     /**
      * query method
@@ -183,16 +111,6 @@ public interface TSDB extends Closeable {
      */
     List<QueryResult> query(Query query) throws HttpUnknowStatusException;
 
-
-    /**
-     * Multi-valued query method. Multi-valued query does not support callback yet.
-     *
-     * @param query
-     * @return result : List
-     * @deprecated please use multiFieldQuery
-     */
-    @Deprecated
-    MultiValuedQueryResult multiValuedQuery(MultiValuedQuery query) throws HttpUnknowStatusException;
 
 
     /**
@@ -456,17 +374,6 @@ public interface TSDB extends Closeable {
      */
     void close(boolean force) throws IOException;
 
-
-    /**
-     * /api/query/last endpoint
-     *
-     * @param queryLastRequest multi-valued query last request
-     * @return result
-     * @throws HttpUnknowStatusException Exception
-     * @deprecated please use multiFieldQueryLast
-     */
-    @Deprecated
-    MultiValuedQueryLastResult multiValuedQueryLast(MultiValuedQueryLastRequest queryLastRequest) throws HttpUnknowStatusException;
 
     /**
      * /api/query/last endpoint or /api/query/mlast endpoint
