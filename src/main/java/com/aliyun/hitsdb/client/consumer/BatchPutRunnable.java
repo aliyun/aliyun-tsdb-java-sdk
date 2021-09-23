@@ -22,6 +22,8 @@ import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.value.request.Point;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 
+import static com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback.getPutQueryParamMap;
+
 public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(BatchPutRunnable.class);
 
@@ -38,17 +40,7 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
 
     @Override
     public void run() {
-        Map<String, String> paramsMap = new HashMap<String, String>();
-        if (this.batchPutCallback != null) {
-            if (batchPutCallback instanceof BatchPutCallback) {
-            } else if (batchPutCallback instanceof BatchPutSummaryCallback) {
-                paramsMap.put("summary", "true");
-            } else if (batchPutCallback instanceof BatchPutDetailsCallback) {
-                paramsMap.put("details", "true");
-            } else if (batchPutCallback instanceof BatchPutIgnoreErrorsCallback) {
-                paramsMap.put("ignoreErrors", "true");
-            }
-        }
+        Map<String, String> paramsMap = getPutQueryParamMap(batchPutCallback);
 
         Point waitPoint = null;
         boolean readyClose = false;
@@ -117,8 +109,9 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
     }
 
 
+    //TODO: unify the implementation with TSDBClient#putAsync()
     private void sendHttpRequest(List<Point> pointList, String strJson, Map<String, String> paramsMap) {
-        String address = getAddressAndSemaphoreAcquire();
+        String address = tsdbHttpClient.getAddressAndSemaphoreAcquire();
         if (this.batchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
                     .createBatchPutDataCallback(

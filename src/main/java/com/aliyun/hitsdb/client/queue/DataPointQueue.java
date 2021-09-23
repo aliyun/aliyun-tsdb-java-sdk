@@ -180,11 +180,19 @@ public class DataPointQueue implements DataQueue {
         return pointQueue.isEmpty() && multiFieldPointQueue.isEmpty() && pointsCollectionQueue.isEmpty();
     }
 
+    /**
+     * COPY out all the remaining Point objects in the pointQueue
+     * @return an array of Point
+     */
     @Override
     public Point[] getPoints() {
         return pointQueue.toArray(new Point[0]);
     }
 
+    /**
+     * COPY out all the remaining MultiFieldPoint objects in the multiFieldPointQueue
+     * @return an array of MultiFieldPoint
+     */
     @Override
     public MultiFieldPoint[] getMultiFieldPoints() {
         return multiFieldPointQueue.toArray(new MultiFieldPoint[0]);

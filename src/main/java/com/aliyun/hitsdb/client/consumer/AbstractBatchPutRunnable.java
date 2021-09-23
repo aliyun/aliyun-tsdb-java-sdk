@@ -7,10 +7,7 @@ import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.http.semaphore.SemaphoreManager;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.util.guava.RateLimiter;
-import com.aliyun.hitsdb.client.value.request.Point;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 public abstract class AbstractBatchPutRunnable {
@@ -55,19 +52,5 @@ public abstract class AbstractBatchPutRunnable {
         this.httpAddressManager = tsdbHttpClient.getHttpAddressManager();
         this.rateLimiter = rateLimiter;
         this.httpResponseCallbackFactory = tsdbHttpClient.getHttpResponseCallbackFactory();
-    }
-
-    protected String getAddressAndSemaphoreAcquire() {
-        String address;
-        while (true) {
-            address = httpAddressManager.getAddress();
-            boolean acquire = this.semaphoreManager.acquire(address);
-            if (!acquire) {
-                continue;
-            } else {
-                break;
-            }
-        }
-        return address;
     }
 }

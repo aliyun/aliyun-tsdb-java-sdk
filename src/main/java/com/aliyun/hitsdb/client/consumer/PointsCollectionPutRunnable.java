@@ -82,7 +82,7 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
             LOGGER.warn("PointsCollection is empty, nothing to post");
         }
 
-        String address = getAddressAndSemaphoreAcquire();
+        String address = tsdbHttpClient.getAddressAndSemaphoreAcquire();
 
         Map<String, String> paramsMap = new HashMap<String, String>();
         if (points.getSimplePointBatchCallbak() != null) {

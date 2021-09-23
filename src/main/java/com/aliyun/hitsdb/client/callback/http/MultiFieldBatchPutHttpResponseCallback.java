@@ -49,6 +49,10 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         this.config = config;
     }
 
+    public AbstractMultiFieldBatchPutCallback<?> getLogicalBatchPutCallback() {
+        return multiFieldBatchPutCallback;
+    }
+
     @Override
     public void completed(HttpResponse httpResponse) {
         try {
