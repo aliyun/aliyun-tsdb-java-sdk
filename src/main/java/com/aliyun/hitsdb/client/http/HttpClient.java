@@ -515,4 +515,17 @@ public class HttpClient {
         return httpAddressManager;
     }
 
+    public String getAddressAndSemaphoreAcquire() {
+        String address;
+        while (true) {
+            address = this.httpAddressManager.getAddress();
+            boolean acquire = this.semaphoreManager.acquire(address);
+            if (!acquire) {
+                continue;
+            } else {
+                break;
+            }
+        }
+        return address;
+    }
 }

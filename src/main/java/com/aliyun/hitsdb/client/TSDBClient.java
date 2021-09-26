@@ -5,10 +5,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.callback.*;
+import com.aliyun.hitsdb.client.callback.http.BatchPutHttpResponseCallback;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
+import com.aliyun.hitsdb.client.callback.http.MultiFieldBatchPutHttpResponseCallback;
 import com.aliyun.hitsdb.client.consumer.Consumer;
 import com.aliyun.hitsdb.client.consumer.ConsumerFactory;
-import com.aliyun.hitsdb.client.exception.NotImplementedException;
 import com.aliyun.hitsdb.client.exception.http.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -1086,6 +1087,49 @@ public class TSDBClient implements TSDB {
         }
     }
 
+    void putAsync(List<Point> pointList, Map<String, String> paramsMap) {
+        String address = httpclient.getAddressAndSemaphoreAcquire();
+
+        String jsonString = JSON.toJSONString(pointList, SerializerFeature.DisableCircularReferenceDetect);
+
+        FutureCallback<HttpResponse> postHttpCallback;
+        if (config.getBatchPutCallback() != null) {
+            postHttpCallback = this.httpResponseCallbackFactory
+                    .createBatchPutDataCallback(
+                            address,
+                            config.getBatchPutCallback(),
+                            pointList,
+                            config,
+                            config.getBatchPutRetryCount());
+
+
+        } else {
+            postHttpCallback = this.httpResponseCallbackFactory
+                    .createNoLogicBatchPutHttpFutureCallback(
+                            address,
+                            pointList,
+                            config,
+                            config.getBatchPutRetryCount()
+                    );
+        }
+
+        try {
+            httpclient.postToAddress(address, HttpAPI.PUT, jsonString, paramsMap, postHttpCallback);
+        } catch (Exception ex) {
+            this.httpclient.getSemaphoreManager().release(address);
+            if (postHttpCallback instanceof BatchPutHttpResponseCallback) {
+                BatchPutHttpResponseCallback batchPutCallback = (BatchPutHttpResponseCallback)postHttpCallback;
+                if (batchPutCallback.getLogicalBatchPutCallback() != null) {
+                    batchPutCallback.getLogicalBatchPutCallback().failed(address, pointList, ex);
+                } else {
+                    batchPutCallback.failed(ex);
+                }
+            } else {
+                postHttpCallback.failed(ex);
+            }
+        }
+    }
+
     @Override
     public void delete(Query query) throws HttpUnknowStatusException {
         try {
@@ -1357,6 +1401,49 @@ public class TSDBClient implements TSDB {
         return multiFieldPutSync(points, Result.class);
     }
 
+    void multiFieldPutAsync(List<MultiFieldPoint> pointList, Map<String, String> paramsMap) {
+        String address = httpclient.getAddressAndSemaphoreAcquire();
+
+        String jsonString = JSON.toJSONString(pointList, SerializerFeature.DisableCircularReferenceDetect);
+
+        FutureCallback<HttpResponse> postHttpCallback;
+        if (config.getMultiFieldBatchPutCallback() != null) {
+            postHttpCallback = this.httpResponseCallbackFactory
+                    .createMultiFieldBatchPutDataCallback(
+                            address,
+                            config.getMultiFieldBatchPutCallback(),
+                            pointList,
+                            config,
+                            config.getBatchPutRetryCount());
+
+
+        } else {
+            postHttpCallback = this.httpResponseCallbackFactory
+                    .createMultiFieldNoLogicBatchPutHttpFutureCallback(
+                            address,
+                            pointList,
+                            config,
+                            config.getBatchPutRetryCount()
+                    );
+        }
+
+        try {
+            httpclient.postToAddress(address, HttpAPI.MPUT, jsonString, paramsMap, postHttpCallback);
+        } catch (Exception ex) {
+            this.httpclient.getSemaphoreManager().release(address);
+            if (postHttpCallback instanceof MultiFieldBatchPutHttpResponseCallback) {
+                MultiFieldBatchPutHttpResponseCallback batchPutCallback = (MultiFieldBatchPutHttpResponseCallback)postHttpCallback;
+                if (batchPutCallback.getLogicalBatchPutCallback() != null) {
+                    batchPutCallback.getLogicalBatchPutCallback().failed(address, pointList, ex);
+                } else {
+                    batchPutCallback.failed(ex);
+                }
+            } else {
+                postHttpCallback.failed(ex);
+            }
+        }
+    }
+
     /**
      * Synchronous put points with callback
      *
@@ -1569,10 +1656,12 @@ public class TSDBClient implements TSDB {
         final MultiFieldPoint[] mpoints = this.queue.getMultiFieldPoints();
         if ((points != null) && (points.length > 0)) {
             flushPoints(points);
+            LOGGER.info("{} single field points flushed", points.length);
         }
 
         if ((mpoints != null) && (mpoints.length > 0)) {
             flushPoints(mpoints);
+            LOGGER.info("{} multi-field points flushed", mpoints.length);
         }
     }
 
@@ -1595,10 +1684,11 @@ public class TSDBClient implements TSDB {
             final List<T> sub = pointList.subList(i, endBound);
             if (singleValue) {
                 List<Point> subPoints = (List<Point>)sub;
-                this.putSync(subPoints, Result.class);
+                this.putAsync(subPoints, AbstractBatchPutCallback.getPutQueryParamMap(config.getBatchPutCallback()));
             } else {
                 List<MultiFieldPoint> subPoints = (List<MultiFieldPoint>)sub;
-                this.multiFieldPutSync(subPoints, Result.class);
+                this.multiFieldPutAsync(subPoints,
+                        AbstractMultiFieldBatchPutCallback.getMultiFieldPutQueryParamMap(config.getMultiFieldBatchPutCallback()));
             }
         }
     }

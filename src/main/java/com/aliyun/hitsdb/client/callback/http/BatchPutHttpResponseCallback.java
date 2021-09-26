@@ -54,6 +54,10 @@ public class BatchPutHttpResponseCallback implements FutureCallback<HttpResponse
         this.config = config;
     }
 
+    public AbstractBatchPutCallback<?> getLogicalBatchPutCallback() {
+        return batchPutCallback;
+    }
+
     @Override
     public void completed(HttpResponse httpResponse) {
         try {

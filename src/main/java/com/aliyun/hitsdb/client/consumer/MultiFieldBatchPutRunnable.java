@@ -16,10 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+
+import static com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback.getMultiFieldPutQueryParamMap;
 
 public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiFieldBatchPutRunnable.class);
@@ -36,17 +37,7 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
 
     @Override
     public void run() {
-        Map<String, String> paramsMap = new HashMap<String, String>();
-        if (this.multiFieldBatchPutCallback != null) {
-            if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutCallback) {
-            } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutSummaryCallback) {
-                paramsMap.put("summary", "true");
-            } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutDetailsCallback) {
-                paramsMap.put("details", "true");
-            } else if (multiFieldBatchPutCallback instanceof MultiFieldBatchPutIgnoreErrorsCallback) {
-                paramsMap.put("ignoreErrors", "true");
-            }
-        }
+        Map<String, String> paramsMap = getMultiFieldPutQueryParamMap(multiFieldBatchPutCallback);
 
         MultiFieldPoint waitPoint = null;
         boolean readyClose = false;
@@ -115,8 +106,9 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
     }
 
 
+    //TODO: unify the implementation with TSDBClient#multiFieldPutAsync()
     private void sendHttpRequest(List<MultiFieldPoint> pointList, String strJson, Map<String, String> paramsMap) {
-        String address = getAddressAndSemaphoreAcquire();
+        String address = tsdbHttpClient.getAddressAndSemaphoreAcquire();
         if (this.multiFieldBatchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
                     .createMultiFieldBatchPutDataCallback(
