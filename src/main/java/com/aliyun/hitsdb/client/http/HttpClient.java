@@ -107,7 +107,7 @@ public class HttpClient {
         return currentDatabase.get();
     }
 
-    public void setCurrentDatabase(String database) {
+    void setCurrentDatabase(String database) {
         if (database == null || database.isEmpty()) {
             throw new HttpClientException("database is invalid.");
         }
@@ -136,9 +136,6 @@ public class HttpClient {
         this.basicPwd = config.getBasicPwd();
         this.certContent = config.getCertContent();
 
-        // set the default database
-        // the database related properties should be set earlier because the AbstractBatchPutRunnable needs them
-        this.currentDatabase = new AtomicReference<String>(TSDB.DEFAULT_DATABASE);
     }
 
     public void close() throws IOException {
@@ -502,6 +499,20 @@ public class HttpClient {
             throw new IllegalArgumentException("invalid database specified");
         }
         paramsMap.put("db", database);
+    }
+
+    public String getAddressAndSemaphoreAcquire() {
+        String address;
+        while (true) {
+            address = getHttpAddressManager().getAddress();
+            boolean acquire = getSemaphoreManager().acquire(address);
+            if (!acquire) {
+                continue;
+            } else {
+                break;
+            }
+        }
+        return address;
     }
 
 }

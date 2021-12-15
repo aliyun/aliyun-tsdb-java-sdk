@@ -11,9 +11,9 @@ import com.aliyun.hitsdb.client.consumer.ConsumerFactory;
 import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedEvent;
 import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedListener;
 import com.aliyun.hitsdb.client.exception.http.*;
+import com.aliyun.hitsdb.client.http.HAHttpClient;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
-import com.aliyun.hitsdb.client.http.HttpClientFactory;
 import com.aliyun.hitsdb.client.http.response.HttpStatus;
 import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.queue.DataQueue;
@@ -44,7 +44,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
 
@@ -53,9 +52,8 @@ public class TSDBClient implements TSDB {
     private final DataQueue queue;
     private final Consumer consumer;
     private final HttpResponseCallbackFactory httpResponseCallbackFactory;
-    private final boolean httpCompress;
-    private final HttpClient httpclient;
-    private final HttpClient secondaryClient;
+    protected final boolean httpCompress;
+    protected final HAHttpClient haHttpClient;
     private RateLimiter rateLimiter;
     private final Config config;
     private static Field queryDeleteField;
@@ -75,17 +73,8 @@ public class TSDBClient implements TSDB {
     }
 
     public TSDBClient(Config config) throws HttpClientInitException {
-        if (config.getHAPolicy() == null) {
-            this.config = config;
-            this.httpclient = HttpClientFactory.createHttpClient(config);
-            this.secondaryClient = null;
-        } else {
-            // secondaryClient only used in query for HA, HiTSDBHAClient support write HA
-            this.config = config;
-            this.httpclient = HttpClientFactory.createHttpClient(config);
-            Config secondaryConfig = config.copy(config.getHAPolicy().getSecondaryHost(), config.getHAPolicy().getSecondaryPort());
-            this.secondaryClient = HttpClientFactory.createHttpClient(secondaryConfig);
-        }
+        this.config = config;
+        this.haHttpClient = HAHttpClient.createHAHttpClient(config);
 
         this.httpCompress = config.isHttpCompress();
         boolean asyncPut = config.isAsyncPut();
@@ -97,13 +86,13 @@ public class TSDBClient implements TSDB {
         this.listeners = new ArrayList<TSDBDatabaseChangedListener>();
 
         if (asyncPut) {
-            this.httpResponseCallbackFactory = httpclient.getHttpResponseCallbackFactory();
+            this.httpResponseCallbackFactory = haHttpClient.getHttpResponseCallbackFactory();
             int batchPutBufferSize = config.getBatchPutBufferSize();
             int multiFieldBatchPutBufferSize = config.getMultiFieldBatchPutBufferSize();
             int batchPutTimeLimit = config.getBatchPutTimeLimit();
             boolean backpressure = config.isBackpressure();
             this.queue = DataQueueFactory.createDataPointQueue(batchPutBufferSize, multiFieldBatchPutBufferSize, batchPutTimeLimit, backpressure);
-            this.consumer = ConsumerFactory.createConsumer(this, queue, httpclient, rateLimiter, config);
+            this.consumer = ConsumerFactory.createConsumer(this, queue, haHttpClient, rateLimiter, config);
             this.consumer.start();
         } else {
             this.httpResponseCallbackFactory = null;
@@ -111,24 +100,18 @@ public class TSDBClient implements TSDB {
             this.consumer = null;
         }
 
-        this.httpclient.start();
-        if (this.secondaryClient != null) {
-            this.secondaryClient.start();
-        }
+        this.haHttpClient.start();
         LOGGER.info("The tsdb client has started.");
 
         try {
-            this.checkConnection();
+            this.haHttpClient.checkConnection();
         } catch (Exception e) {
             try {
                 if (asyncPut) {
                     this.consumer.stop(true);
                 }
 
-                this.httpclient.close(true);
-                if (this.secondaryClient != null) {
-                    this.secondaryClient.close(true);
-                }
+                this.haHttpClient.close();
                 LOGGER.info("when connected to tsdb server failure, so the tsdb client has closed");
             } catch (IOException ex) {
             }
@@ -138,13 +121,6 @@ public class TSDBClient implements TSDB {
 
     private static final String EMPTY_HOLDER = new JSONObject().toJSONString();
     private static final String VIP_API = "/api/vip_health";
-
-    private void checkConnection() {
-        httpclient.post(VIP_API, EMPTY_HOLDER);
-        if (secondaryClient != null) {
-            secondaryClient.post(VIP_API, EMPTY_HOLDER);
-        }
-    }
 
     @Override
     public void close() throws IOException {
@@ -165,10 +141,7 @@ public class TSDBClient implements TSDB {
         }
 
         // 客户端关闭
-        this.httpclient.close(true);
-        if (this.secondaryClient != null) {
-            this.secondaryClient.close(true);
-        }
+        this.haHttpClient.close();
     }
 
     /**
@@ -187,10 +160,7 @@ public class TSDBClient implements TSDB {
             this.consumer.stop();
         }
         // 客户端关闭
-        this.httpclient.close();
-        if (this.secondaryClient != null) {
-            this.secondaryClient.close();
-        }
+        this.haHttpClient.close();
     }
 
     @Override
@@ -208,8 +178,7 @@ public class TSDBClient implements TSDB {
         MetricTimeRange metricTimeRange = new MetricTimeRange(metric, startTime, endTime);
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
-
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -220,7 +189,7 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -231,7 +200,7 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -239,10 +208,9 @@ public class TSDBClient implements TSDB {
     @Override
     public void deleteData(String metric, Map<String, String> tags, List<String> fields, long startTime, long endTime) {
         MetricTimeRange metricTimeRange = new MetricTimeRange(metric, tags, fields, startTime, endTime);
-
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.DELETE_DATA, metricTimeRange.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -328,7 +296,7 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_META, timeline.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.DELETE_META, timeline.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -362,7 +330,7 @@ public class TSDBClient implements TSDB {
     public void deleteMeta(DeleteMetaRequest request) {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DELETE_META, request.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.DELETE_META, request.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -370,19 +338,15 @@ public class TSDBClient implements TSDB {
     @Override
     public List<TagResult> dumpMeta(String tagkey, String tagValuePrefix, int max) {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(tagkey, tagValuePrefix, max);
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return doDumpMeta(dumpMetaValue);
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return doDumpMeta(dumpMetaValue);
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
             }
-        } else {
-            return doDumpMeta(dumpMetaValue);
         }
     }
 
@@ -398,14 +362,14 @@ public class TSDBClient implements TSDB {
     public List<TagResult> dumpMeta(String metric, String tagkey, String tagValuePrefix, int max) {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(metric, tagkey, tagValuePrefix, max);
         if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
+            HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
             while (true) {
                 try {
                     return doDumpMeta(dumpMetaValue);
                 } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
+                    doQueryRetry(QueryContext, e);
                 } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
+                    doQueryRetry(QueryContext, e);
                 }
             }
         } else {
@@ -417,7 +381,7 @@ public class TSDBClient implements TSDB {
     private List<TagResult> doDumpMeta(DumpMetaValue dumpMetaValue) {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.DUMP_META, dumpMetaValue.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -433,26 +397,21 @@ public class TSDBClient implements TSDB {
     @Override
     public List<String> dumpMetric(String tagkey, String tagValuePrefix, int max) throws HttpUnknowStatusException {
         DumpMetaValue dumpMetaValue = new DumpMetaValue(tagkey, tagValuePrefix, max, true);
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return doDumpMetric(dumpMetaValue);
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return doDumpMetric(dumpMetaValue, queryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(queryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(queryContext, e);
             }
-        } else {
-            return doDumpMetric(dumpMetaValue);
         }
     }
 
-    private List<String> doDumpMetric(DumpMetaValue dumpMetaValue) {
+    private List<String> doDumpMetric(DumpMetaValue dumpMetaValue, HttpClient httpClient) {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
-
-        HttpResponse httpResponse = httpclient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON(), paramsMap);
+        HttpResponse httpResponse = httpClient.post(HttpAPI.DUMP_META, dumpMetaValue.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -516,7 +475,7 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getPrimaryClient().post(HttpAPI.QUERY, query.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -863,7 +822,7 @@ public class TSDBClient implements TSDB {
         return tupleFormat;
     }
 
-    private void doQueryRetry(HAPolicy.QueryContext queryContext, Exception e) {
+    protected void doQueryRetry(HAPolicy.QueryContext queryContext, Exception e) {
         // including 5XX error, SocketTimeoutException, ConnectionException etc..
         if (!queryContext.doQuery()) {
             if (e instanceof HttpServerErrorException) {
@@ -881,26 +840,22 @@ public class TSDBClient implements TSDB {
 
     @Override
     public List<QueryResult> query(Query query) {
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return query(query, queryContext.getClient());
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return query(query, QueryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
             }
-        } else {
-            return query(query, httpclient);
         }
     }
 
     private List<QueryResult> query(Query query, HttpClient client) {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON(), paramsMap);
+        HttpResponse httpResponse = client.post(HttpAPI.QUERY, query.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -917,29 +872,58 @@ public class TSDBClient implements TSDB {
 
 	@Override
 	public SQLResult queryBySQL(String sql) throws HttpUnknowStatusException {
-		SQLValue sqlValue = new SQLValue(sql);
+
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return queryBySQL(sql, QueryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
+            }
+        }
+	}
+
+    public SQLResult queryBySQL(String sql, HttpClient client) throws HttpUnknowStatusException {
+        SQLValue sqlValue = new SQLValue(sql);
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
         if (!paramsMap.isEmpty()) {
             throw new IllegalStateException("SQL interface not support database besides default");
         }
 
-		HttpResponse httpResponse = httpclient.post(HttpAPI.SQL, sqlValue.toJSON());
-		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
-		HttpStatus httpStatus = resultResponse.getHttpStatus();
-		switch (httpStatus) {
-			case ServerSuccess:
-				String content = resultResponse.getContent();
-				return JSON.parseObject(content, SQLResult.class);
+        HttpResponse httpResponse = client.post(HttpAPI.SQL, sqlValue.toJSON());
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+        switch (httpStatus) {
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                return JSON.parseObject(content, SQLResult.class);
             default:
                 return (SQLResult) handleStatus(resultResponse);
-		}
-	}
+        }
+    }
 
     @Override
     public void query(Query query, QueryCallback callback) {
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                query(query,callback, QueryContext.getClient());
+                return;
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
+            }
+        }
+
+    }
+
+    public void query(Query query, QueryCallback callback, HttpClient httpClient) {
         FutureCallback<HttpResponse> httpCallback = null;
-        String address = httpclient.getHttpAddressManager().getAddress();
+        String address = httpClient.getHttpAddressManager().getAddress();
 
         if (callback != null) {
             httpCallback = this.httpResponseCallbackFactory.createQueryCallback(address, callback, query);
@@ -947,32 +931,27 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        httpclient.postToAddress(address, HttpAPI.QUERY, query.toJSON(), paramsMap, httpCallback);
+        httpClient.postToAddress(address, HttpAPI.QUERY, query.toJSON(), paramsMap, httpCallback);
     }
 
     @Override
     public List<String> suggest(Suggest type, String prefix, int max) {
         SuggestValue suggestValue = new SuggestValue(type.getName(), prefix, max);
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return suggest(suggestValue);
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return suggest(suggestValue, queryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(queryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(queryContext, e);
             }
-        } else {
-            return suggest(suggestValue);
         }
     }
 
-	private List<String> suggest(SuggestValue suggestValue) {
+	private List<String> suggest(SuggestValue suggestValue, HttpClient httpClient) {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
-
-		HttpResponse httpResponse = httpclient.post(HttpAPI.SUGGEST, suggestValue.toJSON(), paramsMap);
+		HttpResponse httpResponse = httpClient.post(HttpAPI.SUGGEST, suggestValue.toJSON(), paramsMap);
 		ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
 		HttpStatus httpStatus = resultResponse.getHttpStatus();
 		switch (httpStatus) {
@@ -988,19 +967,15 @@ public class TSDBClient implements TSDB {
 	@Override
     public List<String> suggest(Suggest type, String metric, String prefix, int max) {
         SuggestValue suggestValue = new SuggestValue(type.getName(), metric, prefix, max);
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return suggest(suggestValue);
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return suggest(suggestValue, queryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(queryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(queryContext, e);
             }
-        } else {
-            return suggest(suggestValue);
         }
 	}
 
@@ -1008,27 +983,21 @@ public class TSDBClient implements TSDB {
     @Override
     public List<LookupResult> lookup(String metric, List<LookupTagFilter> tags, int max) {
         LookupRequest lookupRequest = new LookupRequest(metric, tags, max);
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return lookup(lookupRequest);
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return lookup(lookupRequest);
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(queryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(queryContext, e);
             }
-        } else {
-            return lookup(lookupRequest);
         }
     }
 
-    @Override
-    public List<LookupResult> lookup(LookupRequest lookupRequest) {
+    public List<LookupResult> lookup(LookupRequest lookupRequest, HttpClient httpClient) {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
-
-        HttpResponse httpResponse = httpclient.post(HttpAPI.LOOKUP, lookupRequest.toJSON(), paramsMap);
+        HttpResponse httpResponse = httpClient.post(HttpAPI.LOOKUP, lookupRequest.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1042,11 +1011,36 @@ public class TSDBClient implements TSDB {
     }
 
     @Override
-    public int ttl() {
-        //TODO: the GET method of HttpClient needs to support query parameters
-        Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
+    public List<LookupResult> lookup(LookupRequest lookupRequest) {
+        HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return lookup(lookupRequest, queryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(queryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(queryContext, e);
+            }
+        }
+    }
 
-        HttpResponse httpResponse = httpclient.get(HttpAPI.TTL, null, paramsMap);
+    @Override
+    public int ttl() {
+        HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return ttl(queryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(queryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(queryContext, e);
+            }
+        }
+    }
+
+    public int ttl(HttpClient httpClient) {
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
+        HttpResponse httpResponse = httpClient.get(HttpAPI.TTL, null, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1068,7 +1062,7 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.TTL, ttlValue.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.TTL, ttlValue.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -1080,7 +1074,7 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.TTL, ttlValue.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.TTL, ttlValue.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -1184,6 +1178,7 @@ public class TSDBClient implements TSDB {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
         HttpResponse httpResponse;
+        HttpClient httpclient = haHttpClient.getWriteClient();
         if (resultType.equals(Result.class)) {
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else if (resultType.equals(SummaryResult.class)) {
@@ -1258,6 +1253,7 @@ public class TSDBClient implements TSDB {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(database);
 
         HttpResponse httpResponse;
+        HttpClient httpclient = haHttpClient.getWriteClient();
         if (resultType.equals(Result.class)) {
             httpResponse = httpclient.post(HttpAPI.PUT, jsonString, paramsMap);
         } else if (resultType.equals(SummaryResult.class)) {
@@ -1309,7 +1305,7 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY, query.toJSON(), paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.QUERY, query.toJSON(), paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -1332,7 +1328,7 @@ public class TSDBClient implements TSDB {
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.QUERY_LAST, jsonString, paramsMap);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.QUERY_LAST, jsonString, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1471,19 +1467,15 @@ public class TSDBClient implements TSDB {
     }
 
     private List<LastDataValue> queryLastInner(String jsonString) throws HttpUnknowStatusException {
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return queryLast(jsonString, queryContext.getClient());
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return queryLast(jsonString, QueryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
             }
-        } else {
-            return queryLast(jsonString, httpclient);
         }
     }
 
@@ -1551,7 +1543,20 @@ public class TSDBClient implements TSDB {
 
     @Override
     public String version() throws HttpUnknowStatusException {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.VERSION, EMPTY_JSON_STR);
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return version(QueryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
+            }
+        }
+    }
+
+    public String version(HttpClient httpClient) throws HttpUnknowStatusException {
+        HttpResponse httpResponse = httpClient.post(HttpAPI.VERSION, EMPTY_JSON_STR);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1566,7 +1571,20 @@ public class TSDBClient implements TSDB {
 
     @Override
     public Map<String, String> getVersionInfo() throws HttpUnknowStatusException {
-        HttpResponse httpResponse = httpclient.post(HttpAPI.VERSION, EMPTY_JSON_STR);
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return getVersionInfo(QueryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
+            }
+        }
+    }
+
+    public Map<String, String> getVersionInfo(HttpClient httpClient) throws HttpUnknowStatusException {
+        HttpResponse httpResponse = httpClient.post(HttpAPI.VERSION, EMPTY_JSON_STR);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1581,6 +1599,7 @@ public class TSDBClient implements TSDB {
                 return (Map<String, String>) handleStatus(resultResponse);
         }
     }
+
 
     @Override
     public void put(Point... points) {
@@ -1634,7 +1653,7 @@ public class TSDBClient implements TSDB {
     public boolean truncate() throws HttpUnknowStatusException {
         Map<String, String> paramsMap = wrapDatabaseRequestParam(getCurrentDatabase());
 
-        HttpResponse httpResponse = httpclient.post(HttpAPI.TRUNCATE, EMPTY_JSON_STR, paramsMap);
+        HttpResponse httpResponse = haHttpClient.getPrimaryClient().post(HttpAPI.TRUNCATE, EMPTY_JSON_STR, paramsMap);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
         switch (httpStatus) {
@@ -1679,6 +1698,7 @@ public class TSDBClient implements TSDB {
         String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
 
         Map<String, String> paramsMap = wrapDatabaseRequestParam(database);
+        HttpClient httpclient = haHttpClient.getWriteClient();
 
         HttpResponse httpResponse;
         if (resultType.equals(Result.class)) {
@@ -1771,19 +1791,15 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public List<MultiFieldQueryResult> multiFieldQuery(MultiFieldQuery query) throws HttpUnknowStatusException {
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return multiFieldQuery(query, queryContext.getClient());
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return multiFieldQuery(query, QueryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
             }
-        } else {
-            return multiFieldQuery(query, httpclient);
         }
     }
 
@@ -1822,19 +1838,15 @@ public class TSDBClient implements TSDB {
         }
 
         String jsonString = lastPointQuery.toJSON();
-        if (config.getHAPolicy() != null) {
-            HAPolicy.QueryContext queryContext = new HAPolicy.QueryContext(config.getHAPolicy(), httpclient, secondaryClient);
-            while (true) {
-                try {
-                    return multiFieldQueryLast(jsonString, queryContext.getClient());
-                } catch (HttpServerErrorException e) {
-                    doQueryRetry(queryContext, e);
-                } catch (HttpClientException e) {
-                    doQueryRetry(queryContext, e);
-                }
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return multiFieldQueryLast(jsonString, QueryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
             }
-        } else {
-            return multiFieldQueryLast(jsonString, httpclient);
         }
     }
 
@@ -1895,7 +1907,7 @@ public class TSDBClient implements TSDB {
 
         UserResult createRequest = new UserResult(username, base64Password, privilege.id());
         String jsonRequest = createRequest.toJSON();
-        HttpResponse httpResponse = httpclient.post(HttpAPI.USER_AUTH, jsonRequest);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().post(HttpAPI.USER_AUTH, jsonRequest);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -1913,7 +1925,7 @@ public class TSDBClient implements TSDB {
             throw new IllegalArgumentException("username cannot be empty");
         }
 
-        HttpResponse httpResponse = httpclient.delete(HttpAPI.USER_AUTH + "?u=" + username, null);
+        HttpResponse httpResponse = haHttpClient.getWriteClient().delete(HttpAPI.USER_AUTH + "?u=" + username, null);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         handleVoid(resultResponse);
     }
@@ -1926,6 +1938,19 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public List<UserResult> listUsers() {
+        HAPolicy.QueryContext QueryContext = new HAPolicy.QueryContext(haHttpClient);
+        while (true) {
+            try {
+                return listUsers(QueryContext.getClient());
+            } catch (HttpServerErrorException e) {
+                doQueryRetry(QueryContext, e);
+            } catch (HttpClientException e) {
+                doQueryRetry(QueryContext, e);
+            }
+        }
+    }
+
+    public List<UserResult> listUsers(HttpClient httpclient) {
         HttpResponse httpResponse = httpclient.get(HttpAPI.USER_AUTH, null);
         ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
         HttpStatus httpStatus = resultResponse.getHttpStatus();
@@ -1998,7 +2023,7 @@ public class TSDBClient implements TSDB {
         }
 
         //switch to new database
-        this.httpclient.setCurrentDatabase(database);
+        this.haHttpClient.setCurrentDatabase(database);
 
         notifyDatabaseChanged(previousDatabase, database);
     }
@@ -2022,7 +2047,7 @@ public class TSDBClient implements TSDB {
      */
     @Override
     public String getCurrentDatabase() {
-        return this.httpclient.getCurrentDatabase();
+        return this.haHttpClient.getPrimaryClient().getCurrentDatabase();
     }
 
     /**

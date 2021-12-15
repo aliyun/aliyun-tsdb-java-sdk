@@ -372,6 +372,9 @@ public class TSDBConfig extends AbstractConfig {
                     throw new IllegalArgumentException("Primary cluster and secondary cluster should not have same host and port");
                 }
             }
+            if (this.haPolicy == null) {
+                this.haPolicy = HAPolicy.createDefaultHAPolicy();
+            }
             config.haPolicy = this.haPolicy;
             config.deduplicationEnable = this.deduplicationEnable;
             config.lastResultReverseEnable = this.lastResultReverseEnable;

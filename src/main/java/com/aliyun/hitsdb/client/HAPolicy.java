@@ -1,5 +1,6 @@
 package com.aliyun.hitsdb.client;
 
+import com.aliyun.hitsdb.client.http.HAHttpClient;
 import com.aliyun.hitsdb.client.http.HttpClient;
 import com.aliyun.hitsdb.client.util.Pair;
 
@@ -9,14 +10,25 @@ import com.aliyun.hitsdb.client.util.Pair;
  */
 public class HAPolicy {
     private Pair<String, Integer> secondaryCluster;
-    private RetryRule retryRule = RetryRule.SecondaryPreferred;
+    private ReadRule readRule = ReadRule.SecondaryPreferred;
+    private WriteRule writeRule = WriteRule.Primary;
     private int queryRetryTimes = 0;
+    /*
+     * unit: second
+     * default as 10 seconds
+     */
+    private int healthCheckTimeout = 10;
+    /*
+     * unit: second
+     * default as 5 seconds
+     */
+    private int healthCheckInterval = 5;
     /*
      * TODO: support queryRetryInterval
      */
     private long queryRetryInterval = 0;
 
-    public enum RetryRule {
+    public enum ReadRule {
         /*
          * Only read primary cluster
          */
@@ -32,13 +44,75 @@ public class HAPolicy {
         /*
          * First read secondary cluster then read primary cluster when failed
          */
-        SecondaryPreferred
+        SecondaryPreferred,
+        /*
+         * HealthCheck determine which cluster to read
+         */
+        HealthCheck,
+    }
+
+    public enum WriteRule {
+        /*
+         * Only Write primary
+         */
+        Primary,
+        /*
+         * HealthCheck determine which cluster to write
+         */
+        HealthCheck,
+    }
+
+    /**
+     * @return write primary and read primary policy , as default policy
+     */
+    public static HAPolicy createDefaultHAPolicy() {
+        HAPolicy haPolicy = new HAPolicy();
+        haPolicy.writeRule = WriteRule.Primary;
+        haPolicy.readRule = ReadRule.Primary;
+        haPolicy.secondaryCluster = null;
+        haPolicy.queryRetryTimes = 0;
+        haPolicy.checkValid();
+        return haPolicy;
     }
 
     public static Builder addSecondaryCluster(String secondaryHost, int secondaryPort) {
         return new Builder(secondaryHost, secondaryPort);
     }
 
+    private void checkValid() {
+        if ( !hasSecondaryCluster()) {
+            if (writeShouldHaveSecondaryCluster()) {
+                throw new IllegalArgumentException("writeRule should specify secondaryCluster");
+            }
+            if (readShouldHaveSecondaryCluster()) {
+                throw new IllegalArgumentException("readRule should specify secondaryCluster");
+            }
+        }
+    }
+
+    private boolean writeShouldHaveSecondaryCluster() {
+        return getWriteRule() != WriteRule.Primary;
+    }
+
+    private boolean readShouldHaveSecondaryCluster() {
+        return getReadRule() != ReadRule.Primary;
+    }
+
+    public boolean hasSecondaryCluster() {
+        return this.secondaryCluster != null;
+    }
+
+    public boolean hasHealthCheckRule() {
+        return getReadRule() == ReadRule.HealthCheck || getWriteRule() == WriteRule.HealthCheck;
+    }
+
+    public int getHealthCheckTimeout() {
+        return healthCheckTimeout;
+    }
+
+    public int getHealthCheckInterval() {
+        return healthCheckInterval;
+    }
 
     public static class Builder {
         private HAPolicy policy;
@@ -48,12 +122,23 @@ public class HAPolicy {
             policy.secondaryCluster = new Pair<String, Integer>(secondaryHost, secondaryPort);
         }
 
-        public Builder setRetryRule(RetryRule rule) {
-            policy.retryRule = rule;
+        public Builder healthCheck() {
+            policy.readRule = ReadRule.HealthCheck;
+            policy.writeRule = WriteRule.HealthCheck;
             return this;
         }
 
-        public Builder setRetryTimes(int retryTimes) {
+        public Builder setReadRule(ReadRule rule) {
+            policy.readRule = rule;
+            return this;
+        }
+
+        public Builder setWriteRule(WriteRule rule) {
+            policy.writeRule = rule;
+            return this;
+        }
+
+        public Builder setQueryRetryTimes(int retryTimes) {
             if (retryTimes < 0) {
                 throw new IllegalArgumentException("retryTimes must greater or equal than 0");
             }
@@ -61,7 +146,24 @@ public class HAPolicy {
             return this;
         }
 
+        public Builder setHealthCheckTimeout(int timeout) {
+            if (timeout <= 0) {
+                throw new IllegalArgumentException("healthCheckTimeout must greater than 0");
+            }
+            policy.healthCheckTimeout = timeout;
+            return this;
+        }
+
+        public Builder setHealthCheckInterval(int interval) {
+            if (interval <= 0) {
+                throw new IllegalArgumentException("healthCheckTimeout must greater than 0");
+            }
+            policy.healthCheckInterval = interval;
+            return this;
+        }
+
         public HAPolicy build() {
+            policy.checkValid();
             return policy;
         }
     }
@@ -74,8 +176,12 @@ public class HAPolicy {
         return secondaryCluster.getValue();
     }
 
-    public RetryRule getRetryRule() {
-        return retryRule;
+    public ReadRule getReadRule() {
+        return readRule;
+    }
+
+    public WriteRule getWriteRule() {
+        return writeRule;
     }
 
     public int getQueryRetryTimes() {
@@ -87,23 +193,22 @@ public class HAPolicy {
     }
 
     public static class QueryContext {
-        private HAPolicy haPolicy;
         private int retryTimes = 0;
-        private HttpClient primaryClient;
-        private HttpClient secondaryClient;
-        public QueryContext(HAPolicy haPolicy, HttpClient primaryClient, HttpClient secondaryClient) {
-            this.haPolicy = haPolicy;
-            this.primaryClient = primaryClient;
-            this.secondaryClient = secondaryClient;
+
+        private HAHttpClient haHttpClient;
+
+        public QueryContext(HAHttpClient haHttpClient) {
+            this.retryTimes = 0;
+            this.haHttpClient = haHttpClient;
         }
 
-        public boolean doQuery(){
-            if (haPolicy.getRetryRule() == RetryRule.Primary || haPolicy.getRetryRule() == RetryRule.Secondary) {
-                if (retryTimes < haPolicy.getQueryRetryTimes()) {
+        public boolean doQuery() {
+            if (haHttpClient.getHaPolicy().getReadRule() == ReadRule.Primary || haHttpClient.getHaPolicy().getReadRule() == ReadRule.Secondary || haHttpClient.getHaPolicy().getReadRule() == ReadRule.HealthCheck) {
+                if (retryTimes < haHttpClient.getHaPolicy().getQueryRetryTimes()) {
                     return true;
                 }
-            } else if (haPolicy.getRetryRule() == RetryRule.PrimaryPreferred || haPolicy.getRetryRule() == RetryRule.SecondaryPreferred) {
-                if (retryTimes < haPolicy.getQueryRetryTimes() + 1) {
+            } else if (haHttpClient.getHaPolicy().getReadRule() == ReadRule.PrimaryPreferred || haHttpClient.getHaPolicy().getReadRule() == ReadRule.SecondaryPreferred) {
+                if (retryTimes < haHttpClient.getHaPolicy().getQueryRetryTimes() + 1) {
                     // retry on another client
                     return true;
                 }
@@ -116,24 +221,9 @@ public class HAPolicy {
         }
 
         public HttpClient getClient() {
-            switch (haPolicy.getRetryRule()) {
-                case Primary:
-                    return primaryClient;
-                case Secondary:
-                    return secondaryClient;
-                case SecondaryPreferred:
-                    if (retryTimes <= haPolicy.getQueryRetryTimes()) {
-                        return secondaryClient;
-                    }
-                    return primaryClient;
-                case PrimaryPreferred:
-                    if (retryTimes <= haPolicy.getQueryRetryTimes()) {
-                        return primaryClient;
-                    }
-                    return secondaryClient;
-                default:
-                    throw new IllegalArgumentException("Unknown Retry Policy");
-            }
+            return this.haHttpClient.getReadClient(retryTimes);
         }
+
     }
+
 }

@@ -53,11 +53,11 @@ public class TestClientQueryHA {
 
 
         // STEP 1: TEST FOR HAPolicy.RetryRule.Secondary AND HAPolicy.RetryRule.SecondaryPreferred
-        HAPolicy SecondaryPreferredpolicy = HAPolicy.addSecondaryCluster(secondaryIp, secondaryPort).setRetryRule(HAPolicy.RetryRule.SecondaryPreferred).setRetryTimes(1).build();
+        HAPolicy SecondaryPreferredpolicy = HAPolicy.addSecondaryCluster(secondaryIp, secondaryPort).setReadRule(HAPolicy.ReadRule.SecondaryPreferred).setQueryRetryTimes(1).build();
         TSDBConfig SecondaryPreferredConfig = TSDBConfig.address(mainIp, mainPort).addHAPolicy(SecondaryPreferredpolicy).config();
         TSDBClient secondaryPreferredTsdb = new TSDBClient(SecondaryPreferredConfig);
 
-        HAPolicy secondaryPolicy = HAPolicy.addSecondaryCluster(secondaryIp, secondaryPort).setRetryRule(HAPolicy.RetryRule.Secondary).setRetryTimes(1).build();
+        HAPolicy secondaryPolicy = HAPolicy.addSecondaryCluster(secondaryIp, secondaryPort).setReadRule(HAPolicy.ReadRule.Secondary).setQueryRetryTimes(1).build();
         TSDBConfig secondaryConfig = TSDBConfig.address(mainIp, mainPort).addHAPolicy(secondaryPolicy).config();
         TSDBClient secondaryTsdb = new TSDBClient(secondaryConfig);
 
@@ -139,11 +139,11 @@ public class TestClientQueryHA {
             }
         }
 
-        HAPolicy PrimaryPreferredPolicy = HAPolicy.addSecondaryCluster(secondaryIp, secondaryPort).setRetryRule(HAPolicy.RetryRule.PrimaryPreferred).setRetryTimes(1).build();
+        HAPolicy PrimaryPreferredPolicy = HAPolicy.addSecondaryCluster(secondaryIp, secondaryPort).setReadRule(HAPolicy.ReadRule.PrimaryPreferred).setQueryRetryTimes(1).build();
         TSDBConfig PrimaryPreferredConfig = TSDBConfig.address(mainIp, mainPort).addHAPolicy(PrimaryPreferredPolicy).config();
         TSDBClient primaryPreferredTsdb = new TSDBClient(PrimaryPreferredConfig);
 
-        HAPolicy mainPolicy = HAPolicy.addSecondaryCluster(secondaryIp, secondaryPort).setRetryRule(HAPolicy.RetryRule.Primary).setRetryTimes(1).build();
+        HAPolicy mainPolicy = HAPolicy.addSecondaryCluster(secondaryIp, secondaryPort).setReadRule(HAPolicy.ReadRule.Primary).setQueryRetryTimes(1).build();
         TSDBConfig mainConfig = TSDBConfig.address(mainIp, mainPort).addHAPolicy(mainPolicy).config();
         TSDBClient mainTsdb = new TSDBClient(mainConfig);
 
@@ -199,5 +199,57 @@ public class TestClientQueryHA {
             failed = true;
         }
         Assert.assertTrue(failed);
+    }
+
+    @Test
+    public void testHAtoSameInstance() throws InterruptedException {
+        String readHost = "127.0.0.1", writeHost = "127.0.0.1";
+        int readPort = 8242, writePort = 8242;
+        String writerUsername = "testuser", tsdbWritePassword = "asdf1234";
+
+        HAPolicy policy = HAPolicy.addSecondaryCluster(readHost, readPort)
+                .setReadRule(HAPolicy.ReadRule.SecondaryPreferred)
+                .setQueryRetryTimes(0)
+                .build();
+
+        TSDBConfig config = TSDBConfig
+                .address(writeHost, writePort)
+                .basicAuth(writerUsername, tsdbWritePassword)
+                .httpConnectionLiveTime(1800)
+                .batchPutSize(50)
+                .batchPutRetryCount(3)
+                .multiFieldBatchPutConsumerThreadCount(2)
+                .addHAPolicy(policy)
+                .config();
+
+        TSDBClient client = new TSDBClient(config);
+        long timestamp = 1626926400L;
+
+        String metric = "testHAtoSameInstance";
+
+        List<MultiFieldPoint> points = new ArrayList<MultiFieldPoint>();
+        for (int i = 0; i < 10; i++) {
+            MultiFieldPoint point = MultiFieldPoint.metric(metric)
+                    .field("field1", "stringValue"+i)
+                    .field("field2", 10.0 + i)
+                    .field("field3", true)
+                    .tag("tagkey1", "tagvalue1")
+                    .tag("tagkey2", "tagvalue2")
+                    .timestamp(timestamp+i).build(true);
+            points.add(point);
+        }
+        client.multiFieldPutSync(points);
+
+        Thread.sleep(2000);
+
+        // Query Data
+
+        MultiFieldQuery query1 = MultiFieldQuery.start(timestamp).end(timestamp+10)
+                .sub(MultiFieldSubQuery.metric(metric).fieldsInfo(MultiFieldSubQueryDetails.field("field1").aggregator(Aggregator.NONE).build())
+                .build()).msResolution(false).build();
+
+        System.out.println(query1.toJSON());
+        List<MultiFieldQueryResult> results = client.multiFieldQuery(query1);
+        System.out.println(results.toString());
     }
 }

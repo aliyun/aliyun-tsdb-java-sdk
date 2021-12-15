@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.TSDB;
+import com.aliyun.hitsdb.client.http.HAHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,12 +25,12 @@ public class DefaultBatchPutConsumer implements Consumer {
     private int batchPutConsumerThreadCount;
     private int multiFieldBatchPutConsumerThreadCount;
     private int pointsBatchPutConsumerThreadCount;
-    private HttpClient httpclient;
+    private HAHttpClient httpclient;
     private Config config;
     private RateLimiter rateLimiter;
     private CountDownLatch countDownLatch;
 
-    public DefaultBatchPutConsumer(TSDB tsdb, DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, Config config) {
+    public DefaultBatchPutConsumer(TSDB tsdb, DataQueue buffer, HAHttpClient httpclient, RateLimiter rateLimiter, Config config) {
         this.tsdb = tsdb;
         this.dataQueue = buffer;
         this.httpclient = httpclient;

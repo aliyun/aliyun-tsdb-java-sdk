@@ -1,7 +1,6 @@
 package com.aliyun.hitsdb.client.consumer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -10,6 +9,7 @@ import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.TSDB;
 import com.aliyun.hitsdb.client.callback.*;
+import com.aliyun.hitsdb.client.http.HAHttpClient;
 import com.aliyun.hitsdb.client.value.request.UniqueUtil;
 import org.apache.http.HttpResponse;
 import org.apache.http.concurrent.FutureCallback;
@@ -34,7 +34,7 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
     private final AbstractBatchPutCallback<?> batchPutCallback;
 
 
-    public BatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
+    public BatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HAHttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
         super(tsdb, dataQueue, httpclient, countDownLatch, config, rateLimiter);
         this.batchPutCallback = config.getBatchPutCallback();
 
@@ -121,7 +121,8 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
 
 
     private void sendHttpRequest(List<Point> pointList, String strJson, Map<String, String> paramsMap) {
-        String address = getAddressAndSemaphoreAcquire();
+        HttpClient httpClient = tsdbHttpClient.getWriteClient();
+        String address = httpClient.getAddressAndSemaphoreAcquire();
         if (this.batchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
                     .createBatchPutDataCallback(
@@ -132,9 +133,9 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
                             config.getBatchPutRetryCount());
 
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
+                httpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
             } catch (Exception ex) {
-                this.semaphoreManager.release(address);
+                httpClient.getSemaphoreManager().release(address);
                 this.batchPutCallback.failed(address, pointList, ex);
             }
         } else {
@@ -146,9 +147,9 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
                             config.getBatchPutRetryCount()
                     );
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, noLogicBatchPutHttpFutureCallback);
+                httpClient.postToAddress(address, HttpAPI.PUT, strJson, noLogicBatchPutHttpFutureCallback);
             } catch (Exception ex) {
-                this.semaphoreManager.release(address);
+                httpClient.getSemaphoreManager().release(address);
                 noLogicBatchPutHttpFutureCallback.failed(ex);
             }
         }
