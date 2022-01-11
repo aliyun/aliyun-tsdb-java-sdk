@@ -82,6 +82,10 @@ public class TSDBConfig extends AbstractConfig {
 
         private boolean lastResultReverseEnable = false;
 
+        private boolean dnsCheckEnable = false;
+
+        private int dnsCheckInterval = 20;
+
         public Builder(String host) {
             this.host = host;
             this.uniqueHost.add(host);
@@ -311,6 +315,17 @@ public class TSDBConfig extends AbstractConfig {
             return this;
         }
 
+        public Builder dnsCheckEnable() {
+            this.dnsCheckEnable = true;
+            return this;
+        }
+
+        public Builder dnsCheckEnable(int interval) {
+            this.dnsCheckEnable = true;
+            this.dnsCheckInterval = interval;
+            return this;
+        }
+
         public  TSDBConfig config() {
             if (multiFieldBatchPutConsumerThreadCount <= 0 && batchPutConsumerThreadCount <= 0) {
                 throw new IllegalArgumentException("At least one of multiFieldBatchPutConsumerThreadCount and batchPutConsumerThreadCount is greater than 0");
@@ -375,6 +390,8 @@ public class TSDBConfig extends AbstractConfig {
             config.haPolicy = this.haPolicy;
             config.deduplicationEnable = this.deduplicationEnable;
             config.lastResultReverseEnable = this.lastResultReverseEnable;
+            config.dnsCheckEnable = this.dnsCheckEnable;
+            config.dnsCheckInterval = this.dnsCheckInterval;
 
             return config;
         }

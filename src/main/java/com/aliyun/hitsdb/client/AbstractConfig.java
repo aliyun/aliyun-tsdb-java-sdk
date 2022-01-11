@@ -147,6 +147,10 @@ public abstract class AbstractConfig implements Config {
 
     protected boolean lastResultReverseEnable;
 
+    protected boolean dnsCheckEnable;
+
+    protected int dnsCheckInterval;
+
     @Override
     public boolean isSslEnable() {
         return sslEnable;
@@ -327,6 +331,16 @@ public abstract class AbstractConfig implements Config {
         return this.lastResultReverseEnable;
     }
 
+    @Override
+    public boolean isDnsCheckEnable() {
+        return this.dnsCheckEnable;
+    }
+
+    @Override
+    public int getDnsCheckInterval() {
+        return this.dnsCheckInterval;
+    }
+
     protected void copy(AbstractConfig config, String host, int port) {
         config.host = host;
         config.port = port;
@@ -358,5 +372,7 @@ public abstract class AbstractConfig implements Config {
         }
         config.deduplicationEnable = this.deduplicationEnable;
         config.lastResultReverseEnable = this.lastResultReverseEnable;
+        config.dnsCheckEnable = this.dnsCheckEnable;
+        config.dnsCheckInterval = this.dnsCheckInterval;
     }
 }

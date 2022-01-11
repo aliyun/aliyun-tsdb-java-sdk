@@ -88,4 +88,8 @@ public interface Config {
     boolean isDeduplicationEnable();
 
     boolean isLastResultReverseEnable();
+
+    boolean isDnsCheckEnable();
+
+    int getDnsCheckInterval();
 }
