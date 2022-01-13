@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client.consumer;
 
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.TSDB;
+import com.aliyun.hitsdb.client.TSDBClient;
 import com.aliyun.hitsdb.client.callback.http.HttpResponseCallbackFactory;
 import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedEvent;
 import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedListener;
@@ -25,19 +26,13 @@ public abstract class AbstractBatchPutRunnable {
     /**
      * Http客户端
      */
-    protected final HttpClient tsdbHttpClient;
+    protected final TSDBClient tsdbClient;
     /**
      * 消费者队列控制器。
      * 在优雅关闭中，若消费者队列尚未结束，则CountDownLatch用于阻塞close()方法。
      */
     protected final CountDownLatch countDownLatch;
     protected final Config config;
-    protected final SemaphoreManager semaphoreManager;
-    protected final HttpAddressManager httpAddressManager;
-    /**
-     * 回调包装与构造工厂
-     */
-    protected final HttpResponseCallbackFactory httpResponseCallbackFactory;
     /**
      * 每批次数据点个数
      */
@@ -54,17 +49,14 @@ public abstract class AbstractBatchPutRunnable {
      */
     protected Map<String, String> paramsMap;
 
-    public AbstractBatchPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
+    public AbstractBatchPutRunnable(TSDB tsdb, DataQueue dataQueue, TSDBClient tsdbClient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
         this.dataQueue = dataQueue;
-        this.tsdbHttpClient = httpclient;
+        this.tsdbClient = tsdbClient;
         this.countDownLatch = countDownLatch;
         this.batchSize = config.getBatchPutSize();
         this.batchPutTimeLimit = config.getBatchPutTimeLimit();
         this.config = config;
-        this.semaphoreManager = tsdbHttpClient.getSemaphoreManager();
-        this.httpAddressManager = tsdbHttpClient.getHttpAddressManager();
         this.rateLimiter = rateLimiter;
-        this.httpResponseCallbackFactory = tsdbHttpClient.getHttpResponseCallbackFactory();
         this.paramsMap = wrapDatabaseRequestParam(tsdb.getCurrentDatabase());
 
         // register the database changed event listener
@@ -80,11 +72,27 @@ public abstract class AbstractBatchPutRunnable {
         });
     }
 
+    protected HttpClient getHttpClient() {
+        return this.tsdbClient.getHttpclient();
+    }
+
+    protected SemaphoreManager getSemaphoreManager() {
+        return getHttpClient().getSemaphoreManager();
+    }
+
+    protected HttpAddressManager getHttpAddressManager() {
+        return getHttpClient().getHttpAddressManager();
+    }
+
+    protected HttpResponseCallbackFactory getHttpResponseCallbackFactory() {
+        return getHttpClient().getHttpResponseCallbackFactory();
+    }
+
     protected String getAddressAndSemaphoreAcquire() {
         String address;
         while (true) {
-            address = httpAddressManager.getAddress();
-            boolean acquire = this.semaphoreManager.acquire(address);
+            address = getHttpAddressManager().getAddress();
+            boolean acquire = getSemaphoreManager().acquire(address);
             if (!acquire) {
                 continue;
             } else {

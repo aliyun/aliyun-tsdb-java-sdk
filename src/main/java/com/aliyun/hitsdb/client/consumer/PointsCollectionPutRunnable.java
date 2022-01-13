@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client.consumer;
 
 import com.aliyun.hitsdb.client.Config;
 import com.aliyun.hitsdb.client.TSDB;
+import com.aliyun.hitsdb.client.TSDBClient;
 import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -25,8 +26,8 @@ import static com.aliyun.hitsdb.client.http.HttpClient.wrapDatabaseRequestParam;
 public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(PointsCollectionPutRunnable.class);
 
-    public PointsCollectionPutRunnable(TSDB tsdb, DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
-        super(tsdb, dataQueue, httpclient, countDownLatch, config, rateLimiter);
+    public PointsCollectionPutRunnable(TSDB tsdb, DataQueue dataQueue, TSDBClient tsdbClient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
+        super(tsdb, dataQueue, tsdbClient, countDownLatch, config, rateLimiter);
     }
 
     /**
@@ -113,7 +114,7 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
             }
 
             List<Point> slist = points.asSingleFieldPoints();
-            FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
+            FutureCallback<HttpResponse> postHttpCallback = getHttpResponseCallbackFactory()
                     .createBatchPutDataCallback(
                             address,
                             scallback,
@@ -122,9 +123,9 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
                     config.getBatchPutRetryCount());
 
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, queryParamsMap, postHttpCallback);
+                getHttpClient().postToAddress(address, HttpAPI.PUT, strJson, queryParamsMap, postHttpCallback);
             } catch (Exception ex) {
-                this.semaphoreManager.release(address);
+                getSemaphoreManager().release(address);
                 scallback.failed(address, slist, ex);
             }
 
@@ -141,7 +142,7 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
 
 
                 List<MultiFieldPoint> mlist = points.asMultiFieldPoints();
-                FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
+                FutureCallback<HttpResponse> postHttpCallback = getHttpResponseCallbackFactory()
                         .createMultiFieldBatchPutDataCallback(
                                 address,
                                 mcallback,
@@ -150,9 +151,9 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
                                 config.getBatchPutRetryCount());
 
                 try {
-                    tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, queryParamsMap, postHttpCallback);
+                    getHttpClient().postToAddress(address, HttpAPI.MPUT, strJson, queryParamsMap, postHttpCallback);
                 } catch (Exception ex) {
-                    this.semaphoreManager.release(address);
+                    getSemaphoreManager().release(address);
                     mcallback.failed(address, mlist, ex);
                 }
             } else {
