@@ -160,6 +160,7 @@ public class TSDBClient implements TSDB {
     void resetAllConnections() {
         LOGGER.info("start reset all connections");
         //close old httpClient
+        String database = getCurrentDatabase();
         try {
             getHttpclient().close(true);
         } catch (Exception e) {
@@ -168,6 +169,7 @@ public class TSDBClient implements TSDB {
 
         //set new httpClient
         this.httpclient.set(HttpClientFactory.createHttpClient(config));
+        useDatabase(database);
         getHttpclient().start();
         LOGGER.info("reset all connections success");
     }
