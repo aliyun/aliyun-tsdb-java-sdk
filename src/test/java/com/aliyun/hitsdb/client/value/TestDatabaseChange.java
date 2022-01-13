@@ -3,9 +3,11 @@ package com.aliyun.hitsdb.client.value;
 import com.aliyun.hitsdb.client.TSDBClient;
 import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedEvent;
 import com.aliyun.hitsdb.client.event.TSDBDatabaseChangedListener;
+import com.aliyun.hitsdb.client.http.HttpClient;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Matchers;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
@@ -113,16 +115,21 @@ public class TestDatabaseChange {
     }
 
     private TSDBClient mockTSDBClient(final String defaultDatabase) {
+        HttpClient hc = mock(HttpClient.class);
+        Whitebox.setInternalState(hc, "currentDatabase", new AtomicReference<String>(defaultDatabase));
+        doCallRealMethod().when(hc).setCurrentDatabase(anyString());
+        when(hc.getCurrentDatabase()).thenCallRealMethod();
+
         TSDBClient client = mock(TSDBClient.class);
         // set the state of internal variables
         Whitebox.setInternalState(client, "listeners", new ArrayList<TSDBDatabaseChangedListener>());
-        Whitebox.setInternalState(client, "currentDatabase", new AtomicReference<String>(defaultDatabase));
         // define the behaviors
         doCallRealMethod().when(client).notifyDatabaseChanged(anyString(), anyString());
         doCallRealMethod().when(client).useDatabase(anyString());
         doCallRealMethod().when(client).addDatabaseChangedListener((TSDBDatabaseChangedListener) any());
         doCallRealMethod().when(client).removeDatabaseChangedListener((TSDBDatabaseChangedListener) any());
         when(client.getCurrentDatabase()).thenCallRealMethod();
+        when(client.getHttpclient()).thenReturn(hc);
 
         return client;
     }
