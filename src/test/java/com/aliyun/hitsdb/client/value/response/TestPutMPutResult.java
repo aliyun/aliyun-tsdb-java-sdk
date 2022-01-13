@@ -29,6 +29,7 @@ import org.powermock.reflect.Whitebox;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({TSDBClient.class, TSDBConfig.class, HttpClient.class, HttpResponse.class})
@@ -304,11 +305,12 @@ public class TestPutMPutResult {
         }
 
         // set the internal variable of TSDBClient
-        Whitebox.setInternalState(client, "httpclient", httpClient);
+        Whitebox.setInternalState(client, "httpclient", new AtomicReference<HttpClient>(httpClient));
         Whitebox.setInternalState(client, "httpCompress", false);
         Whitebox.setInternalState(client, "config", config);
 
         PowerMockito.when(client.getCurrentDatabase()).thenReturn("default");
+        PowerMockito.when(client.getHttpclient()).thenReturn(httpClient);
 
         PowerMockito.when(client.multiFieldPutSync(Mockito.anyCollectionOf(MultiFieldPoint.class), Mockito.any(Class.class))).thenCallRealMethod();
 
