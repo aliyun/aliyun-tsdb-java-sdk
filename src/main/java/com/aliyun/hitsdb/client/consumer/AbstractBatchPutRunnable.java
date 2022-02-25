@@ -19,6 +19,7 @@ public abstract class AbstractBatchPutRunnable {
      * Http客户端
      */
     protected final HttpClient tsdbHttpClient;
+    protected final HttpClient secondaryClient;
     /**
      * 消费者队列控制器。
      * 在优雅关闭中，若消费者队列尚未结束，则CountDownLatch用于阻塞close()方法。
@@ -41,9 +42,10 @@ public abstract class AbstractBatchPutRunnable {
     protected int batchPutTimeLimit;
     protected final RateLimiter rateLimiter;
 
-    public AbstractBatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
+    public AbstractBatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, HttpClient secondaryClient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
         this.dataQueue = dataQueue;
         this.tsdbHttpClient = httpclient;
+        this.secondaryClient = secondaryClient;
         this.countDownLatch = countDownLatch;
         this.batchSize = config.getBatchPutSize();
         this.batchPutTimeLimit = config.getBatchPutTimeLimit();

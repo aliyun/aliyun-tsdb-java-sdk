@@ -7,8 +7,8 @@ import com.aliyun.hitsdb.client.util.guava.RateLimiter;
 
 public class ConsumerFactory {
 
-    public static Consumer createConsumer(DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, Config config) {
-        DefaultBatchPutConsumer consumer = new DefaultBatchPutConsumer(buffer, httpclient, rateLimiter, config);
+    public static Consumer createConsumer(DataQueue buffer, HttpClient httpclient, HttpClient secondaryClient, RateLimiter rateLimiter, Config config) {
+        DefaultBatchPutConsumer consumer = new DefaultBatchPutConsumer(buffer, httpclient, secondaryClient, rateLimiter, config);
         return consumer;
     }
 

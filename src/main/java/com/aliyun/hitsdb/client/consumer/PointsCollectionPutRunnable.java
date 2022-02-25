@@ -1,6 +1,7 @@
 package com.aliyun.hitsdb.client.consumer;
 
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.HAPolicy;
 import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -22,8 +23,8 @@ import java.util.concurrent.CountDownLatch;
 public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implements Runnable {
     private static final Logger LOGGER = LoggerFactory.getLogger(PointsCollectionPutRunnable.class);
 
-    public PointsCollectionPutRunnable(DataQueue dataQueue, HttpClient httpclient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
-        super(dataQueue, httpclient, countDownLatch, config, rateLimiter);
+    public PointsCollectionPutRunnable(DataQueue dataQueue, HttpClient httpclient, HttpClient secondaryClient, CountDownLatch countDownLatch, Config config, RateLimiter rateLimiter) {
+        super(dataQueue, httpclient, secondaryClient, countDownLatch, config, rateLimiter);
     }
 
     /**
@@ -82,7 +83,15 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
             LOGGER.warn("PointsCollection is empty, nothing to post");
         }
 
-        String address = tsdbHttpClient.getAddressAndSemaphoreAcquire();
+        HttpClient httpClient;
+        HAPolicy.WriteContext writeContext = null;
+        if (config.getHAPolicy() != null && config.getHAPolicy().getWriteRetryTimes() > 0) {
+            writeContext = config.getHAPolicy().creatWriteContext();
+            httpClient = writeContext.getClient();
+        } else {
+            httpClient = this.tsdbHttpClient;
+        }
+        String address = httpClient.getAddressAndSemaphoreAcquire();
 
         Map<String, String> paramsMap = new HashMap<String, String>();
         if (points.getSimplePointBatchCallbak() != null) {
@@ -105,7 +114,8 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
                             scallback,
                             slist,
                             config,
-                    config.getBatchPutRetryCount());
+                            config.getBatchPutRetryCount(),
+                            writeContext);
 
             try {
                 tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
@@ -133,7 +143,9 @@ public class PointsCollectionPutRunnable extends AbstractBatchPutRunnable implem
                                 mcallback,
                                 mlist,
                                 config,
-                                config.getBatchPutRetryCount());
+                                config.getBatchPutRetryCount(),
+                                writeContext
+                                );
 
                 try {
                     tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, paramsMap, postHttpCallback);

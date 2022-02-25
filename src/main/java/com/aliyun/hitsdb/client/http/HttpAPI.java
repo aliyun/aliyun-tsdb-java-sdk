@@ -11,12 +11,15 @@ public interface HttpAPI {
     String DUMP_META = "/api/dump_meta";
     String LOOKUP = "/api/search/lookup";
     String VERSION = "/api/version";
+    String MAIN_CLUSTER_TIME = "/api/set_cluster?mainClusterTime";
 
     String UPDATE_LAST = "/api/updatelast";
 
     String TRUNCATE = "/api/truncate";
 
     String DELETE_ALL_TABLE = "/api/delete_all_table";
+
+    String HEALTH = "/api/health";
 
     String VIP_HEALTH = "/api/vip_health";
 

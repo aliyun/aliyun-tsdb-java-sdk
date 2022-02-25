@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.HAPolicy;
 import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.value.request.UniqueUtil;
 import org.apache.http.HttpResponse;
@@ -33,8 +34,8 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
     private final AbstractBatchPutCallback<?> batchPutCallback;
 
 
-    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
-        super(dataQueue, httpclient, countDownLatch, config, rateLimiter);
+    public BatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, HttpClient secondaryClient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
+        super(dataQueue, httpclient, secondaryClient, countDownLatch, config, rateLimiter);
         this.batchPutCallback = config.getBatchPutCallback();
     }
 
@@ -111,7 +112,15 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
 
     //TODO: unify the implementation with TSDBClient#putAsync()
     private void sendHttpRequest(List<Point> pointList, String strJson, Map<String, String> paramsMap) {
-        String address = tsdbHttpClient.getAddressAndSemaphoreAcquire();
+        HttpClient httpClient;
+        HAPolicy.WriteContext writeContext = null;
+        if (config.getHAPolicy() != null && config.getHAPolicy().getWriteRetryTimes() > 0) {
+            writeContext = config.getHAPolicy().creatWriteContext();
+            httpClient = writeContext.getClient();
+        } else {
+            httpClient = this.tsdbHttpClient;
+        }
+        String address = httpClient.getAddressAndSemaphoreAcquire();
         if (this.batchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
                     .createBatchPutDataCallback(
@@ -119,10 +128,11 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
                             this.batchPutCallback,
                             pointList,
                             config,
-                            config.getBatchPutRetryCount());
+                            config.getBatchPutRetryCount(),
+                            writeContext);
 
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
+                httpClient.postToAddress(address, HttpAPI.PUT, strJson, paramsMap, postHttpCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
                 this.batchPutCallback.failed(address, pointList, ex);
@@ -133,10 +143,11 @@ public class BatchPutRunnable extends AbstractBatchPutRunnable implements Runnab
                             address,
                             pointList,
                             config,
-                            config.getBatchPutRetryCount()
+                            config.getBatchPutRetryCount(),
+                            writeContext
                     );
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.PUT, strJson, noLogicBatchPutHttpFutureCallback);
+                httpClient.postToAddress(address, HttpAPI.PUT, strJson, noLogicBatchPutHttpFutureCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
                 noLogicBatchPutHttpFutureCallback.failed(ex);

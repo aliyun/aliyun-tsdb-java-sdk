@@ -3,6 +3,7 @@ package com.aliyun.hitsdb.client.consumer;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.HAPolicy;
 import com.aliyun.hitsdb.client.callback.*;
 import com.aliyun.hitsdb.client.http.HttpAPI;
 import com.aliyun.hitsdb.client.http.HttpClient;
@@ -30,8 +31,8 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
      */
     private final AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
 
-    public MultiFieldBatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
-        super(dataQueue, httpclient, countDownLatch, config, rateLimiter);
+    public MultiFieldBatchPutRunnable(DataQueue dataQueue, HttpClient httpclient, HttpClient secondaryClient, Config config, CountDownLatch countDownLatch, RateLimiter rateLimiter) {
+        super(dataQueue, httpclient, secondaryClient, countDownLatch, config, rateLimiter);
         this.multiFieldBatchPutCallback = config.getMultiFieldBatchPutCallback();
     }
 
@@ -108,7 +109,15 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
 
     //TODO: unify the implementation with TSDBClient#multiFieldPutAsync()
     private void sendHttpRequest(List<MultiFieldPoint> pointList, String strJson, Map<String, String> paramsMap) {
-        String address = tsdbHttpClient.getAddressAndSemaphoreAcquire();
+        HttpClient httpClient;
+        HAPolicy.WriteContext writeContext = null;
+        if (config.getHAPolicy() != null && config.getHAPolicy().getWriteRetryTimes() > 0) {
+            writeContext = config.getHAPolicy().creatWriteContext();
+            httpClient = writeContext.getClient();
+        } else {
+            httpClient = this.tsdbHttpClient;
+        }
+        String address = httpClient.getAddressAndSemaphoreAcquire();
         if (this.multiFieldBatchPutCallback != null) {
             FutureCallback<HttpResponse> postHttpCallback = this.httpResponseCallbackFactory
                     .createMultiFieldBatchPutDataCallback(
@@ -116,10 +125,11 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
                             this.multiFieldBatchPutCallback,
                             pointList,
                             config,
-                            config.getBatchPutRetryCount());
+                            config.getBatchPutRetryCount(),
+                            writeContext);
 
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, paramsMap, postHttpCallback);
+                httpClient.postToAddress(address, HttpAPI.MPUT, strJson, paramsMap, postHttpCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
                 this.multiFieldBatchPutCallback.failed(address, pointList, ex);
@@ -130,10 +140,11 @@ public class MultiFieldBatchPutRunnable extends AbstractBatchPutRunnable impleme
                             address,
                             pointList,
                             config,
-                            config.getBatchPutRetryCount()
+                            config.getBatchPutRetryCount(),
+                            writeContext
                     );
             try {
-                tsdbHttpClient.postToAddress(address, HttpAPI.MPUT, strJson, noLogicBatchPutHttpFutureCallback);
+                httpClient.postToAddress(address, HttpAPI.MPUT, strJson, noLogicBatchPutHttpFutureCallback);
             } catch (Exception ex) {
                 this.semaphoreManager.release(address);
                 noLogicBatchPutHttpFutureCallback.failed(ex);
