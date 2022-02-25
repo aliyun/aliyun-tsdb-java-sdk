@@ -18,6 +18,8 @@ import com.aliyun.hitsdb.client.http.response.HttpStatus;
 import com.aliyun.hitsdb.client.http.response.ResultResponse;
 import com.aliyun.hitsdb.client.queue.DataQueue;
 import com.aliyun.hitsdb.client.queue.DataQueueFactory;
+import com.aliyun.hitsdb.client.util.HealthManager;
+import com.aliyun.hitsdb.client.util.HealthWatcher;
 import com.aliyun.hitsdb.client.util.LinkedHashMapUtils;
 import com.aliyun.hitsdb.client.value.request.UniqueUtil;
 import com.aliyun.hitsdb.client.value.JSONValue;
@@ -51,11 +53,13 @@ public class TSDBClient implements TSDB {
     private final Consumer consumer;
     private final HttpResponseCallbackFactory httpResponseCallbackFactory;
     protected final boolean httpCompress;
-    protected final HttpClient httpclient;
-    private final HttpClient secondaryClient;
+    protected HttpClient httpclient;
+    private HttpClient secondaryClient;
+    private HealthManager healthManager;
     private RateLimiter rateLimiter;
     private final Config config;
     private static Field queryDeleteField;
+    private HAPolicy.HAContext haContext;
 
     static {
         try {
@@ -110,6 +114,15 @@ public class TSDBClient implements TSDB {
         }
         LOGGER.info("The tsdb client has started.");
 
+        if (config.getHAPolicy() != null && config.getHAPolicy().isHaSwitch()) {
+            // start ha switch monitor
+            this.healthManager = new HealthManager();
+            this.healthManager.setIntervalSeconds(config.getHAPolicy().getIntervalSeconds());
+            this.healthManager.start();
+            this.haContext = new HAPolicy.HAContext(config.getHAPolicy(), httpclient, secondaryClient);
+            this.healthManager.watch(httpclient.getHost() + ":" + httpclient.getPort(), healthWatcher);
+        }
+
         try {
             this.checkConnection();
         } catch (Exception e) {
@@ -128,6 +141,25 @@ public class TSDBClient implements TSDB {
             throw new RuntimeException(e);
         }
     }
+
+    private final HealthWatcher healthWatcher = new HealthWatcher() {
+        @Override
+        public void health(String host, boolean health) {
+            // 健康则直接返回
+            if (!health) {
+                haContext.addRetryTimes();
+                HttpClient prevClient = httpclient;
+                httpclient = haContext.getPrimaryClient();
+                secondaryClient = haContext.getSecondaryClient();
+                if (prevClient != httpclient) {
+                    healthManager.unWatchAll();
+                    healthManager.watch(httpclient.getHost() + ":" + httpclient.getPort(), healthWatcher);
+                }
+            } else {
+                haContext.resetRetryTimes();
+            }
+        }
+    };
 
     private static final String EMPTY_HOLDER = new JSONObject().toJSONString();
     private static final String VIP_API = "/api/vip_health";

@@ -2,14 +2,9 @@ package com.aliyun.hitsdb.client;
 
 import com.aliyun.hitsdb.client.callback.AbstractBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
-import com.aliyun.hitsdb.client.exception.http.HttpClientInitException;
 import com.aliyun.hitsdb.client.http.Host;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public interface Config {
     String BASICTYPE = "Basic";    // it should be "Basic" according to RFC 2617

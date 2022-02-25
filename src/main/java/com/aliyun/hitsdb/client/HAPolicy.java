@@ -10,7 +10,10 @@ import com.aliyun.hitsdb.client.util.Pair;
 public class HAPolicy {
     private Pair<String, Integer> secondaryCluster;
     private RetryRule retryRule = RetryRule.SecondaryPreferred;
-    private int queryRetryTimes = 0;
+    private int queryRetryTimes;
+    private boolean haSwitch;
+    private int checkCount;
+    private int intervalSeconds;
     /*
      * TODO: support queryRetryInterval
      */
@@ -61,6 +64,19 @@ public class HAPolicy {
             return this;
         }
 
+        public Builder setHASwitch(int checkCount, int intervalSeconds) {
+            if (checkCount < 1) {
+                throw new IllegalArgumentException("checkCount must greater or equal than 1");
+            }
+            if (intervalSeconds < 1) {
+                throw new IllegalArgumentException("intervalSeconds must greater or equal than 1 second");
+            }
+            policy.haSwitch = true;
+            policy.checkCount = checkCount;
+            policy.intervalSeconds = intervalSeconds;
+            return this;
+        }
+
         public HAPolicy build() {
             return policy;
         }
@@ -84,6 +100,18 @@ public class HAPolicy {
 
     public long getQueryRetryInterval() {
         return queryRetryInterval;
+    }
+
+    public boolean isHaSwitch() {
+        return haSwitch;
+    }
+
+    public int getCheckCount() {
+        return checkCount;
+    }
+
+    public int getIntervalSeconds() {
+        return intervalSeconds;
     }
 
     public static class QueryContext {
@@ -134,6 +162,41 @@ public class HAPolicy {
                 default:
                     throw new IllegalArgumentException("Unknown Retry Policy");
             }
+        }
+    }
+
+    public static class HAContext {
+        private HAPolicy haPolicy;
+        private HttpClient primaryClient;
+        private HttpClient secondaryClient;
+        private int retryTimes = 0;
+
+        public HAContext(HAPolicy haPolicy, HttpClient primaryClient, HttpClient secondaryClient) {
+            this.haPolicy = haPolicy;
+            this.primaryClient = primaryClient;
+            this.secondaryClient = secondaryClient;
+        }
+
+        protected void addRetryTimes() {
+            retryTimes++;
+            if (retryTimes > haPolicy.getCheckCount()) {
+                HttpClient temp = secondaryClient;
+                secondaryClient = primaryClient;
+                primaryClient = temp;
+                retryTimes = 0;
+            }
+        }
+
+        protected void resetRetryTimes() {
+            retryTimes = 0;
+        }
+
+        public HttpClient getPrimaryClient() {
+            return primaryClient;
+        }
+
+        public HttpClient getSecondaryClient() {
+            return secondaryClient;
         }
     }
 }

@@ -18,6 +18,8 @@ public interface HttpAPI {
 
     String DELETE_ALL_TABLE = "/api/delete_all_table";
 
+    String HEALTH = "/api/health";
+
     String VIP_HEALTH = "/api/vip_health";
 
     /**
