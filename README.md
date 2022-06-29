@@ -24,7 +24,7 @@ The recommended way to use the Aliyun TSDB SDK for Java in your project is to co
 <dependency>
     <groupId>com.aliyun</groupId>
     <artifactId>hitsdb-client</artifactId>
-    <version>0.3.7</version>
+    <version>0.3.8</version>
 </dependency>
 ```
 
