@@ -23,13 +23,15 @@ public class DefaultBatchPutConsumer implements Consumer {
     private int multiFieldBatchPutConsumerThreadCount;
     private int pointsBatchPutConsumerThreadCount;
     private HttpClient httpclient;
+    private HttpClient secondaryClient;
     private Config config;
     private RateLimiter rateLimiter;
     private CountDownLatch countDownLatch;
 
-    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, RateLimiter rateLimiter, Config config) {
+    public DefaultBatchPutConsumer(DataQueue buffer, HttpClient httpclient, HttpClient secondaryClient, RateLimiter rateLimiter, Config config) {
         this.dataQueue = buffer;
         this.httpclient = httpclient;
+        this.secondaryClient = secondaryClient;
         this.config = config;
         this.batchPutConsumerThreadCount = config.getBatchPutConsumerThreadCount();
         this.multiFieldBatchPutConsumerThreadCount = config.getMultiFieldBatchPutConsumerThreadCount();
@@ -52,15 +54,15 @@ public class DefaultBatchPutConsumer implements Consumer {
 
     public void start() {
         for (int i = 0; i < batchPutConsumerThreadCount; i++) {
-            threadPool.submit(new BatchPutRunnable(this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
+            threadPool.submit(new BatchPutRunnable(this.dataQueue, this.httpclient, this.secondaryClient, this.config, this.countDownLatch, this.rateLimiter));
         }
 
         for (int i = 0; i < multiFieldBatchPutConsumerThreadCount; i++) {
-            multiFieldThreadPool.submit(new MultiFieldBatchPutRunnable(this.dataQueue, this.httpclient, this.config, this.countDownLatch, this.rateLimiter));
+            multiFieldThreadPool.submit(new MultiFieldBatchPutRunnable(this.dataQueue, this.httpclient, this.secondaryClient, this.config, this.countDownLatch, this.rateLimiter));
         }
 
         for (int i = 0; i < pointsBatchPutConsumerThreadCount; i++) {
-            pointsThreadPool.submit(new PointsCollectionPutRunnable(this.dataQueue, this.httpclient, this.countDownLatch, this.config, this.rateLimiter));
+            pointsThreadPool.submit(new PointsCollectionPutRunnable(this.dataQueue, this.httpclient, this.secondaryClient, this.countDownLatch, this.config, this.rateLimiter));
         }
     }
 

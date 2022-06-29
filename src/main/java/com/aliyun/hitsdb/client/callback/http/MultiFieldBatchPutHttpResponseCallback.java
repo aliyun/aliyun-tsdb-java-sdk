@@ -2,6 +2,7 @@ package com.aliyun.hitsdb.client.callback.http;
 
 import com.alibaba.fastjson.JSON;
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.HAPolicy;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.callback.MultiFieldBatchPutDetailsCallback;
@@ -25,28 +26,19 @@ import org.slf4j.LoggerFactory;
 
 import java.net.SocketTimeoutException;
 import java.util.List;
+import java.util.Map;
 
-public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<HttpResponse> {
+public class MultiFieldBatchPutHttpResponseCallback extends AbstractPutHttpResponseCallback {
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiFieldBatchPutHttpResponseCallback.class);
 
     private final AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback;
     private final List<MultiFieldPoint> pointList;
-    private final int batchPutRetryTimes;
-    private final boolean compress;
-    private final HttpClient hitsdbHttpClient;
-    private final Config config;
-    private final String address;
 
     public MultiFieldBatchPutHttpResponseCallback(String address, HttpClient httpclient, AbstractMultiFieldBatchPutCallback<?> multiFieldBatchPutCallback,
-                                                  List<MultiFieldPoint> pointList, Config config, int batchPutRetryTimes) {
-        super();
-        this.address = address;
-        this.hitsdbHttpClient = httpclient;
+                                                  List<MultiFieldPoint> pointList, Config config, int batchPutRetryTimes, HAPolicy.WriteContext writeContext) {
+        super(address, httpclient, config, batchPutRetryTimes, writeContext);
         this.multiFieldBatchPutCallback = multiFieldBatchPutCallback;
         this.pointList = pointList;
-        this.batchPutRetryTimes = batchPutRetryTimes;
-        this.compress = config.isHttpCompress();
-        this.config = config;
     }
 
     public AbstractMultiFieldBatchPutCallback<?> getLogicalBatchPutCallback() {
@@ -55,10 +47,11 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
 
     @Override
     public void completed(HttpResponse httpResponse) {
+        HttpClient httpClient = writeContext == null ? this.hitsdbHttpClient : writeContext.getClient();
         try {
             // 处理响应
             if (httpResponse.getStatusLine().getStatusCode() == org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT) {
-                this.hitsdbHttpClient.setSslEnable(true);
+                httpClient.setSslEnable(true);
                 if (errorRetry()) {
                     return;
                 }
@@ -68,6 +61,9 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
             switch (httpStatus) {
                 case ServerSuccess:
                 case ServerSuccessNoContent:
+                    if (writeContext != null) {
+                        writeContext.success();
+                    }
                     if (multiFieldBatchPutCallback == null) {
                         return;
                     }
@@ -102,13 +98,16 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                     }
                 case ServerNotSupport: {
                     // 服务器返回4xx错误
+                    if (writeContext != null) {
+                        writeContext.success();
+                    }
                     HttpServerNotSupportException ex = new HttpServerNotSupportException(resultResponse);
                     this.failedWithResponse(ex);
                     return;
                 }
                 case ServerError: {
                     // 服务器返回5xx错误
-                    if (this.batchPutRetryTimes == 0) {
+                    if (this.batchPutRetryTimes == 0 && this.writeContext == null) {
                         HttpServerErrorException ex = new HttpServerErrorException(resultResponse);
                         this.failedWithResponse(ex);
                     } else {
@@ -128,7 +127,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
             }
         } finally {
             // 正常释放Semaphor
-            this.hitsdbHttpClient.getSemaphoreManager().release(address);
+            httpClient.getSemaphoreManager().release(address);
         }
     }
 
@@ -145,56 +144,44 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
         }
     }
 
-    private String getNextAddress() {
-        HttpAddressManager httpAddressManager = hitsdbHttpClient.getHttpAddressManager();
-        String newAddress = httpAddressManager.getAddress();
-        return newAddress;
-    }
-
     /**
      * execute the retry logic when writing failed
      * @return true if retry actually executed; false if retry limit reached
      */
     private boolean errorRetry() {
-        String newAddress;
-        boolean acquire;
+        StringBuffer newAddressBuff = new StringBuffer();
         int retryTimes = this.batchPutRetryTimes;
-        while (true) {
-            newAddress = getNextAddress();
-            acquire = this.hitsdbHttpClient.getSemaphoreManager().acquire(newAddress);
-            retryTimes--;
-            if (acquire || retryTimes <= 0) {
-                break;
-            }
-        }
-
-        if (retryTimes == 0) {
-            this.hitsdbHttpClient.getSemaphoreManager().release(address);
+        HttpClient httpClient = getHttpClient(newAddressBuff);
+        if (httpClient == null) {
             return false;
         }
+        String newAddress = newAddressBuff.toString();
 
         // retry!
         LOGGER.warn("retry put data!");
-        HttpResponseCallbackFactory httpResponseCallbackFactory = this.hitsdbHttpClient.getHttpResponseCallbackFactory();
+        HttpResponseCallbackFactory httpResponseCallbackFactory = httpClient.getHttpResponseCallbackFactory();
 
         FutureCallback<HttpResponse> retryCallback;
         if (multiFieldBatchPutCallback != null) {
-            retryCallback = httpResponseCallbackFactory.createMultiFieldBatchPutDataCallback(newAddress, this.multiFieldBatchPutCallback, this.pointList, this.config, retryTimes);
+            retryCallback = httpResponseCallbackFactory.createMultiFieldBatchPutDataCallback(newAddress,
+                    this.multiFieldBatchPutCallback, this.pointList, this.config, retryTimes, this.writeContext);
         } else {
-            retryCallback = httpResponseCallbackFactory.createMultiFieldNoLogicBatchPutHttpFutureCallback(newAddress, this.pointList, this.config, retryTimes);
+            retryCallback = httpResponseCallbackFactory.createMultiFieldNoLogicBatchPutHttpFutureCallback(newAddress,
+                    this.pointList, this.config, retryTimes, this.writeContext);
         }
 
         String jsonString = JSON.toJSONString(pointList);
-        this.hitsdbHttpClient.post(HttpAPI.MPUT, jsonString, retryCallback);
+        httpClient.post(HttpAPI.MPUT, jsonString, retryCallback);
         return true;
     }
 
     @Override
     public void failed(Exception ex) {
+        HttpClient httpClient = writeContext == null ? this.hitsdbHttpClient : writeContext.getClient();
         try {
             // 异常重试
             if (ex instanceof SocketTimeoutException) {
-                if (this.batchPutRetryTimes == 0) {
+                if (this.batchPutRetryTimes == 0 && this.writeContext == null) {
                     ex = new HttpClientSocketTimeoutException(ex);
                 } else {
                     if (errorRetry()) {
@@ -202,7 +189,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                     }
                 }
             } else if (ex instanceof java.net.ConnectException) {
-                if (this.batchPutRetryTimes == 0) {
+                if (this.batchPutRetryTimes == 0 && this.writeContext == null) {
                     ex = new HttpClientConnectionRefusedException(this.address, ex);
                 } else {
                     if (errorRetry()) {
@@ -218,14 +205,7 @@ public class MultiFieldBatchPutHttpResponseCallback implements FutureCallback<Ht
                 multiFieldBatchPutCallback.failed(this.address, pointList, ex);
             }
         } finally {
-            this.hitsdbHttpClient.getSemaphoreManager().release(address);
+            httpClient.getSemaphoreManager().release(address);
         }
     }
-
-    @Override
-    public void cancelled() {
-        this.hitsdbHttpClient.getSemaphoreManager().release(this.address);
-        LOGGER.info("the HttpAsyncClient has been cancelled");
-    }
-
 }

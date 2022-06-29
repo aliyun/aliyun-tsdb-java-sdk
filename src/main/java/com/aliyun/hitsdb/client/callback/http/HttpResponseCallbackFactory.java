@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.aliyun.hitsdb.client.Config;
+import com.aliyun.hitsdb.client.HAPolicy;
 import com.aliyun.hitsdb.client.callback.AbstractMultiFieldBatchPutCallback;
 import com.aliyun.hitsdb.client.util.Objects;
 import com.aliyun.hitsdb.client.value.request.MultiFieldPoint;
@@ -42,14 +43,16 @@ public class HttpResponseCallbackFactory {
             final AbstractBatchPutCallback<?> batchPutCallback,
             final List<Point> pointList,
             final Config config,
-            final int retryTimes) {
+            final int retryTimes,
+            final HAPolicy.WriteContext writeContext) {
         FutureCallback<HttpResponse> httpCallback = new BatchPutHttpResponseCallback(
                 address,
                 hitsdbHttpclient,
                 batchPutCallback,
                 pointList,
                 config,
-                retryTimes
+                retryTimes,
+                writeContext
         );
         return httpCallback;
     }
@@ -59,7 +62,8 @@ public class HttpResponseCallbackFactory {
             final String address,
             final List<Point> pointList,
             final Config config,
-            final int batchPutRetryTimes
+            final int batchPutRetryTimes,
+            final HAPolicy.WriteContext writeContext
     ) {
         FutureCallback<HttpResponse> httpCallback =
                 new BatchPutHttpResponseCallback(
@@ -68,7 +72,8 @@ public class HttpResponseCallbackFactory {
                         null,
                         pointList,
                         config,
-                        batchPutRetryTimes
+                        batchPutRetryTimes,
+                        writeContext
                 );
         return httpCallback;
     }
@@ -80,14 +85,16 @@ public class HttpResponseCallbackFactory {
             final AbstractMultiFieldBatchPutCallback<?> batchPutCallback,
             final List<MultiFieldPoint> pointList,
             final Config config,
-            final int retryTimes) {
+            final int retryTimes,
+            final HAPolicy.WriteContext writeContext) {
         FutureCallback<HttpResponse> httpCallback = new MultiFieldBatchPutHttpResponseCallback(
                 address,
                 hitsdbHttpclient,
                 batchPutCallback,
                 pointList,
                 config,
-                retryTimes
+                retryTimes,
+                writeContext
         );
         return httpCallback;
     }
@@ -97,7 +104,8 @@ public class HttpResponseCallbackFactory {
             final String address,
             final List<MultiFieldPoint> pointList,
             final Config config,
-            final int batchPutRetryTimes
+            final int batchPutRetryTimes,
+            final HAPolicy.WriteContext writeContext
     ) {
         FutureCallback<HttpResponse> httpCallback =
                 new MultiFieldBatchPutHttpResponseCallback(
@@ -106,7 +114,8 @@ public class HttpResponseCallbackFactory {
                         null,
                         pointList,
                         config,
-                        batchPutRetryTimes
+                        batchPutRetryTimes,
+                        writeContext
                 );
         return httpCallback;
     }
