@@ -16,8 +16,11 @@ public class MultiFieldSubQuery {
     private List<Filter> filters;
     private List<MultiFieldSubQueryDetails> fields;
     private Integer limit;
-    private Integer globalLimit;
     private Integer offset;
+    private Integer rlimit;
+    private Integer roffset;
+    private Integer slimit;
+    private Integer globalLimit;
     private int index;
     private Map<String, Map<String, Integer>> hint;
     private DownsampleDataSource downsampleDataSource;
@@ -25,8 +28,11 @@ public class MultiFieldSubQuery {
     public static class Builder {
         private String metric;
         private Integer limit;
-        private Integer globalLimit;
         private Integer offset;
+        private Integer rlimit;
+        private Integer roffset;
+        private Integer slimit;
+        private Integer globalLimit;
         private Map<String, String> tags = new HashMap<String, String>();
         private List<Filter> filters = new ArrayList<Filter>();
         private List<MultiFieldSubQueryDetails> fieldsInfo = new ArrayList<MultiFieldSubQueryDetails>();
@@ -63,6 +69,46 @@ public class MultiFieldSubQuery {
             return this;
         }
 
+        /**
+         * only support for multi field model
+         */
+        public Builder rlimit(Integer rlimit) {
+            if (rlimit != null) {
+                if (rlimit < 0 || rlimit > Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("Illegal rlimit value.");
+                }
+                this.rlimit = rlimit;
+            }
+            return this;
+        }
+
+        /**
+         * only support for multi field model
+         */
+        public Builder roffset(Integer roffset) {
+            if (roffset != null) {
+                if (roffset < 0 || roffset > Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("Illegal roffset value.");
+                }
+                this.roffset = roffset;
+            }
+            return this;
+        }
+
+        /**
+         * current only support for super tag model
+         */
+        public Builder slimit(Integer slimit) {
+            if (slimit != null) {
+                if (slimit < 0 || slimit > Integer.MAX_VALUE) {
+                    throw new IllegalArgumentException("Illegal slimit value.");
+                }
+                this.slimit = slimit;
+            }
+            return this;
+        }
+
+        @Deprecated
         public Builder globalLimit(Integer globalLimit) {
             if (globalLimit != null) {
                 if (globalLimit < 0 || globalLimit > Integer.MAX_VALUE) {
@@ -174,18 +220,16 @@ public class MultiFieldSubQuery {
             }
             subQuery.fields = this.fieldsInfo;
 
-            if (this.limit != null && this.limit > 0) {
-                subQuery.limit = this.limit;
-            }
-
+            // TSDB Server will set limit, offset, rlimit, roffset, slimit for subquery
             if (this.globalLimit != null && this.globalLimit > 0) {
                 subQuery.globalLimit = this.globalLimit;
             }
 
-            if (this.offset != null && this.offset > 0) {
-                subQuery.offset = this.offset;
-            }
-
+            subQuery.limit = limit;
+            subQuery.offset = offset;
+            subQuery.slimit = slimit;
+            subQuery.rlimit = rlimit;
+            subQuery.roffset = roffset;
             subQuery.hint = this.hint;
 
             if (this.downsampleDataSource != null) {
@@ -232,6 +276,18 @@ public class MultiFieldSubQuery {
 
     public Integer getLimit() {
         return limit;
+    }
+
+    public Integer getRlimit() {
+        return rlimit;
+    }
+
+    public Integer getRoffset() {
+        return roffset;
+    }
+
+    public Integer getSlimit() {
+        return slimit;
     }
 
     public Integer getGlobalLimit() {

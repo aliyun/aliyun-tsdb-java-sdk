@@ -24,6 +24,9 @@ public class Query extends JSONValue {
 	// this field is only allowed for Lindorm TSDB
 	@JSONField(name = "type")
 	private String queryType;
+	private Integer limit;
+	private Integer offset;
+	private Integer slimit;
 
 	public static class Builder {
 		private Long startTime;
@@ -35,6 +38,9 @@ public class Query extends JSONValue {
 		private Class<?> type;
 		// this field is only allowed for Lindorm TSDB
 		private String queryType;
+		private Integer limit;
+		private Integer offset;
+		private Integer slimit;
 		private Map<String, Map<String, Integer>> hint;
 
 		/**
@@ -86,6 +92,39 @@ public class Query extends JSONValue {
 		 */
 		public Builder queryType(QueryType queryType) {
 			this.queryType = queryType.getName();
+			return this;
+		}
+
+		public Builder limit(Integer limit) {
+			if (limit != null) {
+				if (limit < 0 || limit > Integer.MAX_VALUE) {
+					throw new IllegalArgumentException("Illegal limit value.");
+				}
+				this.limit = limit;
+			}
+			return this;
+		}
+
+		public Builder offset(Integer offset) {
+			if (offset != null) {
+				if (offset < 0 || offset > Integer.MAX_VALUE) {
+					throw new IllegalArgumentException("Illegal offset value.");
+				}
+				this.offset = offset;
+			}
+			return this;
+		}
+
+		/**
+		 * current only support for super tag model
+		 */
+		public Builder slimit(Integer slimit) {
+			if (slimit != null) {
+				if (slimit < 0 || slimit > Integer.MAX_VALUE) {
+					throw new IllegalArgumentException("Illegal slimit value.");
+				}
+				this.slimit = slimit;
+			}
 			return this;
 		}
 
@@ -178,6 +217,9 @@ public class Query extends JSONValue {
 			query.type = this.type;
 			query.hint = this.hint;
 			query.queryType = queryType;
+			query.limit = limit;
+			query.offset = offset;
+			query.slimit = slimit;
 			return query;
 		}
 
@@ -278,5 +320,30 @@ public class Query extends JSONValue {
 	 */
 	public void setQueryType(QueryType queryType) {
 		this.queryType = queryType.getName();
+	}
+
+
+	public Integer getLimit() {
+		return limit;
+	}
+
+	public void setLimit(Integer limit) {
+		this.limit = limit;
+	}
+
+	public Integer getOffset() {
+		return offset;
+	}
+
+	public void setOffset(Integer offset) {
+		this.offset = offset;
+	}
+
+	public Integer getSlimit() {
+		return slimit;
+	}
+
+	public void setSlimit(Integer slimit) {
+		this.slimit = slimit;
 	}
 }
