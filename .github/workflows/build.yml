@@ -16,15 +16,20 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ]
+        java-version: [ 8 ]
+        distro: [ 'zulu', 'temurin' ]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK 8
+    - name: Set up JDK ${{ matrix.java-version }} ${{ matrix.distro }}
       uses: actions/setup-java@v2
       with:
-        java-version: '8'
-        distribution: 'adopt'
+        java-version: ${{ matrix.java-version }}
+        distribution: ${{ matrix.distro }}
     - name: Build with Maven
       run: mvn clean package -Dmaven.test.skip=true
     - name: Unit Test
