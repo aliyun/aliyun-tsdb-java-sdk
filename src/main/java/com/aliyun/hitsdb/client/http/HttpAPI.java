@@ -32,4 +32,7 @@ public interface HttpAPI {
     String USER_AUTH = "/api/users";
 
     String SQL = "/api/sqlquery";
+
+    String LTS_PUT = "/api/lts_put";
+    String LTS_MPUT = "/api/lts_mput";
 }
