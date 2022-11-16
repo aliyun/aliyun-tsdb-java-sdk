@@ -41,12 +41,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -2075,5 +2071,100 @@ public class TSDBClient implements TSDB {
     @Override
     public void removeDatabaseChangedListener(TSDBDatabaseChangedListener listener) {
         listeners.remove(listener);
+    }
+
+    @Override
+    public <T extends Result> T ltsPutSync(Collection<Point> points, List<String> clusterIdList, Class<T> resultType) {
+        UniqueUtil.uniquePoints(points, config.isDeduplicationEnable());
+        String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
+        String database = getCurrentDatabase();
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(database);
+
+        HttpResponse httpResponse;
+        if (resultType.equals(Result.class)) {
+            httpResponse = getHttpclient().postForLts(HttpAPI.LTS_PUT, jsonString, clusterIdList, null, "clusterIdList");
+        } else if (resultType.equals(SummaryResult.class)) {
+            paramsMap.put("summary", "true");
+            httpResponse = getHttpclient().postForLts(HttpAPI.LTS_PUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else if (resultType.equals(DetailsResult.class)) {
+            paramsMap.put("details", "true");
+            httpResponse = getHttpclient().postForLts(HttpAPI.LTS_PUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else if (resultType.equals(IgnoreErrorsResult.class)) {
+            paramsMap.put("ignoreErrors", "true");
+            httpResponse = getHttpclient().postForLts(HttpAPI.LTS_PUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else {
+            throw new HttpClientException("This result type is not supported");
+        }
+
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+
+        T result = null;
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                result = (T) new Result();
+                return result;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                if (resultType.equals(SummaryResult.class)) {
+                    result = (T) JSON.parseObject(content, SummaryResult.class);
+                } else if (resultType.equals(DetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, DetailsResult.class);
+                } else if (resultType.equals(IgnoreErrorsResult.class)) {
+                    result = (T) JSON.parseObject(content, IgnoreErrorsResult.class);
+                }
+
+                return result;
+            default:
+                return (T) handleStatus(resultResponse);
+        }
+    }
+
+
+    @Override
+    public <T extends Result> T ltsMputSync(Collection<MultiFieldPoint> points, List<String> clusterIdList, Class<T> resultType) {
+        UniqueUtil.uniqueMultiFieldPoints(points, config.isDeduplicationEnable());
+        String jsonString = JSON.toJSONString(points, SerializerFeature.DisableCircularReferenceDetect);
+        String database = getCurrentDatabase();
+        Map<String, String> paramsMap = wrapDatabaseRequestParam(database);
+
+        HttpResponse httpResponse;
+        if (resultType.equals(Result.class)) {
+            httpResponse = getHttpclient().postForLts(HttpAPI.LTS_MPUT, jsonString, clusterIdList, null, "clusterIdList");
+        } else if (resultType.equals(SummaryResult.class)) {
+            paramsMap.put("summary", "true");
+            httpResponse = getHttpclient().postForLts(HttpAPI.LTS_MPUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else if (resultType.equals(MultiFieldDetailsResult.class)) {
+            paramsMap.put("details", "true");
+            httpResponse = getHttpclient().postForLts(HttpAPI.LTS_MPUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
+            paramsMap.put("ignoreErrors", "true");
+            httpResponse = getHttpclient().postForLts(HttpAPI.LTS_MPUT, jsonString, clusterIdList, paramsMap, "clusterIdList");
+        } else {
+            throw new HttpClientException("This result type is not supported");
+        }
+
+        ResultResponse resultResponse = ResultResponse.simplify(httpResponse, this.httpCompress);
+        HttpStatus httpStatus = resultResponse.getHttpStatus();
+
+        T result = null;
+        switch (httpStatus) {
+            case ServerSuccessNoContent:
+                result = (T) new Result();
+                return result;
+            case ServerSuccess:
+                String content = resultResponse.getContent();
+                if (resultType.equals(SummaryResult.class)) {
+                    result = (T) JSON.parseObject(content, SummaryResult.class);
+                } else if (resultType.equals(MultiFieldDetailsResult.class)) {
+                    result = (T) JSON.parseObject(content, MultiFieldDetailsResult.class);
+                } else if (resultType.equals(MultiFieldIgnoreErrorsResult.class)) {
+                    result = (T) JSON.parseObject(content, MultiFieldIgnoreErrorsResult.class);
+                }
+
+                return result;
+            default:
+                return (T) handleStatus(resultResponse);
+        }
     }
 }

@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
@@ -502,6 +503,43 @@ public class HttpClient {
             throw new IllegalArgumentException("invalid database specified");
         }
         paramsMap.put("db", database);
+    }
+
+    public HttpResponse postForLts(String apiPath, String json, List<String> paramsList, Map<String, String> paramsMap, String key) throws HttpClientException {
+        String httpFullAPI = getUrl(apiPath);
+        URI uri = createURIForLts(httpFullAPI, paramsList, paramsMap, key);
+        final HttpPost request = new HttpPost(uri);
+        return execute(request, json);
+    }
+
+    private URI createURIForLts(String httpFullAPI, List<String> paramsList, Map<String, String> paramsMap, String key) {
+        URIBuilder builder;
+        try {
+            builder = new URIBuilder(httpFullAPI);
+        } catch (URISyntaxException e) {
+            throw new HttpClientException(e);
+        }
+
+        if (paramsMap != null && !paramsMap.isEmpty()) {
+            for (Entry<String, String> entry : paramsMap.entrySet()) {
+                builder.setParameter(entry.getKey(), entry.getValue());
+            }
+        }
+
+        if (paramsList != null && !paramsList.isEmpty() && key != null && !key.isEmpty()) {
+            for (String id : paramsList) {
+                builder.setParameter(key, id);
+            }
+        }
+
+        URI uri;
+        try {
+            uri = builder.build();
+        } catch (URISyntaxException e) {
+            throw new HttpClientException(e);
+        }
+
+        return uri;
     }
 
 }

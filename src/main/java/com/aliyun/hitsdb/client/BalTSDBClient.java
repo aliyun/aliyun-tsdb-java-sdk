@@ -1305,4 +1305,29 @@ public class BalTSDBClient implements TSDB {
         //TODO:
         throw new NotImplementedException();
     }
+
+    @Override
+    public <T extends Result> T ltsPutSync(Collection<Point> points, List<String> clusterIdList, Class<T> resultType) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().ltsPutSync(points, clusterIdList, resultType);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
+
+    @Override public <T extends Result> T ltsMputSync(Collection<MultiFieldPoint> points, List<String> clusterIdList, Class<T> resultType) {
+        Exception exception = null;
+        for (int i = 0; i < MAX_RETRY_SIZE; i++) {
+            try {
+                return client().ltsMputSync(points, clusterIdList, resultType);
+            } catch (Exception e) {
+                exception = e;
+            }
+        }
+        throw new RuntimeException(exception);
+    }
 }
